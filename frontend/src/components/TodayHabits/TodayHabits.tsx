@@ -37,10 +37,10 @@ export function TodayHabits({ habits, onToggle }: TodayHabitsProps) {
             className={`${styles.square} ${completed ? styles.done : ""}`}
             onClick={() => onToggle(habit.id, todayKey, completed)}
             aria-pressed={completed}
+            aria-label={habit.name}
             title={habit.name}
           >
             <Icon className={styles.icon} />
-            <span className={styles.name}>{habit.name}</span>
           </button>
         );
       })}

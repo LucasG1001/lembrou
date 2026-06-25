@@ -64,3 +64,13 @@ export function ChevronIcon({ className }: IconProps) {
     </Icon>
   );
 }
+
+export function ClockIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M3.5 9a9 9 0 1 1 0 6" />
+      <path d="M3 4v5h5" />
+      <path d="M12 8v4l3 2" />
+    </Icon>
+  );
+}

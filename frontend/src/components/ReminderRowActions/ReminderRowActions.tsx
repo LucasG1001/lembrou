@@ -1,0 +1,133 @@
+import { useEffect, useRef, useState } from "react";
+import { CheckIcon, ClockIcon } from "../Sidebar/Sidebar.icons";
+import { toFormParts } from "../../utils/format";
+import type { Reminder, ReminderInput } from "../../types/reminder";
+import styles from "./ReminderRowActions.module.css";
+
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+
+interface Preset {
+  label: string;
+  deltaMs: number;
+}
+
+const TIMED_PRESETS: Preset[] = [
+  { label: "+1 hora", deltaMs: HOUR },
+  { label: "+3 horas", deltaMs: 3 * HOUR },
+  { label: "+1 dia", deltaMs: DAY },
+  { label: "+1 semana", deltaMs: 7 * DAY },
+];
+
+const ALL_DAY_PRESETS: Preset[] = [
+  { label: "+1 dia", deltaMs: DAY },
+  { label: "+1 semana", deltaMs: 7 * DAY },
+];
+
+interface ReminderRowActionsProps {
+  reminder: Reminder;
+  now: number;
+  onCheck: (id: string) => void;
+  onReschedule: (id: string, input: ReminderInput) => void;
+  onCustom: (id: string) => void;
+}
+
+export function ReminderRowActions({
+  reminder,
+  now,
+  onCheck,
+  onReschedule,
+  onCustom,
+}: ReminderRowActionsProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const presets = reminder.isAllDay ? ALL_DAY_PRESETS : TIMED_PRESETS;
+
+  const applyPreset = (deltaMs: number) => {
+    const base = Math.max(now, Date.parse(reminder.eventAt));
+    const parts = toFormParts(new Date(base + deltaMs).toISOString());
+    const input: ReminderInput = {
+      title: reminder.title,
+      notes: reminder.notes,
+      date: parts.date,
+      time: reminder.isAllDay ? null : parts.time,
+      recurInterval: reminder.recurInterval,
+      recurUnit: reminder.recurUnit,
+      recurWeekday: reminder.recurWeekday,
+      maxNotify: reminder.maxNotify,
+    };
+    setOpen(false);
+    onReschedule(reminder.id, input);
+  };
+
+  return (
+    <div className={styles.wrap} ref={ref}>
+      <button
+        type="button"
+        className={styles.btn}
+        title="Concluir"
+        aria-label="Concluir"
+        onClick={() => onCheck(reminder.id)}
+      >
+        <CheckIcon className={styles.icon} />
+      </button>
+      <button
+        type="button"
+        className={`${styles.btn} ${open ? styles.btnActive : ""}`}
+        title="Remarcar"
+        aria-label="Remarcar"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <ClockIcon className={styles.icon} />
+      </button>
+
+      {open && (
+        <div className={styles.menu} role="menu">
+          <span className={styles.menuLabel}>Remarcar para</span>
+          {presets.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              className={styles.menuItem}
+              role="menuitem"
+              onClick={() => applyPreset(preset.deltaMs)}
+            >
+              {preset.label}
+            </button>
+          ))}
+          <div className={styles.divider} />
+          <button
+            type="button"
+            className={styles.menuItem}
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onCustom(reminder.id);
+            }}
+          >
+            Personalizado…
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

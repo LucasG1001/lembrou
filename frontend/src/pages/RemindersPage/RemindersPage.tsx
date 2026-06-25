@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useReminders } from "../../hooks/useReminders";
 import { ReminderCard } from "../../components/ReminderCard/ReminderCard";
+import { ReminderRowActions } from "../../components/ReminderRowActions/ReminderRowActions";
 import { Timeline } from "../../components/Timeline/Timeline";
 import { BellIcon } from "../../components/Sidebar/Sidebar.icons";
 import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
@@ -33,8 +34,20 @@ function toTimelineItem(reminder: Reminder, now: number): TimelineItem {
 
 export function RemindersPage() {
   const navigate = useNavigate();
-  const { reminders, status, setStatus, loading, error, reload, remove, acknowledge, cancel } =
-    useReminders();
+  const {
+    reminders,
+    status,
+    setStatus,
+    loading,
+    error,
+    reload,
+    remove,
+    acknowledge,
+    cancel,
+    reschedule,
+  } = useReminders();
+
+  const byId = useMemo(() => new Map(reminders.map((r) => [r.id, r])), [reminders]);
 
   const handleDelete = (id: string) => {
     if (window.confirm("Excluir este lembrete de vez?")) {
@@ -90,6 +103,19 @@ export function RemindersPage() {
           laterGroups={timeline.laterGroups}
           iconFor={() => BellIcon}
           onItemClick={(item: TimelineItem) => navigate(`/lembretes/r/${item.id}`)}
+          renderAction={(item: TimelineItem) => {
+            const reminder = byId.get(item.id);
+            if (!reminder) return null;
+            return (
+              <ReminderRowActions
+                reminder={reminder}
+                now={now}
+                onCheck={(id) => acknowledge(id).catch(() => undefined)}
+                onReschedule={(id, input) => reschedule(id, input).catch(() => undefined)}
+                onCustom={(id) => navigate(`/lembretes/r/${id}?action=reschedule`)}
+              />
+            );
+          }}
           emptyMessage="Nenhum lembrete ativo agendado."
         />
       )}
