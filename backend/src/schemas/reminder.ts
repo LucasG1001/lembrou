@@ -1,0 +1,28 @@
+import { z } from "zod";
+
+const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+const timeRe = /^\d{2}:\d{2}$/;
+
+const recurUnit = z.enum(["day", "week", "month", "year"]);
+
+const baseReminder = z
+  .object({
+    title: z.string().min(1, "Informe um título.").max(200),
+    notes: z.string().max(2000).nullish(),
+    date: z.string().regex(dateRe, "Data inválida (use YYYY-MM-DD)."),
+    time: z.string().regex(timeRe, "Hora inválida (use HH:MM).").nullish(),
+    recurInterval: z.number().int().positive().nullish(),
+    recurUnit: recurUnit.nullish(),
+    recurWeekday: z.number().int().min(0).max(6).nullish(),
+    maxNotify: z.number().int().min(1).max(50).optional(),
+  })
+  .refine((d) => Boolean(d.recurInterval) === Boolean(d.recurUnit), {
+    message: "Recorrência exige intervalo e unidade juntos.",
+  });
+
+export const createReminderSchema = baseReminder;
+
+export const updateReminderSchema = baseReminder;
+
+export type CreateReminderBody = z.infer<typeof createReminderSchema>;
+export type UpdateReminderBody = z.infer<typeof updateReminderSchema>;

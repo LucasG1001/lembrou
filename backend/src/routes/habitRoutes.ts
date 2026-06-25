@@ -1,0 +1,20 @@
+import { Router } from "express";
+import {
+  getAll,
+  create,
+  update,
+  remove,
+  toggle,
+  setCompletion,
+} from "../controllers/habitController.js";
+
+const router = Router();
+
+router.get("/", getAll);
+router.post("/", create);
+router.put("/:id", update);
+router.delete("/:id", remove);
+router.patch("/:id/toggle/:date", toggle);
+router.patch("/:id/completion/:date", setCompletion);
+
+export { router as habitRoutes };
