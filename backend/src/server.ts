@@ -35,4 +35,7 @@ async function start(): Promise<void> {
   startScheduler();
 }
 
-start();
+start().catch((error) => {
+  console.error("Falha ao iniciar o backend:", error);
+  process.exit(1);
+});

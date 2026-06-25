@@ -73,31 +73,6 @@
   background: var(--color-accent-hover);
 }
 
-.check {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--color-border);
-  color: #fff;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.check:hover {
-  border-color: var(--color-success);
-}
-
-.checkDone {
-  background: var(--color-success);
-  border-color: var(--color-success);
-  box-shadow: 0 0 8px var(--color-success-subtle);
-}
-
 @media (max-width: 768px) {
   .page {
     padding: var(--spacing-base);

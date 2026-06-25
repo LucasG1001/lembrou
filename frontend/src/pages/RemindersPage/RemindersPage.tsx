@@ -89,7 +89,7 @@ export function RemindersPage() {
           weekGroups={timeline.weekGroups}
           laterGroups={timeline.laterGroups}
           iconFor={() => BellIcon}
-          onItemClick={(item) => navigate(`/lembretes/r/${item.id}`)}
+          onItemClick={(item: TimelineItem) => navigate(`/lembretes/r/${item.id}`)}
           emptyMessage="Nenhum lembrete ativo agendado."
         />
       )}

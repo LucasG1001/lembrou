@@ -4,9 +4,10 @@ import { Timeline } from "../../components/Timeline/Timeline";
 import { SidePanel } from "../../components/SidePanel/SidePanel";
 import { HabitForm } from "../../components/HabitForm/HabitForm";
 import { HabitsStats } from "../../components/HabitsStats/HabitsStats";
-import { CheckIcon } from "../../components/Sidebar/Sidebar.icons";
+import { TodayHabits } from "../../components/TodayHabits/TodayHabits";
 import { groupByDay, type TimelineItem } from "../../utils/agenda";
 import { addDays, formatDateKey, getToday, isScheduledDay } from "../../utils/dateUtils";
+import { getHabitIcon } from "../../utils/habitIcons";
 import type { Habit, HabitFormData } from "../../types/habit";
 import styles from "./HabitsPage.module.css";
 
@@ -34,9 +35,8 @@ function buildOccurrences(habits: Habit[]): { items: TimelineItem[]; byId: Map<s
         kind: "habit",
         title: habit.name,
         when: date.getTime(),
-        detail: habit.currentStreak > 0 ? `🔥 ${habit.currentStreak}` : "",
+        detail: "",
         hasTime: false,
-        icon: habit.icon,
       });
       byId.set(id, { habit, dateKey, completed });
     }
@@ -46,7 +46,7 @@ function buildOccurrences(habits: Habit[]): { items: TimelineItem[]; byId: Map<s
 }
 
 export function HabitsPage() {
-  const { habits, loading, error, createHabit, updateHabit, deleteHabit, toggleCompletion } = useHabits();
+  const { habits, loading, error, createHabit, updateHabit, deleteHabit, setCompletion } = useHabits();
 
   const [selected, setSelected] = useState<Habit | null>(null);
   const [formMode, setFormMode] = useState<"create" | "edit" | null>(null);
@@ -88,7 +88,17 @@ export function HabitsPage() {
         </button>
       </header>
 
-      {!loading && !error && habits.length > 0 && <HabitsStats habits={habits} />}
+      {!loading && !error && habits.length > 0 && (
+        <>
+          <HabitsStats habits={habits} />
+          <TodayHabits
+            habits={habits}
+            onToggle={(habitId, dateKey, completed) =>
+              setCompletion(habitId, dateKey, completed ? "clear" : "done").catch(() => undefined)
+            }
+          />
+        </>
+      )}
 
       {loading && <p className={styles.muted}>Carregando…</p>}
       {error && <p className={styles.error}>{error}</p>}
@@ -113,24 +123,10 @@ export function HabitsPage() {
         <Timeline
           weekGroups={weekGroups}
           laterGroups={[]}
-          iconFor={() => CheckIcon}
+          iconFor={(item) => getHabitIcon(byId.get(item.id)?.habit.icon ?? "")}
           onItemClick={(item) => {
             const occ = byId.get(item.id);
             if (occ) setSelected(occ.habit);
-          }}
-          renderAction={(item) => {
-            const occ = byId.get(item.id);
-            if (!occ) return null;
-            return (
-              <button
-                className={`${styles.check} ${occ.completed ? styles.checkDone : ""}`}
-                aria-label={occ.completed ? "Desmarcar" : "Marcar como feito"}
-                aria-pressed={occ.completed}
-                onClick={() => toggleCompletion(occ.habit.id, occ.dateKey).catch(() => undefined)}
-              >
-                {occ.completed ? "✓" : ""}
-              </button>
-            );
           }}
           emptyMessage="Nenhum hábito agendado para os próximos dias."
         />

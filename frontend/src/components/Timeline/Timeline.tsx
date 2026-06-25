@@ -6,7 +6,7 @@ import styles from "./Timeline.module.css";
 interface TimelineProps {
   weekGroups: TimelineGroup[];
   laterGroups: TimelineGroup[];
-  iconFor: (kind: string) => ComponentType<{ className?: string }>;
+  iconFor: (item: TimelineItem) => ComponentType<{ className?: string }>;
   onItemClick?: (item: TimelineItem) => void;
   renderAction?: (item: TimelineItem) => ReactNode;
   emptyMessage?: string;
@@ -30,7 +30,7 @@ export function Timeline({
         <div className={styles.groupHeader}>{group.label}</div>
         <div className={styles.groupItems}>
           {group.items.map((item) => {
-            const Icon = iconFor(item.kind);
+            const Icon = iconFor(item);
             const action = renderAction?.(item);
             return (
               <div
@@ -46,13 +46,7 @@ export function Timeline({
                   }
                 }}
               >
-                {item.icon ? (
-                  <span className={styles.itemEmoji} aria-hidden="true">
-                    {item.icon}
-                  </span>
-                ) : (
-                  <Icon className={styles.itemIcon} />
-                )}
+                <Icon className={styles.itemIcon} />
                 <span className={styles.itemTime}>{itemTime(item, withDate)}</span>
                 <span className={styles.itemTitleWrap}>
                   <span className={styles.itemTitle}>{item.title}</span>

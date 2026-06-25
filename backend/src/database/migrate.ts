@@ -45,7 +45,11 @@ export async function migrate(): Promise<void> {
   `);
 
   await pool.query(`
-    ALTER TABLE habits ADD COLUMN IF NOT EXISTS icon TEXT NOT NULL DEFAULT '🎯';
+    ALTER TABLE habits ADD COLUMN IF NOT EXISTS icon TEXT NOT NULL DEFAULT 'target';
+  `);
+
+  await pool.query(`
+    ALTER TABLE habits ALTER COLUMN icon SET DEFAULT 'target';
   `);
 
   await pool.query(`

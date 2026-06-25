@@ -29,17 +29,22 @@ export async function sendNotification(payload: NotifyPayload): Promise<string |
     return null;
   }
 
-  const data = await httpRequest<NotifyResponse>({
-    method: "post",
-    url: `${baseUrl}/api/notifications`,
-    headers: { "x-api-key": apiKey },
-    data: {
-      type: "reminder",
-      title: payload.title,
-      description: payload.description,
-      buttons: payload.buttons,
-    },
-  });
+  try {
+    const data = await httpRequest<NotifyResponse>({
+      method: "post",
+      url: `${baseUrl}/api/notifications`,
+      headers: { "x-api-key": apiKey },
+      data: {
+        type: "reminder",
+        title: payload.title,
+        description: payload.description,
+        buttons: payload.buttons,
+      },
+    });
 
-  return data?.telegramMessageId ?? null;
+    return data?.telegramMessageId ?? null;
+  } catch (error) {
+    console.error(`[notify] falha ao enviar para ${baseUrl}/api/notifications:`, error);
+    throw error;
+  }
 }

@@ -35,28 +35,41 @@ function buildButtons(r: Reminder): NotifyButton[] {
 export async function processDue(now: Date = new Date()): Promise<void> {
   const due = await reminderModel.findDue(now, BATCH_LIMIT);
 
+  if (due.length > 0) {
+    console.log(`[scheduler] ${now.toISOString()} — ${due.length} lembrete(s) a disparar.`);
+  }
+
   for (const reminder of due) {
     try {
       const { message, patch, actionable } = decide(reminder, now);
       const buttons = actionable ? buildButtons(reminder) : undefined;
       const messageId = await sendNotification({ ...message, buttons });
+      if (messageId === null) {
+        console.warn(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") processado sem id de mensagem (notify-api não configurada?).`);
+      } else {
+        console.log(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") notificado: ${reminder.phase} → ${patch.phase ?? reminder.phase}.`);
+      }
       await reminderModel.update(reminder.id, messageId ? { ...patch, lastMessageId: messageId } : patch);
     } catch (error) {
-      console.error(`Falha ao processar lembrete ${reminder.id}:`, error);
+      console.error(`[scheduler] falha ao processar lembrete ${reminder.id} ("${reminder.title}"):`, error);
       // Não trava o lote: adia ~1 min mantendo a fase para tentar de novo.
       await reminderModel.update(reminder.id, { nextNotifyAt: addMinutes(now, 1) }).catch(() => undefined);
     }
   }
 }
 
+function tick(): void {
+  if (inFlight) return;
+  inFlight = true;
+  processDue()
+    .catch((error) => console.error("[scheduler] tick falhou:", error))
+    .finally(() => {
+      inFlight = false;
+    });
+}
+
 export function startScheduler(): void {
-  setInterval(() => {
-    if (inFlight) return;
-    inFlight = true;
-    processDue()
-      .catch((error) => console.error("Scheduler de lembretes falhou:", error))
-      .finally(() => {
-        inFlight = false;
-      });
-  }, TICK_MS);
+  console.log("[scheduler] iniciado (tick a cada 60s).");
+  tick();
+  setInterval(tick, TICK_MS);
 }

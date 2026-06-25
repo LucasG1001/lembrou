@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { createElement, useState, useEffect, useCallback } from "react";
 import type { Habit } from "../../types/habit";
 import { formatDateDisplay } from "../../utils/dateUtils";
 import { getLevelColor } from "../../utils/levelUtils";
+import { getHabitIcon } from "../../utils/habitIcons";
 import { LevelBadge } from "../LevelBadge/LevelBadge";
 import { CompletionGrid } from "../CompletionGrid/CompletionGrid";
 import styles from "./SidePanel.module.css";
@@ -79,9 +80,7 @@ export function SidePanel({ habit, onClose, onEdit, onDelete }: SidePanelProps) 
           </span>
 
           <h2 className={styles.habitName}>
-            <span className={styles.habitIcon} aria-hidden="true">
-              {habit.icon}
-            </span>
+            {createElement(getHabitIcon(habit.icon), { className: styles.habitIcon })}
             {habit.name}
           </h2>
 

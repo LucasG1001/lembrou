@@ -7,7 +7,6 @@ export interface TimelineItem {
   when: number;
   detail: string;
   hasTime: boolean;
-  icon?: string;
   subtitle?: string;
   subtitleTone?: "danger";
 }

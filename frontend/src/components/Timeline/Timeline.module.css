@@ -64,12 +64,6 @@
   color: var(--color-text-secondary);
 }
 
-.itemEmoji {
-  font-size: 18px;
-  line-height: 1;
-  text-align: center;
-}
-
 .itemTime {
   font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
@@ -143,8 +137,7 @@
       ".    title detail";
   }
 
-  .itemIcon,
-  .itemEmoji {
+  .itemIcon {
     grid-area: icon;
   }
 

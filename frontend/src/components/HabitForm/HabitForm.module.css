@@ -41,17 +41,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
   border-radius: var(--radius-button);
   border: 1px solid var(--border);
   background-color: transparent;
+  color: var(--text-secondary);
   transition: border-color var(--transition-fast), background-color var(--transition-fast),
-    transform var(--transition-fast);
+    color var(--transition-fast), transform var(--transition-fast);
   cursor: pointer;
+}
+
+.iconGlyph {
+  width: 20px;
+  height: 20px;
 }
 
 .iconButton:hover {
   border-color: var(--color-success);
+  color: var(--text-primary);
   transform: translateY(-1px);
 }
 
@@ -59,6 +65,7 @@
 .iconSelected:hover {
   background-color: var(--color-success-subtle);
   border-color: var(--color-success);
+  color: var(--color-success);
 }
 
 @media (max-width: 420px) {
