@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useReminders } from "../../hooks/useReminders";
-import { ReminderCard } from "../../components/ReminderCard/ReminderCard";
 import { ReminderRowActions } from "../../components/ReminderRowActions/ReminderRowActions";
+import { ReminderHistoryActions } from "../../components/ReminderHistoryActions/ReminderHistoryActions";
 import { Timeline } from "../../components/Timeline/Timeline";
 import { BellIcon } from "../../components/Sidebar/Sidebar.icons";
 import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
@@ -32,6 +32,17 @@ function toTimelineItem(reminder: Reminder, now: number): TimelineItem {
   };
 }
 
+function toHistoryItem(reminder: Reminder): TimelineItem {
+  return {
+    id: reminder.id,
+    kind: "reminder",
+    title: reminder.title,
+    when: Date.parse(reminder.eventAt),
+    detail: recurrenceLabel(reminder) ?? (reminder.isAllDay ? "Dia inteiro" : ""),
+    hasTime: !reminder.isAllDay,
+  };
+}
+
 export function RemindersPage() {
   const navigate = useNavigate();
   const {
@@ -43,7 +54,6 @@ export function RemindersPage() {
     reload,
     remove,
     acknowledge,
-    cancel,
     reschedule,
   } = useReminders();
 
@@ -62,6 +72,11 @@ export function RemindersPage() {
     const { week, later } = splitAgenda(items);
     return { weekGroups: groupByDay(week), laterGroups: groupByMonth(later) };
   }, [reminders, now]);
+
+  const historyGroups = useMemo(() => {
+    const items = reminders.map(toHistoryItem).sort((a, b) => b.when - a.when);
+    return groupByMonth(items);
+  }, [reminders]);
 
   const isActiveTab = status === "active";
 
@@ -121,17 +136,19 @@ export function RemindersPage() {
       )}
 
       {!loading && !error && reminders.length > 0 && !isActiveTab && (
-        <div className={styles.list}>
-          {reminders.map((reminder) => (
-            <ReminderCard
-              key={reminder.id}
-              reminder={reminder}
-              onAcknowledge={(id) => acknowledge(id).catch(() => undefined)}
-              onCancel={(id) => cancel(id).catch(() => undefined)}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <Timeline
+          weekGroups={[]}
+          laterGroups={historyGroups}
+          laterTitle={null}
+          iconFor={() => BellIcon}
+          onItemClick={(item: TimelineItem) => navigate(`/lembretes/r/${item.id}`)}
+          renderAction={(item: TimelineItem) => (
+            <ReminderHistoryActions id={item.id} onDelete={handleDelete} />
+          )}
+          emptyMessage={
+            status === "done" ? "Nenhum lembrete concluído." : "Nenhum lembrete cancelado."
+          }
+        />
       )}
 
       <Outlet context={{ reload }} />

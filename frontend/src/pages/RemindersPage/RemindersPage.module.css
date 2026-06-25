@@ -67,12 +67,6 @@
   color: #fff;
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-base);
-}
-
 .muted {
   color: var(--color-text-secondary);
   font-size: var(--font-size-base);

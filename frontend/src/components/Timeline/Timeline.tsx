@@ -10,6 +10,8 @@ interface TimelineProps {
   onItemClick?: (item: TimelineItem) => void;
   renderAction?: (item: TimelineItem) => ReactNode;
   emptyMessage?: string;
+  weekTitle?: string | null;
+  laterTitle?: string | null;
 }
 
 export function Timeline({
@@ -19,6 +21,8 @@ export function Timeline({
   onItemClick,
   renderAction,
   emptyMessage = "Nada agendado nos próximos dias.",
+  weekTitle = "Esta semana",
+  laterTitle = "Mais adiante",
 }: TimelineProps) {
   if (weekGroups.length === 0 && laterGroups.length === 0) {
     return <div className={styles.empty}>{emptyMessage}</div>;
@@ -77,13 +81,13 @@ export function Timeline({
     <div className={styles.timeline}>
       {weekGroups.length > 0 && (
         <div className={styles.block}>
-          <div className={styles.blockTitle}>Esta semana</div>
+          {weekTitle && <div className={styles.blockTitle}>{weekTitle}</div>}
           {renderGroups(weekGroups, false)}
         </div>
       )}
       {laterGroups.length > 0 && (
         <div className={styles.block}>
-          <div className={styles.blockTitle}>Mais adiante</div>
+          {laterTitle && <div className={styles.blockTitle}>{laterTitle}</div>}
           {renderGroups(laterGroups, true)}
         </div>
       )}
