@@ -3,6 +3,7 @@ import { useHabits } from "../../hooks/useHabits";
 import { Timeline } from "../../components/Timeline/Timeline";
 import { SidePanel } from "../../components/SidePanel/SidePanel";
 import { HabitForm } from "../../components/HabitForm/HabitForm";
+import { HabitsStats } from "../../components/HabitsStats/HabitsStats";
 import { CheckIcon } from "../../components/Sidebar/Sidebar.icons";
 import { groupByDay, type TimelineItem } from "../../utils/agenda";
 import { addDays, formatDateKey, getToday, isScheduledDay } from "../../utils/dateUtils";
@@ -86,6 +87,8 @@ export function HabitsPage() {
           + Novo hábito
         </button>
       </header>
+
+      {!loading && !error && habits.length > 0 && <HabitsStats habits={habits} />}
 
       {loading && <p className={styles.muted}>Carregando…</p>}
       {error && <p className={styles.error}>{error}</p>}

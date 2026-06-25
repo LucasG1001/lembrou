@@ -1,4 +1,4 @@
-import type { DayOfWeek, HabitCompletion } from "../types/habit";
+import type { DayOfWeek, Habit, HabitCompletion } from "../types/habit";
 import { addDays, formatDateKey, getDayOfWeek, getToday, isSameDay } from "./dateUtils";
 
 function isCompletedOnDate(completions: HabitCompletion[], dateKey: string): boolean {
@@ -74,6 +74,76 @@ export function calculateLongestStreak(
   }
 
   return longest;
+}
+
+type DayStatus = "complete" | "incomplete" | "neutral";
+
+function startOfDay(isoOrDate: string | Date): Date {
+  const d = new Date(isoOrDate);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function combinedDayStatus(habits: Habit[], date: Date): DayStatus {
+  const key = formatDateKey(date);
+  const weekday = getDayOfWeek(date);
+  let scheduled = 0;
+  let done = 0;
+
+  for (const habit of habits) {
+    if (date < startOfDay(habit.createdAt)) continue;
+    if (!habit.selectedDays.includes(weekday)) continue;
+    scheduled++;
+    if (isCompletedOnDate(habit.completions, key)) done++;
+  }
+
+  if (scheduled === 0) return "neutral";
+  return done === scheduled ? "complete" : "incomplete";
+}
+
+function earliestCreatedDay(habits: Habit[]): Date {
+  let earliest = getToday();
+  for (const habit of habits) {
+    const created = startOfDay(habit.createdAt);
+    if (created < earliest) earliest = created;
+  }
+  return earliest;
+}
+
+export function calculateCombinedStreak(habits: Habit[]): { current: number; longest: number } {
+  if (habits.length === 0) return { current: 0, longest: 0 };
+
+  const today = getToday();
+  const earliest = earliestCreatedDay(habits);
+
+  let current = 0;
+  if (combinedDayStatus(habits, today) === "complete") current = 1;
+  let date = addDays(today, -1);
+  while (date >= earliest) {
+    const status = combinedDayStatus(habits, date);
+    if (status === "complete") {
+      current++;
+    } else if (status === "incomplete") {
+      break;
+    }
+    date = addDays(date, -1);
+  }
+
+  let longest = 0;
+  let run = 0;
+  date = new Date(earliest);
+  while (date <= today) {
+    const status = combinedDayStatus(habits, date);
+    if (status === "complete") {
+      run++;
+      if (run > longest) longest = run;
+    } else if (status === "incomplete" && !isSameDay(date, today)) {
+      run = 0;
+    }
+    date = addDays(date, 1);
+  }
+
+  return { current, longest };
 }
 
 export function hasConsecutiveMissedDays(

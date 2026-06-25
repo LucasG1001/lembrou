@@ -21,6 +21,15 @@ function Icon({ className, children }: IconProps & { children: ReactNode }) {
   );
 }
 
+export function HomeIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M3 9.5 12 3l9 6.5" />
+      <path d="M5 10v10h14V10" />
+    </Icon>
+  );
+}
+
 export function BellIcon({ className }: IconProps) {
   return (
     <Icon className={className}>

@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { NavLink } from "react-router-dom";
 import styles from "./Sidebar.module.css";
-import { BellIcon, CheckIcon, ChevronIcon, LogoIcon } from "./Sidebar.icons";
+import { BellIcon, CheckIcon, ChevronIcon, HomeIcon, LogoIcon } from "./Sidebar.icons";
 
 interface NavItem {
   path: string;
@@ -10,6 +10,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { path: "/inicio", label: "Início", icon: HomeIcon },
   { path: "/lembretes", label: "Lembretes", icon: BellIcon },
   { path: "/habitos", label: "Hábitos", icon: CheckIcon },
 ];
