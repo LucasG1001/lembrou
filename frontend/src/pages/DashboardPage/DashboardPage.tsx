@@ -11,6 +11,8 @@ import {
   todayLabel,
   urgencyStyle,
 } from "../../utils/dashboard";
+import { remainingLabel } from "../../utils/format";
+import { useMinuteTick } from "../../hooks/useMinuteTick";
 import styles from "./DashboardPage.module.css";
 
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
@@ -39,6 +41,7 @@ export function DashboardPage() {
     return groupByDay(items);
   }, [reminders]);
 
+  const now = useMinuteTick();
   const loading = remindersLoading || habitsLoading;
 
   const pendingHabits = habitSummary.totalToday - habitSummary.doneToday;
@@ -82,18 +85,30 @@ export function DashboardPage() {
                 {dayGroups.map((group) => (
                   <div key={group.key} className={styles.dayGroup}>
                     <span className={styles.dayLabel}>{group.label}</span>
-                    {group.items.map((item) => (
-                      <button
-                        key={item.id}
-                        className={styles.row}
-                        style={urgencyStyle(item.when)}
-                        onClick={() => navigate(`/lembretes/r/${item.id}`)}
-                      >
-                        <span className={styles.rowTime}>{itemTime(item, false)}</span>
-                        <span className={styles.rowTitle}>{item.title}</span>
-                        {item.detail && <span className={styles.rowDetail}>{item.detail}</span>}
-                      </button>
-                    ))}
+                    {group.items.map((item) => {
+                      const remaining = item.hasTime ? remainingLabel(item.when, now) : null;
+                      const detailText = remaining?.text ?? item.detail;
+                      return (
+                        <button
+                          key={item.id}
+                          className={styles.row}
+                          style={urgencyStyle(item.when)}
+                          onClick={() => navigate(`/lembretes/r/${item.id}`)}
+                        >
+                          <span className={styles.rowTime}>{itemTime(item, false)}</span>
+                          <span className={styles.rowTitle}>{item.title}</span>
+                          {detailText && (
+                            <span
+                              className={`${styles.rowDetail} ${
+                                remaining?.overdue ? styles.rowDetailDanger : ""
+                              }`}
+                            >
+                              {detailText}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 ))}
               </div>

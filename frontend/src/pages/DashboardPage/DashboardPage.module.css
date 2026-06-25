@@ -192,6 +192,11 @@
   white-space: nowrap;
 }
 
+.rowDetailDanger {
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
+}
+
 .rowStreak {
   font-size: var(--font-size-sm);
   color: var(--streak-color);

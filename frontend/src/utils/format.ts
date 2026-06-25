@@ -72,6 +72,31 @@ export function recurrenceLabel(reminder: Reminder): string | null {
   return base;
 }
 
+export function formatRemaining(targetMs: number, nowMs: number): string {
+  const diff = targetMs - nowMs;
+  if (diff < 60_000) return "agora";
+
+  const totalMinutes = Math.floor(diff / 60_000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days} ${days === 1 ? "dia" : "dias"}`);
+  if (hours > 0) parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
+  if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? "minuto" : "minutos"}`);
+
+  return parts.join(" ");
+}
+
+export function remainingLabel(targetMs: number, nowMs: number): { text: string; overdue: boolean } {
+  if (targetMs > nowMs) {
+    return { text: `faltam ${formatRemaining(targetMs, nowMs)}`, overdue: false };
+  }
+  const elapsed = formatRemaining(nowMs, targetMs);
+  return { text: elapsed === "agora" ? "atrasado" : `atrasado ${elapsed}`, overdue: true };
+}
+
 export const STATUS_LABEL: Record<ReminderStatus, string> = {
   active: "Ativo",
   done: "Concluído",

@@ -8,6 +8,8 @@ export interface TimelineItem {
   detail: string;
   hasTime: boolean;
   icon?: string;
+  subtitle?: string;
+  subtitleTone?: "danger";
 }
 
 export interface TimelineGroup {

@@ -54,7 +54,18 @@ export function Timeline({
                   <Icon className={styles.itemIcon} />
                 )}
                 <span className={styles.itemTime}>{itemTime(item, withDate)}</span>
-                <span className={styles.itemTitle}>{item.title}</span>
+                <span className={styles.itemTitleWrap}>
+                  <span className={styles.itemTitle}>{item.title}</span>
+                  {item.subtitle && (
+                    <span
+                      className={`${styles.itemSubtitle} ${
+                        item.subtitleTone === "danger" ? styles.itemSubtitleDanger : ""
+                      }`}
+                    >
+                      {item.subtitle}
+                    </span>
+                  )}
+                </span>
                 <span className={styles.itemDetail}>{item.detail}</span>
                 {action && (
                   <span className={styles.itemAction} onClick={(e) => e.stopPropagation()}>

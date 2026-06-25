@@ -5,7 +5,8 @@ import { ReminderCard } from "../../components/ReminderCard/ReminderCard";
 import { Timeline } from "../../components/Timeline/Timeline";
 import { BellIcon } from "../../components/Sidebar/Sidebar.icons";
 import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
-import { recurrenceLabel } from "../../utils/format";
+import { recurrenceLabel, remainingLabel } from "../../utils/format";
+import { useMinuteTick } from "../../hooks/useMinuteTick";
 import type { Reminder, ReminderStatus } from "../../types/reminder";
 import styles from "./RemindersPage.module.css";
 
@@ -15,14 +16,18 @@ const TABS: { value: ReminderStatus; label: string }[] = [
   { value: "cancelled", label: "Cancelados" },
 ];
 
-function toTimelineItem(reminder: Reminder): TimelineItem {
+function toTimelineItem(reminder: Reminder, now: number): TimelineItem {
+  const when = Date.parse(reminder.eventAt);
+  const remaining = reminder.isAllDay ? null : remainingLabel(when, now);
   return {
     id: reminder.id,
     kind: "reminder",
     title: reminder.title,
-    when: Date.parse(reminder.eventAt),
+    when,
     detail: recurrenceLabel(reminder) ?? (reminder.isAllDay ? "Dia inteiro" : ""),
     hasTime: !reminder.isAllDay,
+    subtitle: remaining?.text,
+    subtitleTone: remaining?.overdue ? "danger" : undefined,
   };
 }
 
@@ -37,33 +42,33 @@ export function RemindersPage() {
     }
   };
 
+  const now = useMinuteTick();
+
   const timeline = useMemo(() => {
-    const items = reminders.map(toTimelineItem).sort((a, b) => a.when - b.when);
+    const items = reminders.map((r) => toTimelineItem(r, now)).sort((a, b) => a.when - b.when);
     const { week, later } = splitAgenda(items);
     return { weekGroups: groupByDay(week), laterGroups: groupByMonth(later) };
-  }, [reminders]);
+  }, [reminders, now]);
 
   const isActiveTab = status === "active";
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.heading}>Lembretes</h1>
+      <div className={styles.toolbar}>
+        <div className={styles.tabs}>
+          {TABS.map((tab) => (
+            <button
+              key={tab.value}
+              className={`${styles.tab} ${status === tab.value ? styles.tabActive : ""}`}
+              onClick={() => setStatus(tab.value)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         <Link to="/lembretes/novo" className={styles.newButton}>
           + Novo lembrete
         </Link>
-      </header>
-
-      <div className={styles.tabs}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.value}
-            className={`${styles.tab} ${status === tab.value ? styles.tabActive : ""}`}
-            onClick={() => setStatus(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
       </div>
 
       {loading && <p className={styles.muted}>Carregando…</p>}

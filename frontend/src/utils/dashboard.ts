@@ -103,14 +103,3 @@ export function urgencyStyle(when: number): { borderLeftColor: string } | undefi
   const alpha = (0.25 + intensity * 0.6).toFixed(2);
   return { borderLeftColor: `rgba(239, 68, 68, ${alpha})` };
 }
-
-export function formatRelative(iso: string): string {
-  const diff = Date.parse(iso) - Date.now();
-  if (diff <= 0) return "agora";
-  const minutes = Math.round(diff / 60000);
-  if (minutes < 60) return `em ${minutes} min`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `em ${hours} h`;
-  const days = Math.round(hours / 24);
-  return days === 1 ? "amanhã" : `em ${days} dias`;
-}

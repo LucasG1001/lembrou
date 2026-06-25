@@ -77,7 +77,6 @@ export function HabitsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.heading}>Hábitos</h1>
         <button
           className={styles.newButton}
           onClick={() => {

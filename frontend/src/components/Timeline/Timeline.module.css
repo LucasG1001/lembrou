@@ -76,6 +76,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.itemTitleWrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .itemTitle {
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
@@ -83,6 +89,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.itemSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemSubtitleDanger {
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
 }
 
 .itemDetail {
@@ -138,7 +157,7 @@
     text-align: right;
   }
 
-  .itemTitle {
+  .itemTitleWrap {
     grid-area: title;
   }
 
