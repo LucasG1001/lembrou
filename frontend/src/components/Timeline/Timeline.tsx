@@ -46,7 +46,13 @@ export function Timeline({
                   }
                 }}
               >
-                <Icon className={styles.itemIcon} />
+                {item.icon ? (
+                  <span className={styles.itemEmoji} aria-hidden="true">
+                    {item.icon}
+                  </span>
+                ) : (
+                  <Icon className={styles.itemIcon} />
+                )}
                 <span className={styles.itemTime}>{itemTime(item, withDate)}</span>
                 <span className={styles.itemTitle}>{item.title}</span>
                 <span className={styles.itemDetail}>{item.detail}</span>

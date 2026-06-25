@@ -7,6 +7,7 @@ export interface TimelineItem {
   when: number;
   detail: string;
   hasTime: boolean;
+  icon?: string;
 }
 
 export interface TimelineGroup {

@@ -36,6 +36,7 @@ function buildOccurrences(habits: Habit[]): { items: TimelineItem[]; byId: Map<s
         when: date.getTime(),
         detail: habit.currentStreak > 0 ? `🔥 ${habit.currentStreak}` : "",
         hasTime: false,
+        icon: habit.icon,
       });
       byId.set(id, { habit, dateKey, completed });
     }
@@ -154,7 +155,7 @@ export function HabitsPage() {
           mode={formMode}
           initialData={
             formMode === "edit" && editing
-              ? { name: editing.name, selectedDays: editing.selectedDays }
+              ? { name: editing.name, icon: editing.icon, selectedDays: editing.selectedDays }
               : undefined
           }
           onSave={handleSave}

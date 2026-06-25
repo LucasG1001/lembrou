@@ -78,7 +78,12 @@ export function SidePanel({ habit, onClose, onEdit, onDelete }: SidePanelProps) 
             Nível {habit.level}
           </span>
 
-          <h2 className={styles.habitName}>{habit.name}</h2>
+          <h2 className={styles.habitName}>
+            <span className={styles.habitIcon} aria-hidden="true">
+              {habit.icon}
+            </span>
+            {habit.name}
+          </h2>
 
           <div className={styles.divider} />
 

@@ -19,6 +19,7 @@ function toHabit(row: HabitRow, completionRows: HabitCompletionRow[]): Habit {
   return {
     id: row.id,
     name: row.name,
+    icon: row.icon,
     selectedDays: row.selected_days,
     completions: completionRows
       .filter((c) => c.habit_id === row.id)
@@ -51,16 +52,17 @@ export async function findById(id: string): Promise<Habit | null> {
 
 export async function create(entry: NewHabit): Promise<Habit> {
   const result = await pool.query<HabitRow>(
-    `INSERT INTO habits (name, selected_days)
-     VALUES ($1, $2)
+    `INSERT INTO habits (name, selected_days, icon)
+     VALUES ($1, $2, $3)
      RETURNING *`,
-    [entry.name, entry.selectedDays]
+    [entry.name, entry.selectedDays, entry.icon]
   );
   return toHabit(result.rows[0]!, []);
 }
 
 const COLUMN_MAP: Record<keyof HabitPatch, string> = {
   name: "name",
+  icon: "icon",
   selectedDays: "selected_days",
 };
 

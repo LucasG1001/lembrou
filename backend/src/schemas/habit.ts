@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const baseHabit = z.object({
   name: z.string().min(1, "Informe um nome.").max(200),
+  icon: z.string().min(1, "Escolha um ícone.").max(16),
   selectedDays: z
     .array(z.number().int().min(0).max(6))
     .min(1, "Escolha ao menos um dia."),

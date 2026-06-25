@@ -82,7 +82,7 @@
 .check {
   width: 28px;
   height: 28px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border);
   color: #fff;
   font-size: var(--font-size-base);
@@ -95,13 +95,13 @@
 }
 
 .check:hover {
-  border-color: var(--color-accent);
+  border-color: var(--color-success);
 }
 
 .checkDone {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  box-shadow: 0 0 8px var(--color-accent-glow);
+  background: var(--color-success);
+  border-color: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success-subtle);
 }
 
 @media (max-width: 768px) {

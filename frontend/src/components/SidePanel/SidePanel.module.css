@@ -82,6 +82,10 @@
   word-break: break-word;
 }
 
+.habitIcon {
+  margin-right: 8px;
+}
+
 .divider {
   width: 100%;
   height: 1px;

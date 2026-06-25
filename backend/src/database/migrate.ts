@@ -45,6 +45,10 @@ export async function migrate(): Promise<void> {
   `);
 
   await pool.query(`
+    ALTER TABLE habits ADD COLUMN IF NOT EXISTS icon TEXT NOT NULL DEFAULT '🎯';
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS habit_completions (
       id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       habit_id    UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useReminders } from "../../hooks/useReminders";
 import { ReminderCard } from "../../components/ReminderCard/ReminderCard";
 import { Timeline } from "../../components/Timeline/Timeline";
@@ -28,7 +28,8 @@ function toTimelineItem(reminder: Reminder): TimelineItem {
 
 export function RemindersPage() {
   const navigate = useNavigate();
-  const { reminders, status, setStatus, loading, error, remove, acknowledge, cancel } = useReminders();
+  const { reminders, status, setStatus, loading, error, reload, remove, acknowledge, cancel } =
+    useReminders();
 
   const handleDelete = (id: string) => {
     if (window.confirm("Excluir este lembrete de vez?")) {
@@ -101,6 +102,8 @@ export function RemindersPage() {
           ))}
         </div>
       )}
+
+      <Outlet context={{ reload }} />
     </div>
   );
 }

@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { DayOfWeek, HabitFormData } from "../../types/habit";
+import { DEFAULT_HABIT_ICON, HABIT_ICONS } from "../../utils/habitIcons";
 import { DaySelector } from "../DaySelector/DaySelector";
+import { Modal } from "../Modal/Modal";
 import styles from "./HabitForm.module.css";
 
 interface HabitFormProps {
@@ -12,6 +14,7 @@ interface HabitFormProps {
 
 export function HabitForm({ mode, initialData, onSave, onClose }: HabitFormProps) {
   const [name, setName] = useState(initialData?.name ?? "");
+  const [icon, setIcon] = useState(initialData?.icon ?? DEFAULT_HABIT_ICON);
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(initialData?.selectedDays ?? []);
   const [daysError, setDaysError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -20,32 +23,12 @@ export function HabitForm({ mode, initialData, onSave, onClose }: HabitFormProps
     inputRef.current?.focus();
   }, []);
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    },
-    [onClose]
-  );
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
-
-  function handleBackdropClick(e: React.MouseEvent) {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  }
-
   function handleSubmit() {
     if (selectedDays.length === 0) {
       setDaysError("Selecione pelo menos um dia");
       return;
     }
-    onSave({ name: name.trim(), selectedDays });
+    onSave({ name: name.trim(), icon, selectedDays });
   }
 
   function handleDaysChange(days: DayOfWeek[]) {
@@ -59,54 +42,46 @@ export function HabitForm({ mode, initialData, onSave, onClose }: HabitFormProps
   const title = mode === "create" ? "Novo hábito" : "Editar hábito";
 
   return (
-    <div
-      className={styles.backdrop}
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-label={title}
-      aria-modal="true"
-    >
-      <div className={styles.modal}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
-          <button className={styles.closeButton} onClick={onClose} aria-label="Fechar">
-            ×
-          </button>
-        </div>
+    <Modal title={title} onClose={onClose} onSubmit={handleSubmit} submitDisabled={!isValid}>
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="habit-name">
+          Nome
+        </label>
+        <input
+          ref={inputRef}
+          id="habit-name"
+          type="text"
+          className={styles.input}
+          value={name}
+          onChange={(e) => setName(e.target.value.slice(0, 60))}
+          placeholder="Nome do hábito"
+          maxLength={60}
+          autoComplete="off"
+        />
+      </div>
 
-        <div className={styles.body}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="habit-name">
-              Nome
-            </label>
-            <input
-              ref={inputRef}
-              id="habit-name"
-              type="text"
-              className={styles.input}
-              value={name}
-              onChange={(e) => setName(e.target.value.slice(0, 60))}
-              placeholder="Nome do hábito"
-              maxLength={60}
-              autoComplete="off"
-            />
-          </div>
-
-          <div className={styles.field}>
-            <span className={styles.label}>Dias</span>
-            <DaySelector selectedDays={selectedDays} onChange={handleDaysChange} error={daysError} />
-          </div>
-        </div>
-
-        <div className={styles.footer}>
-          <button className={styles.cancelButton} onClick={onClose}>
-            Cancelar
-          </button>
-          <button className={styles.saveButton} onClick={handleSubmit} disabled={!isValid}>
-            Salvar
-          </button>
+      <div className={styles.field}>
+        <span className={styles.label}>Ícone</span>
+        <div className={styles.iconGrid}>
+          {HABIT_ICONS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              className={`${styles.iconButton} ${icon === emoji ? styles.iconSelected : ""}`}
+              onClick={() => setIcon(emoji)}
+              aria-pressed={icon === emoji}
+              aria-label={`Ícone ${emoji}`}
+            >
+              {emoji}
+            </button>
+          ))}
         </div>
       </div>
-    </div>
+
+      <div className={styles.field}>
+        <span className={styles.label}>Dias</span>
+        <DaySelector selectedDays={selectedDays} onChange={handleDaysChange} error={daysError} />
+      </div>
+    </Modal>
   );
 }

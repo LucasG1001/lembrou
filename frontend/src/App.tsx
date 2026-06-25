@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage/DashboardPage";
 import { RemindersPage } from "./pages/RemindersPage/RemindersPage";
-import { ReminderFormPage } from "./pages/ReminderFormPage/ReminderFormPage";
+import { ReminderForm } from "./components/ReminderForm/ReminderForm";
 import { HabitsPage } from "./pages/HabitsPage/HabitsPage";
 import styles from "./App.module.css";
 
@@ -30,9 +30,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/inicio" replace />} />
             <Route path="/inicio" element={<DashboardPage />} />
-            <Route path="/lembretes" element={<RemindersPage />} />
-            <Route path="/lembretes/novo" element={<ReminderFormPage />} />
-            <Route path="/lembretes/r/:id" element={<ReminderFormPage />} />
+            <Route path="/lembretes" element={<RemindersPage />}>
+              <Route path="novo" element={<ReminderForm />} />
+              <Route path="r/:id" element={<ReminderForm />} />
+            </Route>
             <Route path="/habitos" element={<HabitsPage />} />
           </Routes>
         </main>

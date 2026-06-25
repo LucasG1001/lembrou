@@ -11,6 +11,7 @@ export interface HabitCompletion {
 export interface Habit {
   id: string;
   name: string;
+  icon: string;
   selectedDays: DayOfWeek[];
   completions: HabitCompletion[];
   currentStreak: number;
@@ -22,5 +23,6 @@ export interface Habit {
 
 export interface HabitFormData {
   name: string;
+  icon: string;
   selectedDays: DayOfWeek[];
 }
