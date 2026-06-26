@@ -1,4 +1,5 @@
 import { pool } from "../database/connection.js";
+import { buildUpdateSet } from "../lib/sqlUpdate.js";
 import type { NewReminder, Reminder, ReminderPatch, ReminderRow, ReminderStatus } from "../types/reminder.js";
 
 function toReminder(row: ReminderRow): Reminder {
@@ -94,24 +95,14 @@ const COLUMN_MAP: Record<keyof ReminderPatch, string> = {
 };
 
 export async function update(id: string, patch: ReminderPatch): Promise<Reminder | null> {
-  const sets: string[] = [];
-  const values: unknown[] = [];
-  let i = 1;
-
-  for (const [key, column] of Object.entries(COLUMN_MAP) as [keyof ReminderPatch, string][]) {
-    const value = patch[key];
-    if (value !== undefined) {
-      sets.push(`${column} = $${i++}`);
-      values.push(value);
-    }
-  }
+  const { sets, values, nextIndex } = buildUpdateSet(patch, COLUMN_MAP);
 
   if (sets.length === 0) return findById(id);
 
   sets.push("updated_at = NOW()");
   values.push(id);
   const result = await pool.query<ReminderRow>(
-    `UPDATE reminders SET ${sets.join(", ")} WHERE id = $${i} RETURNING *`,
+    `UPDATE reminders SET ${sets.join(", ")} WHERE id = $${nextIndex} RETURNING *`,
     values
   );
   return result.rows[0] ? toReminder(result.rows[0]) : null;

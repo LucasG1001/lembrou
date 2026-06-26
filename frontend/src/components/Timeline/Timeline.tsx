@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode } from "react";
+import { memo, type ComponentType, type ReactNode } from "react";
 import type { TimelineGroup, TimelineItem } from "../../utils/agenda";
 import { itemTime } from "../../utils/agenda";
 import styles from "./Timeline.module.css";
@@ -14,7 +14,7 @@ interface TimelineProps {
   laterTitle?: string | null;
 }
 
-export function Timeline({
+export const Timeline = memo(function Timeline({
   weekGroups,
   laterGroups,
   iconFor,
@@ -93,4 +93,4 @@ export function Timeline({
       )}
     </div>
   );
-}
+});

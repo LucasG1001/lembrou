@@ -5,7 +5,6 @@ import {
   createHabit as apiCreateHabit,
   updateHabit as apiUpdateHabit,
   deleteHabit as apiDeleteHabit,
-  toggleHabitCompletion,
   setHabitCompletion,
 } from "../services/habitService";
 import { calculateCurrentStreak, calculateLongestStreak } from "../utils/streakUtils";
@@ -18,7 +17,6 @@ interface UseHabitsReturn {
   createHabit: (data: HabitFormData) => Promise<void>;
   updateHabit: (id: string, data: HabitFormData) => Promise<void>;
   deleteHabit: (id: string) => Promise<void>;
-  toggleCompletion: (habitId: string, date: string) => Promise<void>;
   setCompletion: (habitId: string, date: string, status: CompletionStatus) => Promise<void>;
 }
 
@@ -56,11 +54,6 @@ export function useHabits(): UseHabitsReturn {
     setHabits((prev) => prev.filter((h) => h.id !== id));
   }
 
-  async function toggleCompletion(habitId: string, date: string): Promise<void> {
-    const updated = await toggleHabitCompletion(habitId, date);
-    setHabits((prev) => prev.map((h) => (h.id === habitId ? recalculateHabitStats(updated) : h)));
-  }
-
   async function setCompletion(habitId: string, date: string, status: CompletionStatus): Promise<void> {
     const updated = await setHabitCompletion(habitId, date, status);
     setHabits((prev) => prev.map((h) => (h.id === habitId ? recalculateHabitStats(updated) : h)));
@@ -73,7 +66,6 @@ export function useHabits(): UseHabitsReturn {
     createHabit,
     updateHabit,
     deleteHabit,
-    toggleCompletion,
     setCompletion,
   };
 }

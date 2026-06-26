@@ -1,9 +1,8 @@
 import type { Request, Response } from "express";
 import { completionStatusSchema, createHabitSchema, updateHabitSchema } from "../schemas/habit.js";
 import * as habitModel from "../models/habitModel.js";
-import { CompletionLockedError } from "../models/habitModel.js";
-
-const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+import { CompletionLockedError } from "../models/errors.js";
+import { DATE_RE, respondValidationError } from "../lib/validation.js";
 
 export async function getAll(_req: Request, res: Response): Promise<void> {
   try {
@@ -18,7 +17,7 @@ export async function create(req: Request, res: Response): Promise<void> {
   try {
     const parsed = createHabitSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." });
+      respondValidationError(res, parsed.error);
       return;
     }
     const habit = await habitModel.create(parsed.data);
@@ -32,7 +31,7 @@ export async function update(req: Request, res: Response): Promise<void> {
   try {
     const parsed = updateHabitSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." });
+      respondValidationError(res, parsed.error);
       return;
     }
     const habit = await habitModel.update(String(req.params.id), parsed.data);
@@ -59,44 +58,11 @@ export async function remove(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function toggle(req: Request, res: Response): Promise<void> {
-  try {
-    const id = String(req.params.id);
-    const date = String(req.params.date);
-    if (!dateRe.test(date)) {
-      res.status(400).json({ error: "Data inválida (use YYYY-MM-DD)." });
-      return;
-    }
-
-    const existing = await habitModel.getCompletion(id, date);
-    if (!existing) {
-      await habitModel.setCompletion(id, date, true);
-    } else if (existing.completed) {
-      await habitModel.setCompletion(id, date, false);
-    } else {
-      await habitModel.clearCompletion(id, date);
-    }
-
-    const habit = await habitModel.findById(id);
-    if (!habit) {
-      res.status(404).json({ error: "Hábito não encontrado." });
-      return;
-    }
-    res.json(habit);
-  } catch (error) {
-    if (error instanceof CompletionLockedError) {
-      res.status(409).json({ error: error.message });
-      return;
-    }
-    res.status(500).json({ error: "Erro ao atualizar conclusão." });
-  }
-}
-
 export async function setCompletion(req: Request, res: Response): Promise<void> {
   try {
     const id = String(req.params.id);
     const date = String(req.params.date);
-    if (!dateRe.test(date)) {
+    if (!DATE_RE.test(date)) {
       res.status(400).json({ error: "Data inválida (use YYYY-MM-DD)." });
       return;
     }

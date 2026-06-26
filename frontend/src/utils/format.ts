@@ -1,4 +1,4 @@
-import type { Reminder, RecurUnit, ReminderStatus } from "../types/reminder";
+import type { Reminder, RecurUnit } from "../types/reminder";
 
 const TZ = "America/Sao_Paulo";
 
@@ -33,32 +33,6 @@ export function toFormParts(iso: string): { date: string; time: string } {
     hour12: false,
   }).format(d);
   return { date, time };
-}
-
-export function formatEventAt(reminder: Reminder): string {
-  const d = new Date(reminder.eventAt);
-  if (reminder.isAllDay) {
-    return d.toLocaleDateString("pt-BR", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" });
-  }
-  return d.toLocaleString("pt-BR", {
-    timeZone: TZ,
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-export function formatDateTime(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-BR", {
-    timeZone: TZ,
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 export function recurrenceLabel(reminder: Reminder): string | null {
@@ -96,9 +70,3 @@ export function remainingLabel(targetMs: number, nowMs: number): { text: string;
   const elapsed = formatRemaining(nowMs, targetMs);
   return { text: elapsed === "agora" ? "atrasado" : `atrasado ${elapsed}`, overdue: true };
 }
-
-export const STATUS_LABEL: Record<ReminderStatus, string> = {
-  active: "Ativo",
-  done: "Concluído",
-  cancelled: "Cancelado",
-};

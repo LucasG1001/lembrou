@@ -63,7 +63,7 @@ Dois domínios, mesmo padrão em camadas: `types/` → `models/` (mapper `toX` s
 ### Endpoints
 
 - `GET/POST /api/reminders`; `GET/PUT/DELETE /api/reminders/:id`; `POST /api/reminders/:id/acknowledge` e `/cancel`; `POST /api/telegram/callback`.
-- `GET/POST /api/habits`; `PUT/DELETE /api/habits/:id`; `PATCH /api/habits/:id/toggle/:date`; `PATCH /api/habits/:id/completion/:date` (body `{ status: "done"|"notDone"|"clear" }`).
+- `GET/POST /api/habits`; `PUT/DELETE /api/habits/:id`; `PATCH /api/habits/:id/completion/:date` (body `{ status: "done"|"notDone"|"clear" }`).
 
 ### Schema do banco
 

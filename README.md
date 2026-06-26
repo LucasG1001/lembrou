@@ -34,7 +34,7 @@ Browser → Nginx (web) → Express (server :3333) → PostgreSQL
 
 - **Domínios do backend** (mesmo padrão `types → models → schemas → controllers → routes`):
   - `reminders` — `/api/reminders` (+ scheduler de notificações e `/api/telegram/callback`).
-  - `habits` — `/api/habits` (CRUD + `/:id/toggle/:date` e `/:id/completion/:date`). Sem scheduler.
+  - `habits` — `/api/habits` (CRUD + `/:id/completion/:date`). Sem scheduler.
 - A **notify-api** (`../notify-api`) é o gateway do Telegram (usada só pelos Lembretes). O RemindMe nunca fala com o Telegram diretamente.
 - O **scheduler** (`setInterval` de 60s) varre lembretes vencidos; a lógica de transição fica em `services/reminderStateMachine.ts` (testada). Hábitos não passam pelo scheduler.
 - O `migrate()` roda no startup e cria as tabelas de forma idempotente (`reminders`, `habits`, `habit_completions`).
@@ -49,7 +49,6 @@ Browser → Nginx (web) → Express (server :3333) → PostgreSQL
 | `POST` | `/api/telegram/callback` | repasse de cliques (notify-api) |
 | `GET/POST` | `/api/habits` | listar / criar hábito |
 | `PUT/DELETE` | `/api/habits/:id` | atualizar / remover |
-| `PATCH` | `/api/habits/:id/toggle/:date` | alterna conclusão do dia (`YYYY-MM-DD`) |
 | `PATCH` | `/api/habits/:id/completion/:date` | define status (`done\|notDone\|clear`) |
 
 ## Desenvolvimento local

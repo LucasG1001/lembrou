@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { createReminderSchema, updateReminderSchema } from "../schemas/reminder.js";
 import * as reminderModel from "../models/reminderModel.js";
 import { parseEventAt } from "../lib/dateUtils.js";
+import { respondValidationError } from "../lib/validation.js";
 import { finishOccurrence, initialSchedule } from "../services/reminderStateMachine.js";
 import type { ReminderStatus } from "../types/reminder.js";
 
@@ -35,7 +36,7 @@ export async function create(req: Request, res: Response): Promise<void> {
   try {
     const parsed = createReminderSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." });
+      respondValidationError(res, parsed.error);
       return;
     }
     const body = parsed.data;
@@ -70,7 +71,7 @@ export async function update(req: Request, res: Response): Promise<void> {
     }
     const parsed = updateReminderSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." });
+      respondValidationError(res, parsed.error);
       return;
     }
     const body = parsed.data;

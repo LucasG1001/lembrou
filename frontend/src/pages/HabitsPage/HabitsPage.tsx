@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useHabits } from "../../hooks/useHabits";
 import { Timeline } from "../../components/Timeline/Timeline";
 import { SidePanel } from "../../components/SidePanel/SidePanel";
@@ -58,21 +58,46 @@ export function HabitsPage() {
   // Mantém o painel sincronizado com o estado mais recente do hábito.
   const selectedHabit = selected ? habits.find((h) => h.id === selected.id) ?? null : null;
 
-  const handleSave = (data: HabitFormData) => {
-    const action =
-      formMode === "edit" && editing
-        ? updateHabit(editing.id, data)
-        : createHabit(data);
-    action.catch(() => undefined).finally(() => {
-      setFormMode(null);
-      setEditing(null);
-    });
-  };
+  const handleSave = useCallback(
+    (data: HabitFormData) => {
+      const action =
+        formMode === "edit" && editing
+          ? updateHabit(editing.id, data)
+          : createHabit(data);
+      action.catch(() => undefined).finally(() => {
+        setFormMode(null);
+        setEditing(null);
+      });
+    },
+    [formMode, editing, updateHabit, createHabit]
+  );
 
-  const handleDelete = (id: string) => {
-    deleteHabit(id).catch(() => undefined);
-    setSelected(null);
-  };
+  const handleDelete = useCallback(
+    (id: string) => {
+      deleteHabit(id).catch(() => undefined);
+      setSelected(null);
+    },
+    [deleteHabit]
+  );
+
+  const iconForHabit = useCallback(
+    (item: TimelineItem) => getHabitIcon(byId.get(item.id)?.habit.icon ?? ""),
+    [byId]
+  );
+
+  const handleItemClick = useCallback(
+    (item: TimelineItem) => {
+      const occ = byId.get(item.id);
+      if (occ) setSelected(occ.habit);
+    },
+    [byId]
+  );
+
+  const handleToggle = useCallback(
+    (habitId: string, dateKey: string, completed: boolean) =>
+      setCompletion(habitId, dateKey, completed ? "clear" : "done").catch(() => undefined),
+    [setCompletion]
+  );
 
   return (
     <div className={styles.page}>
@@ -91,12 +116,7 @@ export function HabitsPage() {
       {!loading && !error && habits.length > 0 && (
         <>
           <HabitsStats habits={habits} />
-          <TodayHabits
-            habits={habits}
-            onToggle={(habitId, dateKey, completed) =>
-              setCompletion(habitId, dateKey, completed ? "clear" : "done").catch(() => undefined)
-            }
-          />
+          <TodayHabits habits={habits} onToggle={handleToggle} />
         </>
       )}
 
@@ -123,11 +143,8 @@ export function HabitsPage() {
         <Timeline
           weekGroups={weekGroups}
           laterGroups={[]}
-          iconFor={(item) => getHabitIcon(byId.get(item.id)?.habit.icon ?? "")}
-          onItemClick={(item) => {
-            const occ = byId.get(item.id);
-            if (occ) setSelected(occ.habit);
-          }}
+          iconFor={iconForHabit}
+          onItemClick={handleItemClick}
           emptyMessage="Nenhum hábito agendado para os próximos dias."
         />
       )}

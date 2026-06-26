@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useReminders } from "../../hooks/useReminders";
 import { ReminderRowActions } from "../../components/ReminderRowActions/ReminderRowActions";
@@ -32,6 +32,8 @@ function toTimelineItem(reminder: Reminder, now: number): TimelineItem {
   };
 }
 
+const iconForBell = () => BellIcon;
+
 function toHistoryItem(reminder: Reminder): TimelineItem {
   return {
     id: reminder.id,
@@ -59,11 +61,19 @@ export function RemindersPage() {
 
   const byId = useMemo(() => new Map(reminders.map((r) => [r.id, r])), [reminders]);
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Excluir este lembrete de vez?")) {
-      remove(id).catch(() => undefined);
-    }
-  };
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (window.confirm("Excluir este lembrete de vez?")) {
+        remove(id).catch(() => undefined);
+      }
+    },
+    [remove]
+  );
+
+  const handleItemClick = useCallback(
+    (item: TimelineItem) => navigate(`/lembretes/r/${item.id}`),
+    [navigate]
+  );
 
   const now = useMinuteTick();
 
@@ -79,6 +89,28 @@ export function RemindersPage() {
   }, [reminders]);
 
   const isActiveTab = status === "active";
+
+  const renderActiveAction = useCallback(
+    (item: TimelineItem) => {
+      const reminder = byId.get(item.id);
+      if (!reminder) return null;
+      return (
+        <ReminderRowActions
+          reminder={reminder}
+          now={now}
+          onCheck={(id) => acknowledge(id).catch(() => undefined)}
+          onReschedule={(id, input) => reschedule(id, input).catch(() => undefined)}
+          onCustom={(id) => navigate(`/lembretes/r/${id}?action=reschedule`)}
+        />
+      );
+    },
+    [byId, now, acknowledge, reschedule, navigate]
+  );
+
+  const renderHistoryAction = useCallback(
+    (item: TimelineItem) => <ReminderHistoryActions id={item.id} onDelete={handleDelete} />,
+    [handleDelete]
+  );
 
   return (
     <div className={styles.page}>
@@ -116,21 +148,9 @@ export function RemindersPage() {
         <Timeline
           weekGroups={timeline.weekGroups}
           laterGroups={timeline.laterGroups}
-          iconFor={() => BellIcon}
-          onItemClick={(item: TimelineItem) => navigate(`/lembretes/r/${item.id}`)}
-          renderAction={(item: TimelineItem) => {
-            const reminder = byId.get(item.id);
-            if (!reminder) return null;
-            return (
-              <ReminderRowActions
-                reminder={reminder}
-                now={now}
-                onCheck={(id) => acknowledge(id).catch(() => undefined)}
-                onReschedule={(id, input) => reschedule(id, input).catch(() => undefined)}
-                onCustom={(id) => navigate(`/lembretes/r/${id}?action=reschedule`)}
-              />
-            );
-          }}
+          iconFor={iconForBell}
+          onItemClick={handleItemClick}
+          renderAction={renderActiveAction}
           emptyMessage="Nenhum lembrete ativo agendado."
         />
       )}
@@ -140,11 +160,9 @@ export function RemindersPage() {
           weekGroups={[]}
           laterGroups={historyGroups}
           laterTitle={null}
-          iconFor={() => BellIcon}
-          onItemClick={(item: TimelineItem) => navigate(`/lembretes/r/${item.id}`)}
-          renderAction={(item: TimelineItem) => (
-            <ReminderHistoryActions id={item.id} onDelete={handleDelete} />
-          )}
+          iconFor={iconForBell}
+          onItemClick={handleItemClick}
+          renderAction={renderHistoryAction}
           emptyMessage={
             status === "done" ? "Nenhum lembrete concluído." : "Nenhum lembrete cancelado."
           }

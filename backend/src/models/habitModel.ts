@@ -1,4 +1,6 @@
 import { pool } from "../database/connection.js";
+import { buildUpdateSet } from "../lib/sqlUpdate.js";
+import { CompletionLockedError } from "./errors.js";
 import type {
   Habit,
   HabitCompletion,
@@ -8,11 +10,8 @@ import type {
   NewHabit,
 } from "../types/habit.js";
 
-export class CompletionLockedError extends Error {
-  constructor() {
-    super("Este registro foi marcado automaticamente e não pode ser desfeito.");
-    this.name = "CompletionLockedError";
-  }
+async function touchHabit(habitId: string): Promise<void> {
+  await pool.query("UPDATE habits SET updated_at = NOW() WHERE id = $1", [habitId]);
 }
 
 function toHabit(row: HabitRow, completionRows: HabitCompletionRow[]): Habit {
@@ -67,28 +66,22 @@ const COLUMN_MAP: Record<keyof HabitPatch, string> = {
 };
 
 export async function update(id: string, patch: HabitPatch): Promise<Habit | null> {
-  const sets: string[] = [];
-  const values: unknown[] = [];
-  let i = 1;
-
-  for (const [key, column] of Object.entries(COLUMN_MAP) as [keyof HabitPatch, string][]) {
-    const value = patch[key];
-    if (value !== undefined) {
-      sets.push(`${column} = $${i++}`);
-      values.push(value);
-    }
-  }
+  const { sets, values, nextIndex } = buildUpdateSet(patch, COLUMN_MAP);
 
   if (sets.length === 0) return findById(id);
 
   sets.push("updated_at = NOW()");
   values.push(id);
   const result = await pool.query<HabitRow>(
-    `UPDATE habits SET ${sets.join(", ")} WHERE id = $${i} RETURNING id`,
+    `UPDATE habits SET ${sets.join(", ")} WHERE id = $${nextIndex} RETURNING *`,
     values
   );
   if (!result.rows[0]) return null;
-  return findById(id);
+  const completions = await pool.query<HabitCompletionRow>(
+    "SELECT habit_id, date, completed, locked FROM habit_completions WHERE habit_id = $1",
+    [id]
+  );
+  return toHabit(result.rows[0], completions.rows);
 }
 
 export async function remove(id: string): Promise<boolean> {
@@ -130,7 +123,7 @@ export async function setCompletion(
     );
   }
 
-  await pool.query("UPDATE habits SET updated_at = NOW() WHERE id = $1", [habitId]);
+  await touchHabit(habitId);
 }
 
 export async function clearCompletion(habitId: string, date: string): Promise<void> {
@@ -141,5 +134,5 @@ export async function clearCompletion(habitId: string, date: string): Promise<vo
   }
 
   await pool.query("DELETE FROM habit_completions WHERE habit_id = $1 AND date = $2", [habitId, date]);
-  await pool.query("UPDATE habits SET updated_at = NOW() WHERE id = $1", [habitId]);
+  await touchHabit(habitId);
 }

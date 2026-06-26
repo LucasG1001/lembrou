@@ -3,7 +3,6 @@ import {
   fetchReminders,
   deleteReminder,
   acknowledgeReminder,
-  cancelReminder,
   updateReminder,
 } from "../services/reminderService";
 import type { Reminder, ReminderInput, ReminderStatus } from "../types/reminder";
@@ -66,11 +65,6 @@ export function useReminders() {
     [applyUpdate]
   );
 
-  const cancel = useCallback(
-    async (id: string) => applyUpdate(await cancelReminder(id)),
-    [applyUpdate]
-  );
-
   const reschedule = useCallback(
     async (id: string, input: ReminderInput) => applyUpdate(await updateReminder(id, input)),
     [applyUpdate]
@@ -85,7 +79,6 @@ export function useReminders() {
     reload,
     remove,
     acknowledge,
-    cancel,
     reschedule,
   };
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { DATE_RE } from "../lib/validation.js";
 
-const dateRe = /^\d{4}-\d{2}-\d{2}$/;
 const timeRe = /^\d{2}:\d{2}$/;
 
 const recurUnit = z.enum(["day", "week", "month", "year"]);
@@ -9,7 +9,7 @@ const baseReminder = z
   .object({
     title: z.string().min(1, "Informe um título.").max(200),
     notes: z.string().max(2000).nullish(),
-    date: z.string().regex(dateRe, "Data inválida (use YYYY-MM-DD)."),
+    date: z.string().regex(DATE_RE, "Data inválida (use YYYY-MM-DD)."),
     time: z.string().regex(timeRe, "Hora inválida (use HH:MM).").nullish(),
     recurInterval: z.number().int().positive().nullish(),
     recurUnit: recurUnit.nullish(),

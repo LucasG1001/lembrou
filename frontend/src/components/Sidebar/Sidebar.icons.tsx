@@ -1,25 +1,4 @@
-import type { ReactNode } from "react";
-
-interface IconProps {
-  className?: string;
-}
-
-function Icon({ className, children }: IconProps & { children: ReactNode }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {children}
-    </svg>
-  );
-}
+import { SvgIcon as Icon, type IconProps } from "../Icon/SvgIcon";
 
 export function HomeIcon({ className }: IconProps) {
   return (

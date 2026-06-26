@@ -20,11 +20,6 @@ export async function deleteHabit(id: string): Promise<void> {
   await api.delete(`/api/habits/${id}`);
 }
 
-export async function toggleHabitCompletion(habitId: string, date: string): Promise<Habit> {
-  const response = await api.patch<Habit>(`/api/habits/${habitId}/toggle/${date}`);
-  return response.data;
-}
-
 export async function setHabitCompletion(
   habitId: string,
   date: string,
