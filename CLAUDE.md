@@ -33,11 +33,13 @@ Pré-requisito local: PostgreSQL acessível (banco `remindme`). A notify-api só
 ### Fluxo de dados
 
 ```
-Browser → Nginx (web) → Express (server :3333) → PostgreSQL
-                                  │
-                                  ├──(só Lembretes)──▶ notify-api :3334 ──▶ Telegram
-                                  ◀──(repassa clique)── notify-api (long-polling)
+Browser → Caddy (proxy central, TLS) → Express (server :3333, serve SPA + API) → PostgreSQL
+                                                  │
+                                                  ├──(só Lembretes)──▶ notify-api :3334 ──▶ Telegram
+                                                  ◀──(repassa clique)── notify-api (long-polling)
 ```
+
+Em produção não há nginx: o Express serve os arquivos estáticos do build do frontend (`backend/public`, copiado na imagem) com fallback de SPA e expõe a API em `/api` na mesma porta 3333. Em dev o Vite (`:5173`) serve o frontend e faz proxy de `/api` para `:3333` — o Express só serve estáticos quando `backend/public` existe.
 
 O backend roda `migrate()` no startup (criação idempotente de `reminders`, `habits`, `habit_completions` — sem arquivos de migração).
 
@@ -92,7 +94,7 @@ Docker (`.env`): `POSTGRES_USER/PASSWORD/DB`, `NOTIFY_API_KEY`, `CALLBACK_SECRET
 
 ## Produção (Docker) e proxy
 
-O frontend é servido pelo **proxy reverso central Caddy** (`caddy-docker-proxy`, stack `../media/proxy`), **compartilhado por todos os projetos da VPS** — não há proxy próprio aqui. O serviço `web` entra na rede `proxy-net` e declara labels `caddy: ${REMINDME_DOMAIN}` / `caddy.reverse_proxy: "{{upstreams 80}}"`; o Caddy descobre o container e termina o TLS (ACME DNS-01 via Cloudflare). Por isso o `web` não expõe porta no host.
+O domínio é roteado pelo **proxy reverso central Caddy** (`caddy-docker-proxy`, stack `../media/proxy`), **compartilhado por todos os projetos da VPS** — não há proxy próprio aqui. O serviço `server` entra na rede `proxy-net` e declara labels `caddy: ${REMINDME_DOMAIN}` / `caddy.reverse_proxy: "{{upstreams 3333}}"`; o Caddy descobre o container e termina o TLS (ACME DNS-01 via Cloudflare). Por isso o `server` não expõe porta no host. Não há container `web`/nginx: o próprio `server` (Express) serve o SPA e a API. A imagem é construída a partir da raiz do projeto (`build.context: .`, `dockerfile: backend/Dockerfile`), pois o Dockerfile builda frontend e backend juntos.
 
 ```bash
 docker network create remindme-net   # compartilhada com a notify-api

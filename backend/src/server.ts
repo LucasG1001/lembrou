@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import path from "path";
+import { existsSync } from "fs";
+import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
 import { migrate } from "./database/migrate.js";
@@ -23,6 +26,17 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/telegram", telegramRoutes);
+
+const clientDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");
+if (existsSync(clientDir)) {
+  app.use(express.static(clientDir));
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api/")) {
+      return next();
+    }
+    res.sendFile(path.join(clientDir, "index.html"));
+  });
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);

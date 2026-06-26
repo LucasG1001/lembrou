@@ -26,10 +26,10 @@ Cada notificação no Telegram traz botões: **✅ Já estou no evento**, **⏰ 
 ## Arquitetura
 
 ```
-Browser → Nginx (web) → Express (server :3333) → PostgreSQL
-                                  │
-                                  ├──(só Lembretes: envia notificação)──▶ notify-api :3334 ──▶ Telegram
-                                  ◀──(repassa clique de botão)── notify-api (long-polling getUpdates)
+Browser → Caddy (proxy central, TLS) → Express (server :3333, serve SPA + API) → PostgreSQL
+                                                  │
+                                                  ├──(só Lembretes: envia notificação)──▶ notify-api :3334 ──▶ Telegram
+                                                  ◀──(repassa clique de botão)── notify-api (long-polling getUpdates)
 ```
 
 - **Domínios do backend** (mesmo padrão `types → models → schemas → controllers → routes`):
@@ -100,7 +100,7 @@ curl -X POST http://localhost:3334/api/projects \
 
 ## Produção (Docker)
 
-O frontend é servido pelo **proxy reverso central Caddy** (`caddy-docker-proxy`, stack `../media/proxy`), compartilhado por todos os projetos da VPS — não há um proxy próprio aqui. O `web` entra na rede `proxy-net` e declara labels `caddy`; o Caddy descobre o container e termina o TLS (ACME DNS-01 via Cloudflare). Por isso o `web` **não expõe porta no host**.
+O domínio é roteado pelo **proxy reverso central Caddy** (`caddy-docker-proxy`, stack `../media/proxy`), compartilhado por todos os projetos da VPS — não há um proxy próprio aqui. O `server` entra na rede `proxy-net` e declara labels `caddy`; o Caddy descobre o container e termina o TLS (ACME DNS-01 via Cloudflare). Por isso o `server` **não expõe porta no host**. Não há nginx: o próprio Express serve o SPA (build do frontend copiado para `backend/public` na imagem) e a API na porta 3333.
 
 ```bash
 docker network create remindme-net      # uma vez (a notify-api também entra nessa rede)

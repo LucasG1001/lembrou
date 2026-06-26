@@ -17,7 +17,9 @@ services:
       retries: 10
 
   server:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
@@ -27,32 +29,22 @@ services:
       NOTIFY_API_KEY: ${NOTIFY_API_KEY}
       CALLBACK_SECRET: ${CALLBACK_SECRET}
       WEB_URL: ${WEB_URL}
+    # Sem porta no host: o proxy reverso central (caddy-docker-proxy, stack ../media/proxy)
+    # descobre este container pela rede proxy-net via labels e termina o TLS.
+    # O Express serve o SPA e a API na mesma porta 3333.
+    labels:
+      caddy: ${REMINDME_DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 3333}}"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       default:
+      proxy-net:
       # Alias estável para a notify-api repassar os cliques de botão.
       remindme-net:
         aliases:
           - remindme-server
-
-  web:
-    build:
-      context: ./frontend
-      args:
-        VITE_API_URL: "/"
-    restart: unless-stopped
-    # Sem porta no host: o proxy reverso central (caddy-docker-proxy, stack ../media/proxy)
-    # descobre este container pela rede proxy-net via labels e termina o TLS.
-    labels:
-      caddy: ${REMINDME_DOMAIN}
-      caddy.reverse_proxy: "{{upstreams 80}}"
-    networks:
-      - default
-      - proxy-net
-    depends_on:
-      - server
 
 volumes:
   postgres_data:
