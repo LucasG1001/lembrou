@@ -148,6 +148,9 @@
   .itemDetail {
     grid-area: detail;
     text-align: right;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .itemTitleWrap {
@@ -157,5 +160,9 @@
   .itemAction {
     grid-area: action;
     justify-content: flex-end;
+  }
+
+  .itemWithAction .itemDetail {
+    display: none;
   }
 }

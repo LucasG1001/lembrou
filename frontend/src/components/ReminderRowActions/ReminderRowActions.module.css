@@ -41,6 +41,7 @@
   right: 0;
   z-index: 20;
   min-width: 168px;
+  max-width: min(168px, calc(100vw - var(--spacing-2xl)));
   display: flex;
   flex-direction: column;
   padding: var(--spacing-xs);
@@ -80,4 +81,15 @@
   height: 1px;
   margin: var(--spacing-xs) 0;
   background: var(--color-border-subtle);
+}
+
+@media (pointer: coarse) {
+  .btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .menuItem {
+    padding: var(--spacing-md);
+  }
 }

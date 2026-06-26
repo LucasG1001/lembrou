@@ -10,7 +10,7 @@
   border: 1px solid var(--border);
   background-color: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -36,14 +36,14 @@
 
 .error {
   color: var(--danger);
-  font-size: 13px;
-  margin-top: 8px;
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-sm);
 }
 
-@media (max-width: 420px) {
+@media (max-width: 480px) {
   .dayButton {
     width: 36px;
-    height: 32px;
-    font-size: 11px;
+    height: 36px;
+    font-size: var(--font-size-sm);
   }
 }

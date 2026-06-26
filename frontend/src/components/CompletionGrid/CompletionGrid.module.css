@@ -31,6 +31,13 @@
   cursor: default;
 }
 
+@media (pointer: coarse) {
+  .navButton {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 .monthLabel {
   font-size: 14px;
   font-weight: 600;

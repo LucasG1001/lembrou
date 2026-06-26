@@ -34,6 +34,25 @@
   .page {
     padding: var(--spacing-base);
   }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tab {
+    flex: 1;
+    text-align: center;
+  }
+
+  .newButton {
+    text-align: center;
+  }
 }
 
 .tabs {

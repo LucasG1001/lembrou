@@ -77,7 +77,11 @@
   --transition-slow: 400ms ease;
 
   --content-width: 760px;
+  /* Escala de breakpoints (referência — CSS não aceita var() em @media):
+     768px = tablet/layout (Sidebar→bottom-nav, grids 2→1 col, padding de página)
+     480px = celular (ajustes finos de componentes) */
   --breakpoint-mobile: 768px;
+  --breakpoint-phone: 480px;
 
   --sidebar-width: 240px;
   --sidebar-collapsed: 72px;
@@ -137,11 +141,13 @@ body {
   color: var(--color-text-primary);
   line-height: 1.6;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 a {
@@ -172,6 +178,13 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--color-accent);
+}
+
+/* iOS dá zoom ao focar campos com fonte < 16px; no mobile garantimos 16px. */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: var(--font-size-md);
+  }
 }
 
 img {
