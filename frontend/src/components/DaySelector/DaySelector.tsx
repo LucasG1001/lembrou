@@ -17,13 +17,21 @@ const DAY_LABELS: { value: DayOfWeek; label: string }[] = [
   { value: 6, label: "Sáb" },
 ];
 
+const ALL_DAYS: DayOfWeek[] = [0, 1, 2, 3, 4, 5, 6];
+
 export function DaySelector({ selectedDays, onChange, error }: DaySelectorProps) {
+  const allSelected = selectedDays.length === ALL_DAYS.length;
+
   function handleToggle(day: DayOfWeek) {
     if (selectedDays.includes(day)) {
       onChange(selectedDays.filter((d) => d !== day));
     } else {
       onChange([...selectedDays, day].sort((a, b) => a - b));
     }
+  }
+
+  function toggleAll() {
+    onChange(allSelected ? [] : [...ALL_DAYS]);
   }
 
   return (
@@ -51,6 +59,9 @@ export function DaySelector({ selectedDays, onChange, error }: DaySelectorProps)
           );
         })}
       </div>
+      <button type="button" className={styles.allButton} onClick={toggleAll} aria-pressed={allSelected}>
+        {allSelected ? "Limpar" : "Todos os dias"}
+      </button>
       {error && <p className={styles.error}>{error}</p>}
     </div>
   );

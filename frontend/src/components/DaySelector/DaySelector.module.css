@@ -34,6 +34,17 @@
   border-color: var(--accent-hover);
 }
 
+.allButton {
+  margin-top: var(--spacing-sm);
+  align-self: flex-start;
+  padding: 4px 0;
+  background: none;
+  color: var(--accent);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .error {
   color: var(--danger);
   font-size: var(--font-size-sm);
