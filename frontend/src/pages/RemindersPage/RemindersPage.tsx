@@ -130,8 +130,9 @@ export function RemindersPage() {
             </button>
           ))}
         </div>
-        <Link to="/lembretes/novo" className={styles.newButton}>
-          + Novo lembrete
+        <Link to="/lembretes/novo" className={styles.newButton} aria-label="Novo lembrete">
+          <span className={styles.newPlus} aria-hidden="true">+</span>
+          <span className={styles.newLabel}>Novo lembrete</span>
         </Link>
       </div>
 

@@ -105,12 +105,14 @@ export function HabitsPage() {
       <header className={styles.header}>
         <button
           className={styles.newButton}
+          aria-label="Novo hábito"
           onClick={() => {
             setEditing(null);
             setFormMode("create");
           }}
         >
-          + Novo hábito
+          <span className={styles.newPlus} aria-hidden="true">+</span>
+          <span className={styles.newLabel}>Novo hábito</span>
         </button>
       </header>
 
