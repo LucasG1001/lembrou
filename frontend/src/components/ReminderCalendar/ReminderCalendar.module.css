@@ -106,8 +106,58 @@
   font-weight: var(--font-weight-bold);
 }
 
+.holiday {
+  background: var(--color-warning-subtle);
+}
+
+.holidayDot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-warning);
+}
+
 .emptyCell {
   aspect-ratio: 1;
+}
+
+.holidayList {
+  margin-top: var(--spacing-base);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.holidayItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.holidayItemDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-warning);
+}
+
+.holidayDate {
+  flex-shrink: 0;
+  min-width: 18px;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.holidayName {
+  color: var(--color-text-secondary);
 }
 
 .badge {
