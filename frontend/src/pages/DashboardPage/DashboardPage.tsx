@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useReminders } from "../../hooks/useReminders";
 import { useHabits } from "../../hooks/useHabits";
-import { BellIcon, CheckIcon } from "../../components/Sidebar/Sidebar.icons";
+import { BellIcon, CheckIcon, CalendarIcon } from "../../components/Sidebar/Sidebar.icons";
+import { ReminderCalendar } from "../../components/ReminderCalendar/ReminderCalendar";
+import { formatDateKey } from "../../utils/dateUtils";
 import { groupByDay, itemTime, startOfToday, type TimelineItem } from "../../utils/agenda";
 import {
   summarizeReminders,
@@ -22,8 +24,19 @@ export function DashboardPage() {
   const { reminders, loading: remindersLoading } = useReminders();
   const { habits, loading: habitsLoading } = useHabits();
 
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
   const reminderSummary = useMemo(() => summarizeReminders(reminders), [reminders]);
   const habitSummary = useMemo(() => summarizeHabits(habits), [habits]);
+
+  const countByDay = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const reminder of reminders) {
+      const key = formatDateKey(new Date(reminder.eventAt));
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }, [reminders]);
 
   const dayGroups = useMemo(() => {
     const start = startOfToday();
@@ -49,7 +62,17 @@ export function DashboardPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.greeting}>{greeting()}</h1>
+        <div className={styles.headerTop}>
+          <h1 className={styles.greeting}>{greeting()}</h1>
+          <button
+            type="button"
+            className={styles.calendarButton}
+            aria-label="Abrir calendário"
+            onClick={() => setCalendarOpen(true)}
+          >
+            <CalendarIcon className={styles.calendarIcon} />
+          </button>
+        </div>
         <p className={styles.date}>{todayLabel()}</p>
         {!loading && (
           <div className={styles.summaryPills}>
@@ -171,6 +194,10 @@ export function DashboardPage() {
             </section>
           )}
         </div>
+      )}
+
+      {calendarOpen && (
+        <ReminderCalendar countByDay={countByDay} onClose={() => setCalendarOpen(false)} />
       )}
     </div>
   );
