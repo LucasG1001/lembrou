@@ -140,6 +140,7 @@ export function DashboardPage() {
                     <span className={`${styles.rowTitle} ${completed ? styles.rowTitleDone : ""}`}>
                       {habit.name}
                     </span>
+                    <span className={styles.rowDetail}>Nível {habit.level}</span>
                     {habit.currentStreak > 0 && (
                       <span className={styles.rowStreak}>🔥 {habit.currentStreak}</span>
                     )}

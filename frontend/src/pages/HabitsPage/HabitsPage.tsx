@@ -6,7 +6,7 @@ import { HabitForm } from "../../components/HabitForm/HabitForm";
 import { HabitsStats } from "../../components/HabitsStats/HabitsStats";
 import { TodayHabits } from "../../components/TodayHabits/TodayHabits";
 import { groupByDay, type TimelineItem } from "../../utils/agenda";
-import { addDays, formatDateKey, getToday, isScheduledDay } from "../../utils/dateUtils";
+import { formatDateKey, getToday, isScheduledDay } from "../../utils/dateUtils";
 import { getHabitIcon } from "../../utils/habitIcons";
 import type { Habit, HabitFormData } from "../../types/habit";
 import styles from "./HabitsPage.module.css";
@@ -20,27 +20,24 @@ interface Occurrence {
 function buildOccurrences(habits: Habit[]): { items: TimelineItem[]; byId: Map<string, Occurrence> } {
   const items: TimelineItem[] = [];
   const byId = new Map<string, Occurrence>();
-  const today = getToday();
+  const date = getToday();
+  const dateKey = formatDateKey(date);
 
-  for (let i = 0; i < 7; i++) {
-    const date = addDays(today, i);
-    const dateKey = formatDateKey(date);
-    for (const habit of habits) {
-      if (!isScheduledDay(date, habit.selectedDays)) continue;
-      const completion = habit.completions.find((c) => c.date === dateKey);
-      const completed = Boolean(completion?.completed);
-      const id = `${habit.id}:${dateKey}`;
-      items.push({
-        id,
-        kind: "habit",
-        title: habit.name,
-        when: date.getTime(),
-        detail: `Nível ${habit.level}`,
-        hasTime: false,
-        done: completed,
-      });
-      byId.set(id, { habit, dateKey, completed });
-    }
+  for (const habit of habits) {
+    if (!isScheduledDay(date, habit.selectedDays)) continue;
+    const completion = habit.completions.find((c) => c.date === dateKey);
+    const completed = Boolean(completion?.completed);
+    const id = `${habit.id}:${dateKey}`;
+    items.push({
+      id,
+      kind: "habit",
+      title: habit.name,
+      when: date.getTime(),
+      detail: `Nível ${habit.level}`,
+      hasTime: false,
+      done: completed,
+    });
+    byId.set(id, { habit, dateKey, completed });
   }
 
   return { items, byId };
@@ -148,7 +145,7 @@ export function HabitsPage() {
           laterGroups={[]}
           iconFor={iconForHabit}
           onItemClick={handleItemClick}
-          emptyMessage="Nenhum hábito agendado para os próximos dias."
+          emptyMessage="Nenhum hábito agendado para hoje."
         />
       )}
 
