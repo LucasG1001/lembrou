@@ -53,7 +53,9 @@ export const Timeline = memo(function Timeline({
                 <Icon className={styles.itemIcon} />
                 <span className={styles.itemTime}>{itemTime(item, withDate)}</span>
                 <span className={styles.itemTitleWrap}>
-                  <span className={styles.itemTitle}>{item.title}</span>
+                  <span className={`${styles.itemTitle} ${item.done ? styles.itemTitleDone : ""}`}>
+                    {item.title}
+                  </span>
                   {item.subtitle && (
                     <span
                       className={`${styles.itemSubtitle} ${

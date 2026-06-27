@@ -37,6 +37,7 @@ function buildOccurrences(habits: Habit[]): { items: TimelineItem[]; byId: Map<s
         when: date.getTime(),
         detail: "",
         hasTime: false,
+        done: completed,
       });
       byId.set(id, { habit, dateKey, completed });
     }

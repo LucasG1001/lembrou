@@ -9,6 +9,7 @@ export interface TimelineItem {
   hasTime: boolean;
   subtitle?: string;
   subtitleTone?: "danger";
+  done?: boolean;
 }
 
 export interface TimelineGroup {

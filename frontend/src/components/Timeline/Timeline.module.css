@@ -85,6 +85,11 @@
   white-space: nowrap;
 }
 
+.itemTitleDone {
+  text-decoration: line-through;
+  color: var(--color-text-tertiary);
+}
+
 .itemSubtitle {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);

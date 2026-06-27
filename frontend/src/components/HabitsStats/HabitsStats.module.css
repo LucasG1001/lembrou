@@ -67,22 +67,11 @@
 
 @media (max-width: 768px) {
   .stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm);
+    grid-template-columns: 1fr;
   }
 
-  /* No celular mostramos só Progresso de hoje + Sequência atual. */
+  /* No celular mostramos só Progresso de hoje + Sequência atual, com os textos. */
   .cardLongest {
-    display: none;
-  }
-
-  .card {
-    justify-content: center;
-    padding: var(--spacing-md);
-  }
-
-  /* Sem rótulos no celular: só o anel/número. */
-  .cardText {
     display: none;
   }
 }
