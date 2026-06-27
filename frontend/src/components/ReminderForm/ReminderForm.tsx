@@ -24,8 +24,6 @@ const UNIT_OPTIONS: { value: RecurUnit; label: string }[] = [
   { value: "year", label: "ano(s)" },
 ];
 
-const DEFAULT_MAX_NOTIFY = 10;
-
 export function ReminderForm() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -47,7 +45,6 @@ export function ReminderForm() {
   const [recurWeekday, setRecurWeekday] = useState<number | null>(null);
   const [recurMode, setRecurMode] = useState<RecurMode>("fixed");
   const [nextOccurrenceAt, setNextOccurrenceAt] = useState<string | null>(null);
-  const [maxNotify, setMaxNotify] = useState(DEFAULT_MAX_NOTIFY);
   const [expanded, setExpanded] = useState(false);
 
   const [loading, setLoading] = useState(isEdit);
@@ -90,9 +87,7 @@ export function ReminderForm() {
         setRecurWeekday(r.recurWeekday);
         setRecurMode(r.recurMode ?? "fixed");
         setNextOccurrenceAt(r.nextOccurrenceAt);
-        setMaxNotify(r.maxNotify);
-        const hasAdvanced =
-          Boolean(r.notes) || r.isAllDay || Boolean(r.recurInterval) || r.maxNotify !== DEFAULT_MAX_NOTIFY;
+        const hasAdvanced = Boolean(r.notes) || r.isAllDay || Boolean(r.recurInterval);
         setExpanded(hasAdvanced);
         setLoading(false);
       })
@@ -158,7 +153,6 @@ export function ReminderForm() {
           recurUnit: repeats ? recurUnit : null,
           recurWeekday: repeats ? recurWeekday : null,
           recurMode: repeats ? recurMode : undefined,
-          maxNotify,
         };
         if (id) {
           await updateReminder(id, payload);
@@ -315,20 +309,6 @@ export function ReminderForm() {
                 </select>
               </label>
             </div>
-          )}
-
-          {!allDay && (
-            <label className={styles.field}>
-              <span className={styles.label}>Máximo de avisos antes de cancelar</span>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                className={`${styles.input} ${styles.intervalInput}`}
-                value={maxNotify}
-                onChange={(e) => setMaxNotify(Math.min(50, Math.max(1, Number(e.target.value))))}
-              />
-            </label>
           )}
         </div>
       )}

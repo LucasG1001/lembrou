@@ -40,21 +40,54 @@ describe("initialSchedule", () => {
     expect(toSpParts(s.nextNotifyAt)).toMatchObject({ hour: 13, minute: 30 });
   });
 
-  it("evento de dia inteiro começa na véspera às 18:00", () => {
+  it("evento de dia inteiro começa na véspera às 08:00", () => {
     const event = parseEventAt("2026-06-18", null);
     const now = parseEventAt("2026-06-10", null);
     const s = initialSchedule(event, true, now);
     expect(s.phase).toBe("pending");
-    expect(toSpParts(s.nextNotifyAt)).toMatchObject({ day: 17, hour: 18 });
+    expect(toSpParts(s.nextNotifyAt)).toMatchObject({ day: 17, hour: 8 });
+  });
+
+  it("criado entre 30 e 5 min antes pula o aviso de 30 min", () => {
+    const event = parseEventAt("2026-06-18", "14:00");
+    const now = parseEventAt("2026-06-18", "13:50"); // 10 min antes
+    const s = initialSchedule(event, false, now);
+    expect(s.phase).toBe("pre");
+    expect(toSpParts(s.nextNotifyAt)).toMatchObject({ hour: 13, minute: 55 }); // 5 min antes
+  });
+
+  it("criado a menos de 5 min antes vai direto para o horário", () => {
+    const event = parseEventAt("2026-06-18", "14:00");
+    const now = parseEventAt("2026-06-18", "13:58");
+    const s = initialSchedule(event, false, now);
+    expect(s.phase).toBe("due");
+    expect(toSpParts(s.nextNotifyAt)).toMatchObject({ hour: 14, minute: 0 });
   });
 });
 
 describe("decide (com hora)", () => {
-  it("pending → pre, incrementa contador", () => {
+  it("pending → pre (aviso de 30 min), incrementa contador", () => {
     const r = makeReminder({ phase: "pending", notifyCount: 0 });
     const { patch } = decide(r, new Date());
     expect(patch.phase).toBe("pre");
     expect(patch.notifyCount).toBe(1);
+    // próximo disparo é 5 min antes do evento (14:00 → 13:55)
+    expect(toSpParts(patch.nextNotifyAt as Date)).toMatchObject({ hour: 13, minute: 55 });
+  });
+
+  it("pre → due (aviso de 5 min), dispara no horário do evento", () => {
+    const r = makeReminder({ phase: "pre", notifyCount: 1 });
+    const { patch } = decide(r, new Date());
+    expect(patch.phase).toBe("due");
+    expect(toSpParts(patch.nextNotifyAt as Date)).toMatchObject({ hour: 14, minute: 0 });
+  });
+
+  it("due → at (no horário), começa o nag", () => {
+    const now = new Date("2026-06-18T17:00:00.000Z");
+    const r = makeReminder({ phase: "due", notifyCount: 2 });
+    const { patch } = decide(r, now);
+    expect(patch.phase).toBe("at");
+    expect(patch.nextNotifyAt?.getTime()).toBe(now.getTime() + 10 * 60 * 1000);
   });
 
   it("nag se repete a cada 10 min", () => {

@@ -12,24 +12,31 @@ export function pre30(title: string): ReminderMessage {
   };
 }
 
+export function pre5(title: string): ReminderMessage {
+  return {
+    title: `⏰ Faltam 5 minutos`,
+    description: `Quase lá: ${title}. Já dá pra se preparar. 🙂`,
+  };
+}
+
 export function atTime(title: string): ReminderMessage {
   return {
     title: `🔔 É agora!`,
-    description: `Chegou a hora de ${title}. Já tá no rolê? Toca em "Já estou no evento" pra eu sossegar.`,
+    description: `Chegou a hora de ${title}. Abra o app pra concluir ou remarcar quando puder.`,
   };
 }
 
 export function nag(title: string): ReminderMessage {
   return {
     title: `👀 E aí, conseguiu?`,
-    description: `Ainda lembrando de ${title}. Confirma em "Já estou no evento" ou adia que eu volto depois.`,
+    description: `Ainda lembrando de ${title}. Quando der, conclua ou remarque no app.`,
   };
 }
 
 export function autoCancel(title: string): ReminderMessage {
   return {
     title: `😴 Cansei de avisar`,
-    description: `Te lembrei de ${title} várias vezes e ninguém respondeu, então cancelei por aqui. Se ainda precisar, é só reabrir na web.`,
+    description: `Te lembrei de ${title} várias vezes e ninguém respondeu, então cancelei por aqui. Se ainda precisar, é só reabrir no app.`,
   };
 }
 

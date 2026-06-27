@@ -1,7 +1,7 @@
 export type ReminderStatus = "active" | "done" | "cancelled";
 
-/** Fases da máquina de estados. Com hora: pending→pre→at→nag. Dia inteiro: pending→day_before→morning. */
-export type ReminderPhase = "pending" | "pre" | "at" | "nag" | "day_before" | "morning";
+/** Fases da máquina de estados. Com hora: pending→pre(30min)→due(5min)→at→nag. Dia inteiro: pending→day_before→morning. */
+export type ReminderPhase = "pending" | "pre" | "due" | "at" | "nag" | "day_before" | "morning";
 
 export type RecurUnit = "day" | "week" | "month" | "year";
 

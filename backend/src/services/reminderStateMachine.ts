@@ -2,9 +2,10 @@ import type { Reminder, ReminderPatch, ReminderPhase } from "../types/reminder.j
 import { addMinutes, computeNextOccurrence, fromSpParts, spDateAtTime, toSpParts } from "../lib/dateUtils.js";
 import * as messages from "./reminderMessages.js";
 
-const PRE_LEAD_MIN = 30;
+const LEAD_1_MIN = 30;
+const LEAD_2_MIN = 5;
 const NAG_INTERVAL_MIN = 10;
-const ALLDAY_BEFORE_HOUR = 18;
+const ALLDAY_BEFORE_HOUR = 8;
 const ALLDAY_MORNING_HOUR = 8;
 
 export interface ReminderMessage {
@@ -38,10 +39,12 @@ export function initialSchedule(
     if (now < morning) return { phase: "day_before", nextNotifyAt: morning };
     return { phase: "day_before", nextNotifyAt: now };
   }
-  const pre = addMinutes(eventAt, -PRE_LEAD_MIN);
-  if (now < pre) return { phase: "pending", nextNotifyAt: pre };
-  if (now < eventAt) return { phase: "pre", nextNotifyAt: eventAt };
-  return { phase: "pre", nextNotifyAt: now };
+  const lead1 = addMinutes(eventAt, -LEAD_1_MIN);
+  const lead2 = addMinutes(eventAt, -LEAD_2_MIN);
+  if (now < lead1) return { phase: "pending", nextNotifyAt: lead1 };
+  if (now < lead2) return { phase: "pre", nextNotifyAt: lead2 };
+  if (now < eventAt) return { phase: "due", nextNotifyAt: eventAt };
+  return { phase: "due", nextNotifyAt: now };
 }
 
 /**
@@ -98,8 +101,10 @@ function decideTimed(r: Reminder, now: Date): TickResult {
   const notifyCount = r.notifyCount + 1;
   switch (r.phase) {
     case "pending":
-      return { message: messages.pre30(r.title), patch: { phase: "pre", nextNotifyAt: new Date(r.eventAt), notifyCount }, actionable: true };
+      return { message: messages.pre30(r.title), patch: { phase: "pre", nextNotifyAt: addMinutes(new Date(r.eventAt), -LEAD_2_MIN), notifyCount }, actionable: true };
     case "pre":
+      return { message: messages.pre5(r.title), patch: { phase: "due", nextNotifyAt: new Date(r.eventAt), notifyCount }, actionable: true };
+    case "due":
       return { message: messages.atTime(r.title), patch: { phase: "at", nextNotifyAt: addMinutes(now, NAG_INTERVAL_MIN), notifyCount }, actionable: true };
     default:
       return { message: messages.nag(r.title), patch: { phase: "nag", nextNotifyAt: addMinutes(now, NAG_INTERVAL_MIN), notifyCount }, actionable: true };
