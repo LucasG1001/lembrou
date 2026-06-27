@@ -1,6 +1,7 @@
 import { memo, type ComponentType, type ReactNode } from "react";
 import type { TimelineGroup, TimelineItem } from "../../utils/agenda";
 import { itemTime } from "../../utils/agenda";
+import { useLongPress } from "../../hooks/useLongPress";
 import styles from "./Timeline.module.css";
 
 interface TimelineProps {
@@ -8,6 +9,7 @@ interface TimelineProps {
   laterGroups: TimelineGroup[];
   iconFor: (item: TimelineItem) => ComponentType<{ className?: string }>;
   onItemClick?: (item: TimelineItem) => void;
+  onItemLongPress?: (item: TimelineItem) => void;
   renderAction?: (item: TimelineItem) => ReactNode;
   emptyMessage?: string;
   weekTitle?: string | null;
@@ -19,11 +21,16 @@ export const Timeline = memo(function Timeline({
   laterGroups,
   iconFor,
   onItemClick,
+  onItemLongPress,
   renderAction,
   emptyMessage = "Nada agendado nos próximos dias.",
   weekTitle = "Esta semana",
   laterTitle = "Mais adiante",
 }: TimelineProps) {
+  const bindPress = useLongPress<TimelineItem>({
+    onTap: (item) => onItemClick?.(item),
+    onLongPress: (item) => onItemLongPress?.(item),
+  });
   if (weekGroups.length === 0 && laterGroups.length === 0) {
     return <div className={styles.empty}>{emptyMessage}</div>;
   }
@@ -36,13 +43,16 @@ export const Timeline = memo(function Timeline({
           {group.items.map((item) => {
             const Icon = iconFor(item);
             const action = renderAction?.(item);
+            const pressProps = onItemLongPress
+              ? bindPress(item)
+              : { onClick: () => onItemClick?.(item) };
             return (
               <div
                 key={item.id}
                 className={`${styles.item} ${action ? styles.itemWithAction : ""}`}
                 role="button"
                 tabIndex={0}
-                onClick={() => onItemClick?.(item)}
+                {...pressProps}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();

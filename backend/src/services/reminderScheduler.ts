@@ -1,36 +1,12 @@
 import * as reminderModel from "../models/reminderModel.js";
-import type { Reminder } from "../types/reminder.js";
 import { addMinutes } from "../lib/dateUtils.js";
-import { encodeAck, encodeSnooze } from "../lib/callbackCodec.js";
-import { decide, isRecurring } from "./reminderStateMachine.js";
-import { sendNotification, type NotifyButton } from "./notifyService.js";
+import { decide } from "./reminderStateMachine.js";
+import { sendNotification } from "./notifyService.js";
 
 const TICK_MS = 60 * 1000;
 const BATCH_LIMIT = 100;
 
 let inFlight = false;
-
-/** Monta os botões de ação de acordo com o tipo do lembrete e a WEB_URL. */
-function buildButtons(r: Reminder): NotifyButton[] {
-  const buttons: NotifyButton[] = [];
-
-  if (r.isAllDay) {
-    buttons.push({ text: isRecurring(r) ? "✅ Já resolvi" : "✅ Ok, ciente", callbackData: encodeAck(r.id) });
-  } else {
-    buttons.push({ text: "✅ Já estou no evento", callbackData: encodeAck(r.id) });
-    buttons.push({ text: "⏰ +15 min", callbackData: encodeSnooze(15, r.id) });
-    buttons.push({ text: "⏰ +30 min", callbackData: encodeSnooze(30, r.id) });
-    buttons.push({ text: "⏰ +1 h", callbackData: encodeSnooze(60, r.id) });
-  }
-
-  const webUrl = process.env.WEB_URL?.trim();
-  if (webUrl) {
-    buttons.push({ text: "🗓 Outro horário", url: `${webUrl}/r/${r.id}?action=reschedule` });
-    buttons.push({ text: "❌ Cancelar", url: `${webUrl}/r/${r.id}?action=cancel` });
-  }
-
-  return buttons;
-}
 
 export async function processDue(now: Date = new Date()): Promise<void> {
   const due = await reminderModel.findDue(now, BATCH_LIMIT);
@@ -41,9 +17,9 @@ export async function processDue(now: Date = new Date()): Promise<void> {
 
   for (const reminder of due) {
     try {
-      const { message, patch, actionable } = decide(reminder, now);
-      const buttons = actionable ? buildButtons(reminder) : undefined;
-      const messageId = await sendNotification({ ...message, buttons });
+      const { message, patch } = decide(reminder, now);
+      // Notificação só com o alerta de texto — as ações agora são feitas pelo app.
+      const messageId = await sendNotification({ ...message });
       if (messageId === null) {
         console.warn(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") processado sem id de mensagem (notify-api não configurada?).`);
       } else {
