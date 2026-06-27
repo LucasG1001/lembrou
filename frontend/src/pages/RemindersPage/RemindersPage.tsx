@@ -6,7 +6,7 @@ import { ReminderHistoryActions } from "../../components/ReminderHistoryActions/
 import { Timeline } from "../../components/Timeline/Timeline";
 import { BellIcon } from "../../components/Sidebar/Sidebar.icons";
 import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
-import { recurrenceLabel, remainingLabel } from "../../utils/format";
+import { recurrenceLabel, remainingLabel, dayRemainingLabel } from "../../utils/format";
 import { useMinuteTick } from "../../hooks/useMinuteTick";
 import type { Reminder, ReminderStatus } from "../../types/reminder";
 import styles from "./RemindersPage.module.css";
@@ -19,7 +19,7 @@ const TABS: { value: ReminderStatus; label: string }[] = [
 
 function toTimelineItem(reminder: Reminder, now: number): TimelineItem {
   const when = Date.parse(reminder.eventAt);
-  const remaining = reminder.isAllDay ? null : remainingLabel(when, now);
+  const remaining = reminder.isAllDay ? dayRemainingLabel(when, now) : remainingLabel(when, now);
   return {
     id: reminder.id,
     kind: "reminder",

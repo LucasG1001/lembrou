@@ -59,7 +59,7 @@ export function HabitsStats({ habits }: HabitsStatsProps) {
         </div>
       </div>
 
-      <div className={styles.card}>
+      <div className={`${styles.card} ${styles.cardLongest}`}>
         <span className={styles.value}>{longest}</span>
         <div className={styles.cardText}>
           <span className={styles.label}>Maior sequência</span>

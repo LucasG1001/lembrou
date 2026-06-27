@@ -78,3 +78,18 @@ export function remainingLabel(targetMs: number, nowMs: number): { text: string;
   const elapsed = formatRemaining(nowMs, targetMs);
   return { text: elapsed === "agora" ? "atrasado" : `atrasado ${elapsed}`, overdue: true };
 }
+
+/** Contagem por dias para itens de dia inteiro (sem horário): hoje / amanhã / faltam N dias. */
+export function dayRemainingLabel(targetMs: number, nowMs: number): { text: string; overdue: boolean } {
+  const DAY = 24 * 60 * 60 * 1000;
+  const startToday = new Date(nowMs);
+  startToday.setHours(0, 0, 0, 0);
+  const startTarget = new Date(targetMs);
+  startTarget.setHours(0, 0, 0, 0);
+  const diff = Math.round((startTarget.getTime() - startToday.getTime()) / DAY);
+  if (diff === 0) return { text: "hoje", overdue: false };
+  if (diff === 1) return { text: "amanhã", overdue: false };
+  if (diff > 1) return { text: `faltam ${diff} dias`, overdue: false };
+  if (diff === -1) return { text: "atrasado 1 dia", overdue: true };
+  return { text: `atrasado ${-diff} dias`, overdue: true };
+}

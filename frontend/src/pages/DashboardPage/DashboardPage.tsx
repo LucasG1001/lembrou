@@ -11,11 +11,11 @@ import {
   todayLabel,
   urgencyStyle,
 } from "../../utils/dashboard";
-import { remainingLabel } from "../../utils/format";
+import { remainingLabel, dayRemainingLabel } from "../../utils/format";
 import { useMinuteTick } from "../../hooks/useMinuteTick";
 import styles from "./DashboardPage.module.css";
 
-const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function DashboardPage() {
   const navigate = useNavigate();
@@ -36,7 +36,7 @@ export function DashboardPage() {
         detail: reminder.isAllDay ? "Dia inteiro" : "",
         hasTime: !reminder.isAllDay,
       }))
-      .filter((item) => item.when >= start && item.when < start + TWO_DAYS_MS)
+      .filter((item) => item.when >= start && item.when < start + WEEK_MS)
       .sort((a, b) => a.when - b.when);
     return groupByDay(items);
   }, [reminders]);
@@ -72,21 +72,23 @@ export function DashboardPage() {
             <div className={styles.cardHeader}>
               <span className={styles.cardLabelGroup}>
                 <BellIcon className={styles.cardLabelIcon} />
-                <span className={styles.cardLabel}>Hoje e amanhã</span>
+                <span className={styles.cardLabel}>Esta semana</span>
               </span>
               <Link to="/lembretes" className={styles.cardLink}>
                 Ver todos
               </Link>
             </div>
             {dayGroups.length === 0 ? (
-              <p className={styles.muted}>Nada para hoje nem amanhã.</p>
+              <p className={styles.muted}>Nada para esta semana.</p>
             ) : (
               <div className={styles.dayList}>
                 {dayGroups.map((group) => (
                   <div key={group.key} className={styles.dayGroup}>
                     <span className={styles.dayLabel}>{group.label}</span>
                     {group.items.map((item) => {
-                      const remaining = item.hasTime ? remainingLabel(item.when, now) : null;
+                      const remaining = item.hasTime
+                        ? remainingLabel(item.when, now)
+                        : dayRemainingLabel(item.when, now);
                       const detailText = remaining?.text ?? item.detail;
                       return (
                         <button
