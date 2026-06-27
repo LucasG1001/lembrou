@@ -39,9 +39,12 @@ export function recurrenceLabel(reminder: Reminder): string | null {
   if (!reminder.recurInterval || !reminder.recurUnit) return null;
   const n = reminder.recurInterval;
   const unit = n === 1 ? UNIT_SINGULAR[reminder.recurUnit] : UNIT_PLURAL[reminder.recurUnit];
-  const base = n === 1 ? `A cada ${unit}` : `A cada ${n} ${unit}`;
+  let base = n === 1 ? `A cada ${unit}` : `A cada ${n} ${unit}`;
   if (reminder.recurWeekday !== null) {
-    return `${base}, ${WEEKDAYS[reminder.recurWeekday].toLowerCase()}`;
+    base = `${base}, ${WEEKDAYS[reminder.recurWeekday].toLowerCase()}`;
+  }
+  if (reminder.recurMode === "relative") {
+    base = `${base} (a partir da conclusão)`;
   }
   return base;
 }

@@ -3,9 +3,9 @@ import {
   fetchReminders,
   deleteReminder,
   acknowledgeReminder,
-  updateReminder,
+  rescheduleReminder,
 } from "../services/reminderService";
-import type { Reminder, ReminderInput, ReminderStatus } from "../types/reminder";
+import type { Reminder, ReminderStatus, RescheduleInput } from "../types/reminder";
 
 export function useReminders() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -66,7 +66,7 @@ export function useReminders() {
   );
 
   const reschedule = useCallback(
-    async (id: string, input: ReminderInput) => applyUpdate(await updateReminder(id, input)),
+    async (id: string, input: RescheduleInput) => applyUpdate(await rescheduleReminder(id, input)),
     [applyUpdate]
   );
 

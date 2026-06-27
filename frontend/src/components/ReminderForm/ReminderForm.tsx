@@ -4,9 +4,10 @@ import {
   fetchReminder,
   createReminder,
   updateReminder,
+  rescheduleReminder,
   cancelReminder,
 } from "../../services/reminderService";
-import type { RecurUnit, ReminderInput } from "../../types/reminder";
+import type { RecurMode, RecurUnit, ReminderInput } from "../../types/reminder";
 import { toFormParts, WEEKDAYS } from "../../utils/format";
 import { ChevronIcon } from "../Sidebar/Sidebar.icons";
 import { Modal } from "../Modal/Modal";
@@ -44,6 +45,7 @@ export function ReminderForm() {
   const [recurInterval, setRecurInterval] = useState(1);
   const [recurUnit, setRecurUnit] = useState<RecurUnit>("month");
   const [recurWeekday, setRecurWeekday] = useState<number | null>(null);
+  const [recurMode, setRecurMode] = useState<RecurMode>("fixed");
   const [maxNotify, setMaxNotify] = useState(DEFAULT_MAX_NOTIFY);
   const [expanded, setExpanded] = useState(false);
 
@@ -85,10 +87,11 @@ export function ReminderForm() {
         setRecurInterval(r.recurInterval ?? 1);
         setRecurUnit(r.recurUnit ?? "month");
         setRecurWeekday(r.recurWeekday);
+        setRecurMode(r.recurMode ?? "fixed");
         setMaxNotify(r.maxNotify);
         const hasAdvanced =
           Boolean(r.notes) || r.isAllDay || Boolean(r.recurInterval) || r.maxNotify !== DEFAULT_MAX_NOTIFY;
-        setExpanded(hasAdvanced || action === "reschedule");
+        setExpanded(hasAdvanced);
         setLoading(false);
       })
       .catch(() => {
@@ -116,24 +119,29 @@ export function ReminderForm() {
       return;
     }
 
-    const payload: ReminderInput = {
-      title: title.trim(),
-      notes: notes.trim() || null,
-      date,
-      time: allDay ? null : time,
-      recurInterval: repeats ? recurInterval : null,
-      recurUnit: repeats ? recurUnit : null,
-      recurWeekday: repeats ? recurWeekday : null,
-      maxNotify,
-    };
-
     setSaving(true);
     setError(null);
     try {
-      if (id) {
-        await updateReminder(id, payload);
+      if (id && action === "reschedule") {
+        // Remarcar move só esta ocorrência: não toca na regra/série.
+        await rescheduleReminder(id, { date, time: allDay ? null : time });
       } else {
-        await createReminder(payload);
+        const payload: ReminderInput = {
+          title: title.trim(),
+          notes: notes.trim() || null,
+          date,
+          time: allDay ? null : time,
+          recurInterval: repeats ? recurInterval : null,
+          recurUnit: repeats ? recurUnit : null,
+          recurWeekday: repeats ? recurWeekday : null,
+          recurMode: repeats ? recurMode : undefined,
+          maxNotify,
+        };
+        if (id) {
+          await updateReminder(id, payload);
+        } else {
+          await createReminder(payload);
+        }
       }
       reload();
       navigate("/lembretes");
@@ -199,17 +207,19 @@ export function ReminderForm() {
         </label>
       </div>
 
-      <button
-        type="button"
-        className={styles.expander}
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-      >
-        <ChevronIcon className={`${styles.expanderIcon} ${expanded ? styles.expanderOpen : ""}`} />
-        {expanded ? "Menos opções" : "Mais opções"}
-      </button>
+      {action !== "reschedule" && (
+        <button
+          type="button"
+          className={styles.expander}
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+        >
+          <ChevronIcon className={`${styles.expanderIcon} ${expanded ? styles.expanderOpen : ""}`} />
+          {expanded ? "Menos opções" : "Mais opções"}
+        </button>
+      )}
 
-      {expanded && (
+      {action !== "reschedule" && expanded && (
         <div className={styles.advanced}>
           <label className={styles.field}>
             <span className={styles.label}>Notas (opcional)</span>
@@ -268,6 +278,17 @@ export function ReminderForm() {
                       {w}
                     </option>
                   ))}
+                </select>
+              </label>
+              <label className={styles.field}>
+                <span className={styles.label}>Quando recalcular</span>
+                <select
+                  className={styles.input}
+                  value={recurMode}
+                  onChange={(e) => setRecurMode(e.target.value as RecurMode)}
+                >
+                  <option value="fixed">Horário fixo (sempre na mesma grade)</option>
+                  <option value="relative">A partir da conclusão</option>
                 </select>
               </label>
             </div>

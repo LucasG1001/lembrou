@@ -15,6 +15,8 @@ function makeReminder(over: Partial<Reminder>): Reminder {
     recurInterval: null,
     recurUnit: null,
     recurWeekday: null,
+    recurMode: "fixed",
+    recurAnchorAt: null,
     status: "active",
     phase: "pending",
     nextNotifyAt: null,
@@ -104,7 +106,13 @@ describe("decide (dia inteiro)", () => {
 
 describe("finishOccurrence", () => {
   it("recorrente reinicia ciclo na próxima data", () => {
-    const r = makeReminder({ recurInterval: 6, recurUnit: "month", recurWeekday: 6, notifyCount: 5 });
+    const r = makeReminder({
+      recurInterval: 6,
+      recurUnit: "month",
+      recurWeekday: 6,
+      recurAnchorAt: parseEventAt("2026-06-18", "14:00").toISOString(),
+      notifyCount: 5,
+    });
     const patch = finishOccurrence(r, new Date());
     expect(patch.status).toBe("active");
     expect(patch.notifyCount).toBe(0);
@@ -114,5 +122,50 @@ describe("finishOccurrence", () => {
   it("único vira done", () => {
     const patch = finishOccurrence(makeReminder({}), new Date());
     expect(patch.status).toBe("done");
+  });
+
+  it("fixo: avança na grade da âncora, ignorando event_at remarcado", () => {
+    // Âncora segunda 10h; ocorrência atual remarcada p/ 14h.
+    const r = makeReminder({
+      recurInterval: 1,
+      recurUnit: "week",
+      recurWeekday: 1,
+      recurMode: "fixed",
+      recurAnchorAt: parseEventAt("2026-06-15", "10:00").toISOString(),
+      eventAt: parseEventAt("2026-06-15", "14:00").toISOString(),
+    });
+    const patch = finishOccurrence(r, parseEventAt("2026-06-15", "14:30"));
+    const next = toSpParts(patch.eventAt as Date);
+    expect(next).toMatchObject({ day: 22, hour: 10, minute: 0, weekday: 1 });
+    expect(patch.recurAnchorAt).toEqual(patch.eventAt);
+  });
+
+  it("fixo: sem âncora cai no fallback para event_at", () => {
+    const r = makeReminder({
+      recurInterval: 1,
+      recurUnit: "week",
+      recurMode: "fixed",
+      recurAnchorAt: null,
+      eventAt: parseEventAt("2026-06-15", "10:00").toISOString(),
+    });
+    const patch = finishOccurrence(r, new Date());
+    expect(toSpParts(patch.eventAt as Date)).toMatchObject({ day: 22, hour: 10 });
+  });
+
+  it("relativo: avança a partir de now, preservando dia-da-semana e hora da âncora", () => {
+    // Âncora sábado 10h; confirma numa terça 15h.
+    const r = makeReminder({
+      recurInterval: 6,
+      recurUnit: "month",
+      recurWeekday: 6,
+      recurMode: "relative",
+      recurAnchorAt: parseEventAt("2026-06-20", "10:00").toISOString(),
+      eventAt: parseEventAt("2026-06-20", "10:00").toISOString(),
+    });
+    const patch = finishOccurrence(r, parseEventAt("2026-06-23", "15:00"));
+    const next = toSpParts(patch.eventAt as Date);
+    // ~6 meses após 2026-06-23 → dezembro/2026, ajustado p/ sábado, às 10h.
+    expect(next).toMatchObject({ year: 2026, month: 11, hour: 10, minute: 0, weekday: 6 });
+    expect(patch.recurAnchorAt).toEqual(patch.eventAt);
   });
 });

@@ -14,6 +14,7 @@ const baseReminder = z
     recurInterval: z.number().int().positive().nullish(),
     recurUnit: recurUnit.nullish(),
     recurWeekday: z.number().int().min(0).max(6).nullish(),
+    recurMode: z.enum(["fixed", "relative"]).nullish(),
     maxNotify: z.number().int().min(1).max(50).optional(),
   })
   .refine((d) => Boolean(d.recurInterval) === Boolean(d.recurUnit), {
@@ -24,5 +25,11 @@ export const createReminderSchema = baseReminder;
 
 export const updateReminderSchema = baseReminder;
 
+export const rescheduleSchema = z.object({
+  date: z.string().regex(DATE_RE, "Data inválida (use YYYY-MM-DD)."),
+  time: z.string().regex(timeRe, "Hora inválida (use HH:MM).").nullish(),
+});
+
 export type CreateReminderBody = z.infer<typeof createReminderSchema>;
 export type UpdateReminderBody = z.infer<typeof updateReminderSchema>;
+export type RescheduleBody = z.infer<typeof rescheduleSchema>;

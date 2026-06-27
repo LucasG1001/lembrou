@@ -11,6 +11,8 @@ export async function migrate(): Promise<void> {
       recur_interval    INTEGER,
       recur_unit        TEXT,
       recur_weekday     SMALLINT,
+      recur_mode        TEXT NOT NULL DEFAULT 'fixed',
+      recur_anchor_at   TIMESTAMPTZ,
       status            TEXT NOT NULL DEFAULT 'active',
       phase             TEXT NOT NULL DEFAULT 'pending',
       next_notify_at    TIMESTAMPTZ,
@@ -22,6 +24,21 @@ export async function migrate(): Promise<void> {
       created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+  `);
+
+  // Recorrência: modo (fixo/relativo) e âncora da série, separada do event_at da ocorrência.
+  await pool.query(`
+    ALTER TABLE reminders ADD COLUMN IF NOT EXISTS recur_mode TEXT NOT NULL DEFAULT 'fixed';
+  `);
+
+  await pool.query(`
+    ALTER TABLE reminders ADD COLUMN IF NOT EXISTS recur_anchor_at TIMESTAMPTZ;
+  `);
+
+  // Backfill: linhas recorrentes legadas ancoram na ocorrência atual.
+  await pool.query(`
+    UPDATE reminders SET recur_anchor_at = event_at
+      WHERE recur_anchor_at IS NULL AND recur_interval IS NOT NULL;
   `);
 
   // Consulta quente do scheduler: lembretes ativos com disparo vencido.

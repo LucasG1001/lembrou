@@ -5,6 +5,9 @@ export type ReminderPhase = "pending" | "pre" | "at" | "nag" | "day_before" | "m
 
 export type RecurUnit = "day" | "week" | "month" | "year";
 
+/** Como a próxima ocorrência é calculada: fixa na grade da série ou a partir da conclusão. */
+export type RecurMode = "fixed" | "relative";
+
 export interface Reminder {
   id: string;
   title: string;
@@ -14,6 +17,8 @@ export interface Reminder {
   recurInterval: number | null;
   recurUnit: RecurUnit | null;
   recurWeekday: number | null;
+  recurMode: RecurMode;
+  recurAnchorAt: string | null;
   status: ReminderStatus;
   phase: ReminderPhase;
   nextNotifyAt: string | null;
@@ -35,6 +40,8 @@ export interface ReminderRow {
   recur_interval: number | null;
   recur_unit: RecurUnit | null;
   recur_weekday: number | null;
+  recur_mode: RecurMode;
+  recur_anchor_at: string | null;
   status: ReminderStatus;
   phase: ReminderPhase;
   next_notify_at: string | null;
@@ -56,6 +63,8 @@ export interface NewReminder {
   recurInterval: number | null;
   recurUnit: RecurUnit | null;
   recurWeekday: number | null;
+  recurMode: RecurMode;
+  recurAnchorAt: Date | null;
   maxNotify: number;
   phase: ReminderPhase;
   nextNotifyAt: Date | null;
@@ -70,6 +79,8 @@ export interface ReminderPatch {
   recurInterval?: number | null;
   recurUnit?: RecurUnit | null;
   recurWeekday?: number | null;
+  recurMode?: RecurMode;
+  recurAnchorAt?: Date | null;
   maxNotify?: number;
   status?: ReminderStatus;
   phase?: ReminderPhase;

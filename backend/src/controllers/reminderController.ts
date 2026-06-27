@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { createReminderSchema, updateReminderSchema } from "../schemas/reminder.js";
+import { createReminderSchema, updateReminderSchema, rescheduleSchema } from "../schemas/reminder.js";
 import * as reminderModel from "../models/reminderModel.js";
 import { parseEventAt } from "../lib/dateUtils.js";
 import { respondValidationError } from "../lib/validation.js";
@@ -43,6 +43,7 @@ export async function create(req: Request, res: Response): Promise<void> {
     const isAllDay = !body.time;
     const eventAt = parseEventAt(body.date, body.time ?? null);
     const sched = initialSchedule(eventAt, isAllDay, new Date());
+    const isRecurring = Boolean(body.recurInterval);
 
     const reminder = await reminderModel.create({
       title: body.title,
@@ -52,6 +53,8 @@ export async function create(req: Request, res: Response): Promise<void> {
       recurInterval: body.recurInterval ?? null,
       recurUnit: body.recurUnit ?? null,
       recurWeekday: body.recurWeekday ?? null,
+      recurMode: body.recurMode ?? "fixed",
+      recurAnchorAt: isRecurring ? eventAt : null,
       maxNotify: body.maxNotify ?? 10,
       phase: sched.phase,
       nextNotifyAt: sched.nextNotifyAt,
@@ -78,8 +81,9 @@ export async function update(req: Request, res: Response): Promise<void> {
     const isAllDay = !body.time;
     const eventAt = parseEventAt(body.date, body.time ?? null);
     const sched = initialSchedule(eventAt, isAllDay, new Date());
+    const isRecurring = Boolean(body.recurInterval);
 
-    // Editar reinicia o ciclo de notificações (cobre o "Outro horário").
+    // Editar muda a regra: reinicia o ciclo e re-ancora a série no novo event_at.
     const reminder = await reminderModel.update(existing.id, {
       title: body.title,
       notes: body.notes ?? null,
@@ -88,6 +92,8 @@ export async function update(req: Request, res: Response): Promise<void> {
       recurInterval: body.recurInterval ?? null,
       recurUnit: body.recurUnit ?? null,
       recurWeekday: body.recurWeekday ?? null,
+      recurMode: isRecurring ? body.recurMode ?? "fixed" : "fixed",
+      recurAnchorAt: isRecurring ? eventAt : null,
       maxNotify: body.maxNotify ?? existing.maxNotify,
       status: "active",
       phase: sched.phase,
@@ -99,6 +105,42 @@ export async function update(req: Request, res: Response): Promise<void> {
     res.json(reminder);
   } catch {
     res.status(500).json({ error: "Erro ao atualizar lembrete." });
+  }
+}
+
+export async function reschedule(req: Request, res: Response): Promise<void> {
+  try {
+    const existing = await reminderModel.findById(String(req.params.id));
+    if (!existing) {
+      res.status(404).json({ error: "Lembrete não encontrado." });
+      return;
+    }
+    const parsed = rescheduleSchema.safeParse(req.body);
+    if (!parsed.success) {
+      respondValidationError(res, parsed.error);
+      return;
+    }
+    const body = parsed.data;
+    // Remarcar move só esta ocorrência: preserva o tipo e a regra/âncora da série.
+    if (!existing.isAllDay && !body.time) {
+      res.status(400).json({ error: "Informe a hora para remarcar este lembrete." });
+      return;
+    }
+    const eventAt = parseEventAt(body.date, existing.isAllDay ? null : body.time ?? null);
+    const sched = initialSchedule(eventAt, existing.isAllDay, new Date());
+
+    const reminder = await reminderModel.update(existing.id, {
+      eventAt,
+      status: "active",
+      phase: sched.phase,
+      nextNotifyAt: sched.nextNotifyAt,
+      notifyCount: 0,
+      acknowledged: false,
+      acknowledgedAt: null,
+    });
+    res.json(reminder);
+  } catch {
+    res.status(500).json({ error: "Erro ao remarcar lembrete." });
   }
 }
 

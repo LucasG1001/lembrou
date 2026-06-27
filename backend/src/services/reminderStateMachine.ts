@@ -1,5 +1,5 @@
 import type { Reminder, ReminderPatch, ReminderPhase } from "../types/reminder.js";
-import { addMinutes, computeNextOccurrence, spDateAtTime } from "../lib/dateUtils.js";
+import { addMinutes, computeNextOccurrence, fromSpParts, spDateAtTime, toSpParts } from "../lib/dateUtils.js";
 import * as messages from "./reminderMessages.js";
 
 const PRE_LEAD_MIN = 30;
@@ -50,8 +50,19 @@ export function initialSchedule(
  */
 export function finishOccurrence(r: Reminder, now: Date): ReminderPatch {
   if (isRecurring(r)) {
+    const anchor = new Date(r.recurAnchorAt ?? r.eventAt);
+    // Fixo: avança na grade da série. Relativo: avança a partir de agora,
+    // mas preservando dia-da-semana e hora canônicos da âncora.
+    const base =
+      r.recurMode === "relative"
+        ? (() => {
+            const a = toSpParts(anchor);
+            const n = toSpParts(now);
+            return fromSpParts(n.year, n.month, n.day, a.hour, a.minute);
+          })()
+        : anchor;
     const nextEventAt = computeNextOccurrence(
-      new Date(r.eventAt),
+      base,
       r.recurInterval as number,
       r.recurUnit as NonNullable<Reminder["recurUnit"]>,
       r.recurWeekday
@@ -59,6 +70,7 @@ export function finishOccurrence(r: Reminder, now: Date): ReminderPatch {
     const sched = initialSchedule(nextEventAt, r.isAllDay, now);
     return {
       eventAt: nextEventAt,
+      recurAnchorAt: nextEventAt,
       status: "active",
       phase: sched.phase,
       nextNotifyAt: sched.nextNotifyAt,

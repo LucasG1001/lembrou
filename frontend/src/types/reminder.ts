@@ -4,6 +4,8 @@ export type ReminderPhase = "pending" | "pre" | "at" | "nag" | "day_before" | "m
 
 export type RecurUnit = "day" | "week" | "month" | "year";
 
+export type RecurMode = "fixed" | "relative";
+
 export interface Reminder {
   id: string;
   title: string;
@@ -13,6 +15,8 @@ export interface Reminder {
   recurInterval: number | null;
   recurUnit: RecurUnit | null;
   recurWeekday: number | null;
+  recurMode: RecurMode;
+  recurAnchorAt: string | null;
   status: ReminderStatus;
   phase: ReminderPhase;
   nextNotifyAt: string | null;
@@ -33,5 +37,11 @@ export interface ReminderInput {
   recurInterval: number | null;
   recurUnit: RecurUnit | null;
   recurWeekday: number | null;
+  recurMode?: RecurMode;
   maxNotify?: number;
+}
+
+export interface RescheduleInput {
+  date: string;
+  time: string | null;
 }

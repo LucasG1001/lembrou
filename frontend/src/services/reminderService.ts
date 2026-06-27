@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { Reminder, ReminderInput, ReminderStatus } from "../types/reminder";
+import type { Reminder, ReminderInput, ReminderStatus, RescheduleInput } from "../types/reminder";
 
 export async function fetchReminders(status?: ReminderStatus): Promise<Reminder[]> {
   const response = await api.get<Reminder[]>("/api/reminders", {
@@ -20,6 +20,11 @@ export async function createReminder(input: ReminderInput): Promise<Reminder> {
 
 export async function updateReminder(id: string, input: ReminderInput): Promise<Reminder> {
   const response = await api.put<Reminder>(`/api/reminders/${id}`, input);
+  return response.data;
+}
+
+export async function rescheduleReminder(id: string, input: RescheduleInput): Promise<Reminder> {
+  const response = await api.post<Reminder>(`/api/reminders/${id}/reschedule`, input);
   return response.data;
 }
 

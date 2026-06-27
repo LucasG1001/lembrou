@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CheckIcon, ClockIcon } from "../Sidebar/Sidebar.icons";
 import { toFormParts } from "../../utils/format";
-import type { Reminder, ReminderInput } from "../../types/reminder";
+import type { Reminder, RescheduleInput } from "../../types/reminder";
 import styles from "./ReminderRowActions.module.css";
 
 const HOUR = 3_600_000;
@@ -28,7 +28,7 @@ interface ReminderRowActionsProps {
   reminder: Reminder;
   now: number;
   onCheck: (id: string) => void;
-  onReschedule: (id: string, input: ReminderInput) => void;
+  onReschedule: (id: string, input: RescheduleInput) => void;
   onCustom: (id: string) => void;
 }
 
@@ -63,18 +63,11 @@ export function ReminderRowActions({
   const applyPreset = (deltaMs: number) => {
     const base = Math.max(now, Date.parse(reminder.eventAt));
     const parts = toFormParts(new Date(base + deltaMs).toISOString());
-    const input: ReminderInput = {
-      title: reminder.title,
-      notes: reminder.notes,
+    setOpen(false);
+    onReschedule(reminder.id, {
       date: parts.date,
       time: reminder.isAllDay ? null : parts.time,
-      recurInterval: reminder.recurInterval,
-      recurUnit: reminder.recurUnit,
-      recurWeekday: reminder.recurWeekday,
-      maxNotify: reminder.maxNotify,
-    };
-    setOpen(false);
-    onReschedule(reminder.id, input);
+    });
   };
 
   return (

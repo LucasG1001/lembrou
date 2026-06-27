@@ -4,6 +4,7 @@ import {
   getById,
   create,
   update,
+  reschedule,
   remove,
   acknowledge,
   cancel,
@@ -15,6 +16,7 @@ router.get("/", getAll);
 router.post("/", create);
 router.get("/:id", getById);
 router.put("/:id", update);
+router.post("/:id/reschedule", reschedule);
 router.delete("/:id", remove);
 router.post("/:id/acknowledge", acknowledge);
 router.post("/:id/cancel", cancel);

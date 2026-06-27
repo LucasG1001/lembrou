@@ -12,6 +12,8 @@ function toReminder(row: ReminderRow): Reminder {
     recurInterval: row.recur_interval,
     recurUnit: row.recur_unit,
     recurWeekday: row.recur_weekday,
+    recurMode: row.recur_mode,
+    recurAnchorAt: row.recur_anchor_at,
     status: row.status,
     phase: row.phase,
     nextNotifyAt: row.next_notify_at,
@@ -57,8 +59,8 @@ export async function findDue(now: Date, limit: number): Promise<Reminder[]> {
 export async function create(entry: NewReminder): Promise<Reminder> {
   const result = await pool.query<ReminderRow>(
     `INSERT INTO reminders
-       (title, notes, event_at, is_all_day, recur_interval, recur_unit, recur_weekday, max_notify, phase, next_notify_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       (title, notes, event_at, is_all_day, recur_interval, recur_unit, recur_weekday, recur_mode, recur_anchor_at, max_notify, phase, next_notify_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING *`,
     [
       entry.title,
@@ -68,6 +70,8 @@ export async function create(entry: NewReminder): Promise<Reminder> {
       entry.recurInterval,
       entry.recurUnit,
       entry.recurWeekday,
+      entry.recurMode,
+      entry.recurAnchorAt,
       entry.maxNotify,
       entry.phase,
       entry.nextNotifyAt,
@@ -84,6 +88,8 @@ const COLUMN_MAP: Record<keyof ReminderPatch, string> = {
   recurInterval: "recur_interval",
   recurUnit: "recur_unit",
   recurWeekday: "recur_weekday",
+  recurMode: "recur_mode",
+  recurAnchorAt: "recur_anchor_at",
   maxNotify: "max_notify",
   status: "status",
   phase: "phase",
