@@ -99,7 +99,11 @@ export function RemindersPage() {
           reminder={reminder}
           now={now}
           onCheck={(id) => acknowledge(id).catch(() => undefined)}
-          onReschedule={(id, input) => reschedule(id, input).catch(() => undefined)}
+          onReschedule={(id, input) =>
+            reschedule(id, input).catch((err) =>
+              window.alert(err?.response?.data?.error ?? "Não foi possível remarcar.")
+            )
+          }
           onCustom={(id) => navigate(`/lembretes/r/${id}?action=reschedule`)}
         />
       );

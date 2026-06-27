@@ -17,6 +17,7 @@ export interface Reminder {
   recurWeekday: number | null;
   recurMode: RecurMode;
   recurAnchorAt: string | null;
+  nextOccurrenceAt: string | null;
   status: ReminderStatus;
   phase: ReminderPhase;
   nextNotifyAt: string | null;

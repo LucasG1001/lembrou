@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { parseEventAt, computeNextOccurrence, spDateAtTime, addMinutes, toSpParts } from "./dateUtils.js";
+import {
+  parseEventAt,
+  computeNextOccurrence,
+  spDateAtTime,
+  addMinutes,
+  toSpParts,
+  isPastEvent,
+  isOnOrAfter,
+} from "./dateUtils.js";
 
 describe("parseEventAt", () => {
   it("interpreta data+hora como horário de São Paulo", () => {
@@ -58,5 +66,44 @@ describe("addMinutes", () => {
   it("desloca em minutos", () => {
     const base = new Date("2026-06-18T12:00:00.000Z");
     expect(addMinutes(base, 30).toISOString()).toBe("2026-06-18T12:30:00.000Z");
+  });
+});
+
+describe("isPastEvent", () => {
+  const now = parseEventAt("2026-06-18", "14:00");
+
+  it("com hora: antes de agora é passado", () => {
+    expect(isPastEvent(parseEventAt("2026-06-18", "13:00"), false, now)).toBe(true);
+  });
+
+  it("com hora: futuro não é passado", () => {
+    expect(isPastEvent(parseEventAt("2026-06-18", "15:00"), false, now)).toBe(false);
+  });
+
+  it("com hora: tolera o minuto corrente", () => {
+    const event = new Date(now.getTime() + 30 * 1000); // 30s depois, mesmo minuto
+    expect(isPastEvent(event, false, now)).toBe(false);
+  });
+
+  it("dia inteiro: hoje ainda é válido mesmo de tarde", () => {
+    expect(isPastEvent(parseEventAt("2026-06-18", null), true, now)).toBe(false);
+  });
+
+  it("dia inteiro: ontem é passado", () => {
+    expect(isPastEvent(parseEventAt("2026-06-17", null), true, now)).toBe(true);
+  });
+});
+
+describe("isOnOrAfter", () => {
+  it("com hora: igual ou depois", () => {
+    const a = parseEventAt("2026-06-22", "10:00");
+    expect(isOnOrAfter(a, parseEventAt("2026-06-22", "10:00"), false)).toBe(true);
+    expect(isOnOrAfter(a, parseEventAt("2026-06-22", "11:00"), false)).toBe(false);
+  });
+
+  it("dia inteiro: compara por dia", () => {
+    const a = parseEventAt("2026-06-22", "23:00");
+    expect(isOnOrAfter(a, parseEventAt("2026-06-22", "00:00"), true)).toBe(true);
+    expect(isOnOrAfter(a, parseEventAt("2026-06-23", "00:00"), true)).toBe(false);
   });
 });

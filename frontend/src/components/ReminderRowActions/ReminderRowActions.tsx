@@ -59,9 +59,10 @@ export function ReminderRowActions({
   }, [open]);
 
   const presets = reminder.isAllDay ? ALL_DAY_PRESETS : TIMED_PRESETS;
+  const base = Math.max(now, Date.parse(reminder.eventAt));
+  const limit = reminder.nextOccurrenceAt ? Date.parse(reminder.nextOccurrenceAt) : null;
 
   const applyPreset = (deltaMs: number) => {
-    const base = Math.max(now, Date.parse(reminder.eventAt));
     const parts = toFormParts(new Date(base + deltaMs).toISOString());
     setOpen(false);
     onReschedule(reminder.id, {
@@ -96,17 +97,22 @@ export function ReminderRowActions({
       {open && (
         <div className={styles.menu} role="menu">
           <span className={styles.menuLabel}>Remarcar para</span>
-          {presets.map((preset) => (
-            <button
-              key={preset.label}
-              type="button"
-              className={styles.menuItem}
-              role="menuitem"
-              onClick={() => applyPreset(preset.deltaMs)}
-            >
-              {preset.label}
-            </button>
-          ))}
+          {presets.map((preset) => {
+            const disabled = limit != null && base + preset.deltaMs >= limit;
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                className={styles.menuItem}
+                role="menuitem"
+                disabled={disabled}
+                title={disabled ? "Passa do próximo agendamento" : undefined}
+                onClick={() => applyPreset(preset.deltaMs)}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
           <div className={styles.divider} />
           <button
             type="button"

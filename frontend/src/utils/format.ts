@@ -17,6 +17,11 @@ const UNIT_PLURAL: Record<RecurUnit, string> = {
   year: "anos",
 };
 
+/** Instante (ms UTC) a partir de "YYYY-MM-DD" + "HH:MM" no fuso fixo de SP (UTC-3, sem DST). */
+export function spInstant(date: string, time: string | null): number {
+  return Date.parse(`${date}T${time && time.length ? time : "00:00"}:00-03:00`);
+}
+
 /** Quebra o event_at (UTC) em campos de formulário no fuso de São Paulo. */
 export function toFormParts(iso: string): { date: string; time: string } {
   const d = new Date(iso);

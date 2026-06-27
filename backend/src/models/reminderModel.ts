@@ -1,6 +1,17 @@
 import { pool } from "../database/connection.js";
 import { buildUpdateSet } from "../lib/sqlUpdate.js";
+import { computeNextOccurrence } from "../lib/dateUtils.js";
 import type { NewReminder, Reminder, ReminderPatch, ReminderRow, ReminderStatus } from "../types/reminder.js";
+
+function nextOccurrenceOf(row: ReminderRow): string | null {
+  if (!row.recur_interval || !row.recur_unit || row.recur_mode !== "fixed") return null;
+  return computeNextOccurrence(
+    new Date(row.recur_anchor_at ?? row.event_at),
+    row.recur_interval,
+    row.recur_unit,
+    row.recur_weekday
+  ).toISOString();
+}
 
 function toReminder(row: ReminderRow): Reminder {
   return {
@@ -14,6 +25,7 @@ function toReminder(row: ReminderRow): Reminder {
     recurWeekday: row.recur_weekday,
     recurMode: row.recur_mode,
     recurAnchorAt: row.recur_anchor_at,
+    nextOccurrenceAt: nextOccurrenceOf(row),
     status: row.status,
     phase: row.phase,
     nextNotifyAt: row.next_notify_at,

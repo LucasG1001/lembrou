@@ -1,12 +1,22 @@
 import type { Request, Response } from "express";
 import { createReminderSchema, updateReminderSchema, rescheduleSchema } from "../schemas/reminder.js";
 import * as reminderModel from "../models/reminderModel.js";
-import { parseEventAt } from "../lib/dateUtils.js";
+import { parseEventAt, computeNextOccurrence, isPastEvent, isOnOrAfter, toSpParts } from "../lib/dateUtils.js";
 import { respondValidationError } from "../lib/validation.js";
 import { finishOccurrence, initialSchedule } from "../services/reminderStateMachine.js";
 import type { ReminderStatus } from "../types/reminder.js";
 
 const VALID_STATUS: ReminderStatus[] = ["active", "done", "cancelled"];
+
+const PAST_ERROR = "Não é possível agendar para uma data no passado.";
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+function formatSpRef(date: Date, isAllDay: boolean): string {
+  const p = toSpParts(date);
+  const day = `${pad(p.day)}/${pad(p.month + 1)}/${p.year}`;
+  return isAllDay ? day : `${day} ${pad(p.hour)}:${pad(p.minute)}`;
+}
 
 export async function getAll(req: Request, res: Response): Promise<void> {
   try {
@@ -42,7 +52,12 @@ export async function create(req: Request, res: Response): Promise<void> {
     const body = parsed.data;
     const isAllDay = !body.time;
     const eventAt = parseEventAt(body.date, body.time ?? null);
-    const sched = initialSchedule(eventAt, isAllDay, new Date());
+    const now = new Date();
+    if (isPastEvent(eventAt, isAllDay, now)) {
+      res.status(400).json({ error: PAST_ERROR });
+      return;
+    }
+    const sched = initialSchedule(eventAt, isAllDay, now);
     const isRecurring = Boolean(body.recurInterval);
 
     const reminder = await reminderModel.create({
@@ -80,7 +95,12 @@ export async function update(req: Request, res: Response): Promise<void> {
     const body = parsed.data;
     const isAllDay = !body.time;
     const eventAt = parseEventAt(body.date, body.time ?? null);
-    const sched = initialSchedule(eventAt, isAllDay, new Date());
+    const now = new Date();
+    if (isPastEvent(eventAt, isAllDay, now)) {
+      res.status(400).json({ error: PAST_ERROR });
+      return;
+    }
+    const sched = initialSchedule(eventAt, isAllDay, now);
     const isRecurring = Boolean(body.recurInterval);
 
     // Editar muda a regra: reinicia o ciclo e re-ancora a série no novo event_at.
@@ -127,7 +147,27 @@ export async function reschedule(req: Request, res: Response): Promise<void> {
       return;
     }
     const eventAt = parseEventAt(body.date, existing.isAllDay ? null : body.time ?? null);
-    const sched = initialSchedule(eventAt, existing.isAllDay, new Date());
+    const now = new Date();
+    if (isPastEvent(eventAt, existing.isAllDay, now)) {
+      res.status(400).json({ error: PAST_ERROR });
+      return;
+    }
+    // Fixo recorrente: não pode empurrar a ocorrência atual para além do próximo agendamento.
+    if (existing.recurInterval && existing.recurUnit && existing.recurMode === "fixed") {
+      const next = computeNextOccurrence(
+        new Date(existing.recurAnchorAt ?? existing.eventAt),
+        existing.recurInterval,
+        existing.recurUnit,
+        existing.recurWeekday
+      );
+      if (isOnOrAfter(eventAt, next, existing.isAllDay)) {
+        res.status(400).json({
+          error: `Não é possível remarcar para depois do próximo agendamento (${formatSpRef(next, existing.isAllDay)}).`,
+        });
+        return;
+      }
+    }
+    const sched = initialSchedule(eventAt, existing.isAllDay, now);
 
     const reminder = await reminderModel.update(existing.id, {
       eventAt,

@@ -60,6 +60,28 @@ export function addMinutes(date: Date, minutes: number): Date {
 }
 
 /**
+ * Evento está no passado? Dia inteiro compara por dia local (SP) — "hoje" ainda
+ * é válido de tarde; com hora compara por instante, tolerando o minuto corrente.
+ */
+export function isPastEvent(eventAt: Date, isAllDay: boolean, now: Date): boolean {
+  if (isAllDay) {
+    const eventDay = spDateAtTime(eventAt, 0, 0, 0).getTime();
+    const today = spDateAtTime(now, 0, 0, 0).getTime();
+    return eventDay < today;
+  }
+  const nowMinute = Math.floor(now.getTime() / 60000) * 60000;
+  return eventAt.getTime() < nowMinute;
+}
+
+/** `a` cai em/depois de `b`? Dia inteiro compara por dia (SP); com hora, por instante. */
+export function isOnOrAfter(a: Date, b: Date, isAllDay: boolean): boolean {
+  if (isAllDay) {
+    return spDateAtTime(a, 0, 0, 0).getTime() >= spDateAtTime(b, 0, 0, 0).getTime();
+  }
+  return a.getTime() >= b.getTime();
+}
+
+/**
  * Próxima ocorrência somando intervalo × unidade ao event_at. month/year fazem
  * soma de calendário com clamp de fim-de-mês; se houver weekday, avança até o dia
  * da semana alvo (ex: "a cada 6 meses aos sábados").

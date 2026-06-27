@@ -8,7 +8,7 @@ import {
   cancelReminder,
 } from "../../services/reminderService";
 import type { RecurMode, RecurUnit, ReminderInput } from "../../types/reminder";
-import { toFormParts, WEEKDAYS } from "../../utils/format";
+import { toFormParts, spInstant, WEEKDAYS } from "../../utils/format";
 import { ChevronIcon } from "../Sidebar/Sidebar.icons";
 import { Modal } from "../Modal/Modal";
 import styles from "./ReminderForm.module.css";
@@ -46,6 +46,7 @@ export function ReminderForm() {
   const [recurUnit, setRecurUnit] = useState<RecurUnit>("month");
   const [recurWeekday, setRecurWeekday] = useState<number | null>(null);
   const [recurMode, setRecurMode] = useState<RecurMode>("fixed");
+  const [nextOccurrenceAt, setNextOccurrenceAt] = useState<string | null>(null);
   const [maxNotify, setMaxNotify] = useState(DEFAULT_MAX_NOTIFY);
   const [expanded, setExpanded] = useState(false);
 
@@ -88,6 +89,7 @@ export function ReminderForm() {
         setRecurUnit(r.recurUnit ?? "month");
         setRecurWeekday(r.recurWeekday);
         setRecurMode(r.recurMode ?? "fixed");
+        setNextOccurrenceAt(r.nextOccurrenceAt);
         setMaxNotify(r.maxNotify);
         const hasAdvanced =
           Boolean(r.notes) || r.isAllDay || Boolean(r.recurInterval) || r.maxNotify !== DEFAULT_MAX_NOTIFY;
@@ -117,6 +119,27 @@ export function ReminderForm() {
     if (!allDay && !time) {
       setError("Escolha um horário ou marque como dia inteiro.");
       return;
+    }
+
+    const todaySp = toFormParts(new Date().toISOString()).date;
+    const isPast = allDay ? date < todaySp : spInstant(date, time) < Math.floor(Date.now() / 60000) * 60000;
+    if (isPast) {
+      setError("Não é possível agendar para uma data no passado.");
+      return;
+    }
+
+    // Remarcar de recorrente fixo: não pode passar do próximo agendamento.
+    if (action === "reschedule" && nextOccurrenceAt) {
+      const next = toFormParts(nextOccurrenceAt);
+      const tooLate = allDay ? date >= next.date : spInstant(date, time) >= spInstant(next.date, next.time);
+      if (tooLate) {
+        setError(
+          `Não é possível remarcar para depois do próximo agendamento (${next.date.split("-").reverse().join("/")}${
+            allDay ? "" : ` ${next.time}`
+          }).`
+        );
+        return;
+      }
     }
 
     setSaving(true);

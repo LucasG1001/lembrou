@@ -77,6 +77,17 @@
   color: var(--color-text-accent);
 }
 
+.menuItem:disabled {
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menuItem:disabled:hover {
+  background: transparent;
+  color: var(--color-text-tertiary);
+}
+
 .divider {
   height: 1px;
   margin: var(--spacing-xs) 0;

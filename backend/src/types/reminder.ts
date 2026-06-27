@@ -19,6 +19,8 @@ export interface Reminder {
   recurWeekday: number | null;
   recurMode: RecurMode;
   recurAnchorAt: string | null;
+  /** Calculado (não persistido): próxima ocorrência da grade — só para recorrentes fixos, senão null. */
+  nextOccurrenceAt: string | null;
   status: ReminderStatus;
   phase: ReminderPhase;
   nextNotifyAt: string | null;
