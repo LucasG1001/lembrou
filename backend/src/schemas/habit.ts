@@ -16,5 +16,9 @@ export const completionStatusSchema = z.object({
   status: z.enum(["done", "notDone", "clear"]),
 });
 
+export const reorderHabitsSchema = z.object({
+  order: z.array(z.string().uuid("ID inválido.")).min(1, "Forneça ao menos um hábito."),
+});
+
 export type CreateHabitBody = z.infer<typeof createHabitSchema>;
 export type UpdateHabitBody = z.infer<typeof updateHabitSchema>;

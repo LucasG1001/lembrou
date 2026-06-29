@@ -26,13 +26,16 @@ function toHabit(row: HabitRow, completionRows: HabitCompletionRow[]): Habit {
     currentStreak: row.current_streak,
     longestStreak: row.longest_streak,
     level: row.level,
+    position: row.position,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
 export async function findAll(): Promise<Habit[]> {
-  const habits = await pool.query<HabitRow>("SELECT * FROM habits ORDER BY created_at ASC");
+  const habits = await pool.query<HabitRow>(
+    "SELECT * FROM habits ORDER BY position ASC, created_at ASC"
+  );
   const completions = await pool.query<HabitCompletionRow>(
     "SELECT habit_id, date, completed, locked FROM habit_completions"
   );
@@ -51,12 +54,32 @@ export async function findById(id: string): Promise<Habit | null> {
 
 export async function create(entry: NewHabit): Promise<Habit> {
   const result = await pool.query<HabitRow>(
-    `INSERT INTO habits (name, selected_days, icon)
-     VALUES ($1, $2, $3)
+    `INSERT INTO habits (name, selected_days, icon, position)
+     VALUES ($1, $2, $3, (SELECT COALESCE(MAX(position), -1) + 1 FROM habits))
      RETURNING *`,
     [entry.name, entry.selectedDays, entry.icon]
   );
   return toHabit(result.rows[0]!, []);
+}
+
+export async function reorder(orderedIds: string[]): Promise<Habit[]> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (let i = 0; i < orderedIds.length; i++) {
+      await client.query("UPDATE habits SET position = $1, updated_at = NOW() WHERE id = $2", [
+        i,
+        orderedIds[i],
+      ]);
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+  return findAll();
 }
 
 const COLUMN_MAP: Record<keyof HabitPatch, string> = {

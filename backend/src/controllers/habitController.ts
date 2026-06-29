@@ -1,5 +1,10 @@
 import type { Request, Response } from "express";
-import { completionStatusSchema, createHabitSchema, updateHabitSchema } from "../schemas/habit.js";
+import {
+  completionStatusSchema,
+  createHabitSchema,
+  reorderHabitsSchema,
+  updateHabitSchema,
+} from "../schemas/habit.js";
 import * as habitModel from "../models/habitModel.js";
 import { CompletionLockedError } from "../models/errors.js";
 import { DATE_RE, respondValidationError } from "../lib/validation.js";
@@ -42,6 +47,20 @@ export async function update(req: Request, res: Response): Promise<void> {
     res.json(habit);
   } catch {
     res.status(500).json({ error: "Erro ao atualizar hábito." });
+  }
+}
+
+export async function reorder(req: Request, res: Response): Promise<void> {
+  try {
+    const parsed = reorderHabitsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      respondValidationError(res, parsed.error);
+      return;
+    }
+    const habits = await habitModel.reorder(parsed.data.order);
+    res.json(habits);
+  } catch {
+    res.status(500).json({ error: "Erro ao reordenar hábitos." });
   }
 }
 

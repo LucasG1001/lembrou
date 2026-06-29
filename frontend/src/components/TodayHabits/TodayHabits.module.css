@@ -17,6 +17,10 @@
   transition: border-color var(--transition-fast), background var(--transition-fast),
     color var(--transition-fast), transform var(--transition-fast);
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .square:hover {
@@ -30,6 +34,18 @@
   background: var(--color-success-subtle);
   border-color: var(--color-success);
   color: var(--color-success);
+}
+
+.dragging,
+.dragging:hover {
+  position: relative;
+  z-index: 2;
+  transform: scale(1.1);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+  opacity: 0.9;
+  cursor: grabbing;
 }
 
 .icon {

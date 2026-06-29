@@ -16,6 +16,11 @@ export async function updateHabit(id: string, data: HabitFormData): Promise<Habi
   return response.data;
 }
 
+export async function reorderHabits(order: string[]): Promise<Habit[]> {
+  const response = await api.post<Habit[]>("/api/habits/reorder", { order });
+  return response.data;
+}
+
 export async function deleteHabit(id: string): Promise<void> {
   await api.delete(`/api/habits/${id}`);
 }

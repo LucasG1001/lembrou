@@ -69,6 +69,18 @@ export async function migrate(): Promise<void> {
     ALTER TABLE habits ALTER COLUMN icon SET DEFAULT 'target';
   `);
 
+  // Ordem manual dos hábitos (drag-and-drop). Coluna idempotente.
+  await pool.query(`
+    ALTER TABLE habits ADD COLUMN IF NOT EXISTS position INTEGER NOT NULL DEFAULT 0;
+  `);
+
+  // Backfill só quando ainda não há ordenação (todas as posições iguais): roda 1x.
+  await pool.query(`
+    UPDATE habits h SET position = s.rn
+    FROM (SELECT id, (ROW_NUMBER() OVER (ORDER BY created_at) - 1) AS rn FROM habits) s
+    WHERE h.id = s.id AND (SELECT COUNT(DISTINCT position) FROM habits) <= 1;
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS habit_completions (
       id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

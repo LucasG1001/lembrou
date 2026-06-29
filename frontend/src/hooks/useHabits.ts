@@ -5,6 +5,7 @@ import {
   createHabit as apiCreateHabit,
   updateHabit as apiUpdateHabit,
   deleteHabit as apiDeleteHabit,
+  reorderHabits as apiReorderHabits,
   setHabitCompletion,
 } from "../services/habitService";
 import { calculateCurrentStreak, calculateLongestStreak } from "../utils/streakUtils";
@@ -17,6 +18,7 @@ interface UseHabitsReturn {
   createHabit: (data: HabitFormData) => Promise<void>;
   updateHabit: (id: string, data: HabitFormData) => Promise<void>;
   deleteHabit: (id: string) => Promise<void>;
+  reorderHabits: (orderedIds: string[]) => Promise<void>;
   setCompletion: (habitId: string, date: string, status: CompletionStatus) => Promise<void>;
 }
 
@@ -59,6 +61,22 @@ export function useHabits(): UseHabitsReturn {
     setHabits((prev) => prev.map((h) => (h.id === habitId ? recalculateHabitStats(updated) : h)));
   }
 
+  async function reorderHabits(orderedIds: string[]): Promise<void> {
+    let previous: Habit[] = [];
+    setHabits((prev) => {
+      previous = prev;
+      const byId = new Map(prev.map((h) => [h.id, h]));
+      const next = orderedIds.map((id) => byId.get(id)).filter((h): h is Habit => Boolean(h));
+      return next.length === prev.length ? next : prev;
+    });
+    try {
+      const updated = await apiReorderHabits(orderedIds);
+      setHabits(updated.map(recalculateHabitStats));
+    } catch {
+      setHabits(previous);
+    }
+  }
+
   return {
     habits,
     loading,
@@ -66,6 +84,7 @@ export function useHabits(): UseHabitsReturn {
     createHabit,
     updateHabit,
     deleteHabit,
+    reorderHabits,
     setCompletion,
   };
 }

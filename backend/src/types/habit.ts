@@ -13,6 +13,7 @@ export interface Habit {
   currentStreak: number;
   longestStreak: number;
   level: number;
+  position: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +26,7 @@ export interface HabitRow {
   current_streak: number;
   longest_streak: number;
   level: number;
+  position: number;
   created_at: string;
   updated_at: string;
 }

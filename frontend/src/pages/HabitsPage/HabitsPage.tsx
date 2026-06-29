@@ -45,7 +45,8 @@ function buildOccurrences(habits: Habit[]): { items: TimelineItem[]; byId: Map<s
 }
 
 export function HabitsPage() {
-  const { habits, loading, error, createHabit, updateHabit, deleteHabit, setCompletion } = useHabits();
+  const { habits, loading, error, createHabit, updateHabit, deleteHabit, reorderHabits, setCompletion } =
+    useHabits();
 
   const [selected, setSelected] = useState<Habit | null>(null);
   const [editing, setEditing] = useState<Habit | null>(null);
@@ -111,6 +112,19 @@ export function HabitsPage() {
     [setCompletion]
   );
 
+  const handleReorder = useCallback(
+    (newVisibleIds: string[]) => {
+      const todayDate = getToday();
+      const visible = new Set(
+        habits.filter((h) => isScheduledDay(todayDate, h.selectedDays)).map((h) => h.id)
+      );
+      let vi = 0;
+      const fullOrder = habits.map((h) => (visible.has(h.id) ? newVisibleIds[vi++]! : h.id));
+      reorderHabits(fullOrder).catch(() => undefined);
+    },
+    [habits, reorderHabits]
+  );
+
   return (
     <div className={styles.page}>
       {!loading && !error && habits.length > 0 && (
@@ -123,7 +137,7 @@ export function HabitsPage() {
               <span className={styles.newLabel}>Novo hábito</span>
             </button>
           </div>
-          <TodayHabits habits={habits} onToggle={handleToggle} />
+          <TodayHabits habits={habits} onToggle={handleToggle} onReorder={handleReorder} />
         </>
       )}
 

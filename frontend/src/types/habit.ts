@@ -17,6 +17,7 @@ export interface Habit {
   currentStreak: number;
   longestStreak: number;
   level: number;
+  position: number;
   createdAt: string;
   updatedAt: string;
 }
