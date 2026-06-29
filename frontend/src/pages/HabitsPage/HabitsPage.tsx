@@ -99,23 +99,23 @@ export function HabitsPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <button
-          className={styles.newButton}
-          aria-label="Novo hábito"
-          onClick={() => {
-            setEditing(null);
-            setFormMode("create");
-          }}
-        >
-          <span className={styles.newPlus} aria-hidden="true">+</span>
-          <span className={styles.newLabel}>Novo hábito</span>
-        </button>
-      </header>
-
       {!loading && !error && habits.length > 0 && (
         <>
           <HabitsStats habits={habits} />
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Hoje</h2>
+            <button
+              className={styles.newButton}
+              aria-label="Novo hábito"
+              onClick={() => {
+                setEditing(null);
+                setFormMode("create");
+              }}
+            >
+              <span className={styles.newPlus} aria-hidden="true">+</span>
+              <span className={styles.newLabel}>Novo hábito</span>
+            </button>
+          </div>
           <TodayHabits habits={habits} onToggle={handleToggle} />
         </>
       )}
@@ -145,6 +145,8 @@ export function HabitsPage() {
           laterGroups={[]}
           iconFor={iconForHabit}
           onItemClick={handleItemClick}
+          weekTitle={null}
+          hideGroupHeaders
           emptyMessage="Nenhum hábito agendado para hoje."
         />
       )}

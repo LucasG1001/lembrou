@@ -14,6 +14,7 @@ interface TimelineProps {
   emptyMessage?: string;
   weekTitle?: string | null;
   laterTitle?: string | null;
+  hideGroupHeaders?: boolean;
 }
 
 export const Timeline = memo(function Timeline({
@@ -26,6 +27,7 @@ export const Timeline = memo(function Timeline({
   emptyMessage = "Nada agendado nos próximos dias.",
   weekTitle = "Esta semana",
   laterTitle = "Mais adiante",
+  hideGroupHeaders = false,
 }: TimelineProps) {
   const bindPress = useLongPress<TimelineItem>({
     onTap: (item) => onItemClick?.(item),
@@ -38,7 +40,7 @@ export const Timeline = memo(function Timeline({
   const renderGroups = (groups: TimelineGroup[], withDate: boolean) =>
     groups.map((group) => (
       <div key={group.key} className={styles.group}>
-        <div className={styles.groupHeader}>{group.label}</div>
+        {!hideGroupHeaders && <div className={styles.groupHeader}>{group.label}</div>}
         <div className={styles.groupItems}>
           {group.items.map((item) => {
             const Icon = iconFor(item);

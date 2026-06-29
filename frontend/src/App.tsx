@@ -28,7 +28,7 @@ function App() {
         <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
         <main className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""}`}>
           <Routes>
-            <Route path="/" element={<Navigate to="/inicio" replace />} />
+            <Route path="/" element={<Navigate to="/lembretes" replace />} />
             <Route path="/inicio" element={<DashboardPage />} />
             <Route path="/lembretes" element={<RemindersPage />}>
               <Route path="novo" element={<ReminderForm />} />
