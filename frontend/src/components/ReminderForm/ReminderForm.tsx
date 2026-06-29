@@ -87,7 +87,7 @@ export function ReminderForm() {
         setRecurWeekday(r.recurWeekday);
         setRecurMode(r.recurMode ?? "fixed");
         setNextOccurrenceAt(r.nextOccurrenceAt);
-        const hasAdvanced = Boolean(r.notes) || r.isAllDay || Boolean(r.recurInterval);
+        const hasAdvanced = Boolean(r.notes) || Boolean(r.recurInterval);
         setExpanded(hasAdvanced);
         setLoading(false);
       })
@@ -224,6 +224,11 @@ export function ReminderForm() {
         </label>
       </div>
 
+      <label className={styles.checkbox}>
+        <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />
+        <span>Dia inteiro (aviso às 08:00 do dia anterior e às 08:00 do dia do evento)</span>
+      </label>
+
       {action !== "reschedule" && (
         <button
           type="button"
@@ -247,11 +252,6 @@ export function ReminderForm() {
               rows={2}
               maxLength={2000}
             />
-          </label>
-
-          <label className={styles.checkbox}>
-            <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />
-            <span>Dia inteiro (aviso na véspera às 18:00 e no dia às 08:00)</span>
           </label>
 
           <label className={styles.checkbox}>
