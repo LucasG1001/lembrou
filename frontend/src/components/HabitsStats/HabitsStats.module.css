@@ -27,6 +27,10 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.labelShort {
+  display: none;
+}
+
 .caption {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
@@ -75,11 +79,35 @@
 }
 
 @media (max-width: 768px) {
+  /* No celular mostramos Progresso de hoje + Sequência lado a lado,
+     mantendo o anel; só encurtamos os textos. */
   .stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
-  /* No celular mostramos só Progresso de hoje + Sequência atual, com os textos. */
+  .card {
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+  }
+
+  .ring {
+    width: 52px;
+    height: 52px;
+  }
+
+  .ringInner {
+    width: 38px;
+    height: 38px;
+  }
+
+  .labelFull {
+    display: none;
+  }
+
+  .labelShort {
+    display: inline;
+  }
+
   .cardLongest {
     display: none;
   }

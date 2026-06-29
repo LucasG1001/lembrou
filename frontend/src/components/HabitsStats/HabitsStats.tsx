@@ -39,7 +39,8 @@ export function HabitsStats({ habits }: HabitsStatsProps) {
           </div>
         </div>
         <div className={styles.cardText}>
-          <span className={styles.label}>Progresso de hoje</span>
+          <span className={`${styles.label} ${styles.labelFull}`}>Progresso de hoje</span>
+          <span className={`${styles.label} ${styles.labelShort}`}>Progresso</span>
           <span className={styles.caption}>
             {totalToday === 0
               ? "Nada agendado para hoje"
@@ -55,8 +56,10 @@ export function HabitsStats({ habits }: HabitsStatsProps) {
           <FlameIcon className={styles.flame} /> {current}
         </span>
         <div className={styles.cardText}>
-          <span className={styles.label}>Sequência atual</span>
-          <span className={styles.caption}>Todos os hábitos em dia</span>
+          <span className={`${styles.label} ${styles.labelFull}`}>Sequência atual</span>
+          <span className={`${styles.label} ${styles.labelShort}`}>Sequência</span>
+          <span className={`${styles.caption} ${styles.labelFull}`}>Todos os hábitos em dia</span>
+          <span className={`${styles.caption} ${styles.labelShort}`}>Hábitos em dia</span>
         </div>
       </div>
 
