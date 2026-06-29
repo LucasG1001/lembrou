@@ -1,21 +1,14 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useReminders } from "../../hooks/useReminders";
 import { ReminderActionsSheet } from "../../components/ReminderActionsSheet/ReminderActionsSheet";
-import { ReminderHistoryActions } from "../../components/ReminderHistoryActions/ReminderHistoryActions";
 import { Timeline } from "../../components/Timeline/Timeline";
 import { BellIcon } from "../../components/Sidebar/Sidebar.icons";
 import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
 import { recurrenceLabel, remainingLabel, dayRemainingLabel } from "../../utils/format";
 import { useMinuteTick } from "../../hooks/useMinuteTick";
-import type { Reminder, ReminderStatus } from "../../types/reminder";
+import type { Reminder } from "../../types/reminder";
 import styles from "./RemindersPage.module.css";
-
-const TABS: { value: ReminderStatus; label: string }[] = [
-  { value: "active", label: "Ativos" },
-  { value: "done", label: "Concluídos" },
-  { value: "cancelled", label: "Cancelados" },
-];
 
 function toTimelineItem(reminder: Reminder, now: number): TimelineItem {
   const when = Date.parse(reminder.eventAt);
@@ -34,51 +27,15 @@ function toTimelineItem(reminder: Reminder, now: number): TimelineItem {
 
 const iconForBell = () => BellIcon;
 
-function toHistoryItem(reminder: Reminder): TimelineItem {
-  return {
-    id: reminder.id,
-    kind: "reminder",
-    title: reminder.title,
-    when: Date.parse(reminder.eventAt),
-    detail: recurrenceLabel(reminder) ?? (reminder.isAllDay ? "Dia inteiro" : ""),
-    hasTime: !reminder.isAllDay,
-  };
-}
-
 export function RemindersPage() {
   const navigate = useNavigate();
-  const {
-    reminders,
-    status,
-    setStatus,
-    loading,
-    error,
-    reload,
-    remove,
-    acknowledge,
-    reschedule,
-    cancel,
-  } = useReminders();
+  const { reminders, loading, error, reload, acknowledge, reschedule, cancel } = useReminders();
 
   const [selected, setSelected] = useState<Reminder | null>(null);
 
   const byId = useMemo(() => new Map(reminders.map((r) => [r.id, r])), [reminders]);
 
   const selectedReminder = selected ? byId.get(selected.id) ?? selected : null;
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (window.confirm("Excluir este lembrete de vez?")) {
-        remove(id).catch(() => undefined);
-      }
-    },
-    [remove]
-  );
-
-  const handleItemClick = useCallback(
-    (item: TimelineItem) => navigate(`/lembretes/r/${item.id}`),
-    [navigate]
-  );
 
   const now = useMinuteTick();
 
@@ -88,32 +45,9 @@ export function RemindersPage() {
     return { weekGroups: groupByDay(week), laterGroups: groupByMonth(later) };
   }, [reminders, now]);
 
-  const historyGroups = useMemo(() => {
-    const items = reminders.map(toHistoryItem).sort((a, b) => b.when - a.when);
-    return groupByMonth(items);
-  }, [reminders]);
-
-  const isActiveTab = status === "active";
-
-  const renderHistoryAction = useCallback(
-    (item: TimelineItem) => <ReminderHistoryActions id={item.id} onDelete={handleDelete} />,
-    [handleDelete]
-  );
-
   return (
     <div className={styles.page}>
       <div className={styles.toolbar}>
-        <div className={styles.tabs}>
-          {TABS.map((tab) => (
-            <button
-              key={tab.value}
-              className={`${styles.tab} ${status === tab.value ? styles.tabActive : ""}`}
-              onClick={() => setStatus(tab.value)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
         <Link to="/lembretes/novo" className={styles.newButton} aria-label="Novo lembrete">
           <span className={styles.newPlus} aria-hidden="true">+</span>
           <span className={styles.newLabel}>Novo lembrete</span>
@@ -133,7 +67,7 @@ export function RemindersPage() {
         </div>
       )}
 
-      {!loading && !error && reminders.length > 0 && isActiveTab && (
+      {!loading && !error && reminders.length > 0 && (
         <Timeline
           weekGroups={timeline.weekGroups}
           laterGroups={timeline.laterGroups}
@@ -141,20 +75,6 @@ export function RemindersPage() {
           onItemClick={(item) => setSelected(byId.get(item.id) ?? null)}
           onItemLongPress={(item) => navigate(`/lembretes/r/${item.id}`)}
           emptyMessage="Nenhum lembrete ativo agendado."
-        />
-      )}
-
-      {!loading && !error && reminders.length > 0 && !isActiveTab && (
-        <Timeline
-          weekGroups={[]}
-          laterGroups={historyGroups}
-          laterTitle={null}
-          iconFor={iconForBell}
-          onItemClick={handleItemClick}
-          renderAction={renderHistoryAction}
-          emptyMessage={
-            status === "done" ? "Nenhum lembrete concluído." : "Nenhum lembrete cancelado."
-          }
         />
       )}
 

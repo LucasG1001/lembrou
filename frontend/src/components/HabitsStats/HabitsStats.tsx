@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { Habit } from "../../types/habit";
 import { getToday, getTodayKey, isScheduledDay } from "../../utils/dateUtils";
 import { calculateCombinedStreak } from "../../utils/streakUtils";
+import { FlameIcon } from "../Sidebar/Sidebar.icons";
 import styles from "./HabitsStats.module.css";
 
 interface HabitsStatsProps {
@@ -51,7 +52,7 @@ export function HabitsStats({ habits }: HabitsStatsProps) {
 
       <div className={styles.card}>
         <span className={styles.value} style={{ color: "var(--streak-color)" }}>
-          🔥 {current}
+          <FlameIcon className={styles.flame} /> {current}
         </span>
         <div className={styles.cardText}>
           <span className={styles.label}>Sequência atual</span>

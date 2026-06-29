@@ -38,11 +38,16 @@ interface CalendarDay {
 function getDayState(
   date: Date,
   today: Date,
+  createdDay: Date,
   completions: HabitCompletion[],
   selectedDays: DayOfWeek[]
 ): DayState {
   if (date > today) {
     return "future";
+  }
+
+  if (date < createdDay) {
+    return "notScheduled";
   }
 
   const dow = getDayOfWeek(date);
@@ -68,6 +73,7 @@ function buildCalendarDays(
   year: number,
   month: number,
   today: Date,
+  createdDay: Date,
   completions: HabitCompletion[],
   selectedDays: DayOfWeek[]
 ): CalendarDay[] {
@@ -76,7 +82,7 @@ function buildCalendarDays(
 
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
-    const state = getDayState(date, today, completions, selectedDays);
+    const state = getDayState(date, today, createdDay, completions, selectedDays);
     days.push({
       day,
       date,
@@ -103,6 +109,7 @@ export function CompletionGrid({ completions, selectedDays, createdAt }: Complet
   const createdDate = new Date(createdAt);
   const createdYear = createdDate.getFullYear();
   const createdMonth = createdDate.getMonth();
+  const createdDay = new Date(createdYear, createdMonth, createdDate.getDate());
 
   const canGoPrev =
     viewMonth.year > createdYear ||
@@ -134,6 +141,7 @@ export function CompletionGrid({ completions, selectedDays, createdAt }: Complet
     viewMonth.year,
     viewMonth.month,
     today,
+    createdDay,
     completions,
     selectedDays
   );

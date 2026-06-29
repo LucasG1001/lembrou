@@ -87,7 +87,7 @@
   --sidebar-collapsed: 72px;
   --mobile-nav-height: 64px;
 
-  --streak-color: #fb923c;
+  --streak-color: var(--color-accent);
   --level-1: #6b7280;
   --level-2: #4ade80;
   --level-3: #22d3ee;

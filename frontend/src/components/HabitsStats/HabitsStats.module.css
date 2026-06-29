@@ -37,6 +37,15 @@
   font-weight: var(--font-weight-extrabold);
   line-height: 1;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+}
+
+.flame {
+  width: 0.95em;
+  height: 0.95em;
+  flex-shrink: 0;
 }
 
 .ring {

@@ -6,19 +6,18 @@ import {
   rescheduleReminder,
   cancelReminder,
 } from "../services/reminderService";
-import type { Reminder, ReminderStatus, RescheduleInput } from "../types/reminder";
+import type { Reminder, RescheduleInput } from "../types/reminder";
 
 export function useReminders() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [status, setStatusState] = useState<ReminderStatus>("active");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Busca dispara só por mudança de status/refresh; setState só dentro de callbacks.
+  // Busca dispara só por refresh; setState só dentro de callbacks.
   useEffect(() => {
     let active = true;
-    fetchReminders(status)
+    fetchReminders("active")
       .then((data) => {
         if (active) setReminders(data);
       })
@@ -31,13 +30,7 @@ export function useReminders() {
     return () => {
       active = false;
     };
-  }, [status, refreshKey]);
-
-  const setStatus = useCallback((next: ReminderStatus) => {
-    setLoading(true);
-    setError(null);
-    setStatusState(next);
-  }, []);
+  }, [refreshKey]);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -45,16 +38,13 @@ export function useReminders() {
     setRefreshKey((k) => k + 1);
   }, []);
 
-  const applyUpdate = useCallback(
-    (updated: Reminder) => {
-      setReminders((prev) =>
-        updated.status === status
-          ? prev.map((r) => (r.id === updated.id ? updated : r))
-          : prev.filter((r) => r.id !== updated.id)
-      );
-    },
-    [status]
-  );
+  const applyUpdate = useCallback((updated: Reminder) => {
+    setReminders((prev) =>
+      updated.status === "active"
+        ? prev.map((r) => (r.id === updated.id ? updated : r))
+        : prev.filter((r) => r.id !== updated.id)
+    );
+  }, []);
 
   const remove = useCallback(async (id: string) => {
     await deleteReminder(id);
@@ -78,8 +68,6 @@ export function useReminders() {
 
   return {
     reminders,
-    status,
-    setStatus,
     loading,
     error,
     reload,

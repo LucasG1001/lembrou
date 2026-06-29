@@ -65,6 +65,14 @@ export function ClockIcon({ className }: IconProps) {
   );
 }
 
+export function FlameIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M12 2c1 3-1 5-2 6-1 1-2 3-2 5a6 6 0 0 0 12 0c0-3-2-5-3-7-1.5 1-2 2-2 2 0-2 0-4-3-6Z" />
+    </Icon>
+  );
+}
+
 export function TrashIcon({ className }: IconProps) {
   return (
     <Icon className={className}>
