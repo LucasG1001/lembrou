@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useHabits } from "../../hooks/useHabits";
 import { Timeline } from "../../components/Timeline/Timeline";
 import { SidePanel } from "../../components/SidePanel/SidePanel";
@@ -47,8 +48,24 @@ export function HabitsPage() {
   const { habits, loading, error, createHabit, updateHabit, deleteHabit, setCompletion } = useHabits();
 
   const [selected, setSelected] = useState<Habit | null>(null);
-  const [formMode, setFormMode] = useState<"create" | "edit" | null>(null);
   const [editing, setEditing] = useState<Habit | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const formMode: "create" | "edit" | null = editing
+    ? "edit"
+    : searchParams.get("novo") === "1"
+      ? "create"
+      : null;
+
+  const openCreate = useCallback(() => {
+    setEditing(null);
+    setSearchParams({ novo: "1" });
+  }, [setSearchParams]);
+
+  const closeForm = useCallback(() => {
+    setEditing(null);
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
 
   const { items, byId } = useMemo(() => buildOccurrences(habits), [habits]);
   const weekGroups = useMemo(() => groupByDay(items), [items]);
@@ -62,12 +79,9 @@ export function HabitsPage() {
         formMode === "edit" && editing
           ? updateHabit(editing.id, data)
           : createHabit(data);
-      action.catch(() => undefined).finally(() => {
-        setFormMode(null);
-        setEditing(null);
-      });
+      action.catch(() => undefined).finally(closeForm);
     },
-    [formMode, editing, updateHabit, createHabit]
+    [formMode, editing, updateHabit, createHabit, closeForm]
   );
 
   const handleDelete = useCallback(
@@ -104,14 +118,7 @@ export function HabitsPage() {
           <HabitsStats habits={habits} />
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Hoje</h2>
-            <button
-              className={styles.newButton}
-              aria-label="Novo hábito"
-              onClick={() => {
-                setEditing(null);
-                setFormMode("create");
-              }}
-            >
+            <button className={styles.newButton} aria-label="Novo hábito" onClick={openCreate}>
               <span className={styles.newPlus} aria-hidden="true">+</span>
               <span className={styles.newLabel}>Novo hábito</span>
             </button>
@@ -127,13 +134,7 @@ export function HabitsPage() {
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>Nenhum hábito ainda</p>
           <p className={styles.muted}>Crie um hábito e acompanhe sua sequência por aqui.</p>
-          <button
-            className={styles.emptyButton}
-            onClick={() => {
-              setEditing(null);
-              setFormMode("create");
-            }}
-          >
+          <button className={styles.emptyButton} onClick={openCreate}>
             + Novo hábito
           </button>
         </div>
@@ -158,7 +159,6 @@ export function HabitsPage() {
           onEdit={(habit) => {
             setSelected(null);
             setEditing(habit);
-            setFormMode("edit");
           }}
           onDelete={handleDelete}
         />
@@ -173,10 +173,7 @@ export function HabitsPage() {
               : undefined
           }
           onSave={handleSave}
-          onClose={() => {
-            setFormMode(null);
-            setEditing(null);
-          }}
+          onClose={closeForm}
         />
       )}
     </div>

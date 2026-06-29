@@ -11,9 +11,10 @@ const MOVE_THRESHOLD = 10;
 interface LongPressHandlers {
   onPointerDown: (e: React.PointerEvent) => void;
   onPointerMove: (e: React.PointerEvent) => void;
-  onPointerUp: (e: React.PointerEvent) => void;
+  onPointerUp: () => void;
   onPointerLeave: () => void;
   onPointerCancel: () => void;
+  onClick: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }
 
@@ -53,12 +54,16 @@ export function useLongPress<T>({ onTap, onLongPress, delay = 500 }: UseLongPres
           clear();
         }
       },
-      onPointerUp: () => {
-        clear();
-        if (!fired.current && !moved.current) onTap(payload);
-      },
+      onPointerUp: clear,
       onPointerLeave: clear,
       onPointerCancel: clear,
+      onClick: () => {
+        if (fired.current) {
+          fired.current = false;
+          return;
+        }
+        if (!moved.current) onTap(payload);
+      },
       onContextMenu: (e) => e.preventDefault(),
     };
   };

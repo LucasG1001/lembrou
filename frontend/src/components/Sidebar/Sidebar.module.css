@@ -219,17 +219,12 @@
   .barItem {
     flex: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
     padding: var(--spacing-xs);
     color: var(--color-text-secondary);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
     border: none;
     background: none;
-    text-align: center;
   }
 
   .barItemActive {
@@ -237,12 +232,40 @@
   }
 
   .barIcon {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     color: var(--color-text-tertiary);
   }
 
   .barItemActive .barIcon {
     color: var(--color-accent);
+  }
+
+  .barAdd {
+    flex-shrink: 0;
+    align-self: center;
+    width: 52px;
+    height: 52px;
+    margin: 0 var(--spacing-sm);
+    background: none;
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast), transform var(--transition-fast);
+  }
+
+  .barAdd:hover {
+    color: var(--color-accent-hover);
+  }
+
+  .barAdd:active {
+    transform: scale(0.92);
+  }
+
+  .barAddIcon {
+    width: 34px;
+    height: 34px;
+    stroke-width: 2.75;
   }
 }

@@ -95,25 +95,8 @@
     padding: var(--spacing-base);
   }
 
-  /* O botão vira FAB fixo; o título "Hoje" continua no fluxo. */
+  /* No celular o "+" central da barra inferior cuida de adicionar. */
   .newButton {
-    position: fixed;
-    right: var(--spacing-base);
-    bottom: calc(var(--mobile-nav-height) + var(--spacing-base) + env(safe-area-inset-bottom));
-    z-index: 30;
-    width: 56px;
-    height: 56px;
-    padding: 0;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .newPlus {
-    font-size: var(--font-size-2xl);
-  }
-
-  .newLabel {
     display: none;
   }
 }

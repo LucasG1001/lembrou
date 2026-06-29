@@ -85,25 +85,8 @@
     padding: var(--spacing-base);
   }
 
-  /* Botão flutuante (FAB) só com "+" no canto inferior direito, acima da barra. */
+  /* No celular o "+" central da barra inferior cuida de adicionar. */
   .newButton {
-    position: fixed;
-    right: var(--spacing-base);
-    bottom: calc(var(--mobile-nav-height) + var(--spacing-base) + env(safe-area-inset-bottom));
-    z-index: 30;
-    width: 56px;
-    height: 56px;
-    padding: 0;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .newPlus {
-    font-size: var(--font-size-2xl);
-  }
-
-  .newLabel {
     display: none;
   }
 }

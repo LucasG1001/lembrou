@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Sidebar.module.css";
-import { BellIcon, CheckIcon, ChevronIcon, LogoIcon } from "./Sidebar.icons";
+import { BellIcon, CheckIcon, ChevronIcon, LogoIcon, PlusIcon } from "./Sidebar.icons";
 
 interface NavItem {
   path: string;
@@ -20,6 +20,34 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleAdd = () => {
+    if (location.pathname.startsWith("/habitos")) {
+      navigate("/habitos?novo=1");
+    } else {
+      navigate("/lembretes/novo");
+    }
+  };
+
+  const mid = Math.floor(NAV_ITEMS.length / 2);
+
+  const renderBarItem = (item: NavItem) => {
+    const ItemIcon = item.icon;
+    return (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        aria-label={item.label}
+        title={item.label}
+        className={({ isActive }) => `${styles.barItem} ${isActive ? styles.barItemActive : ""}`}
+      >
+        <ItemIcon className={styles.barIcon} />
+      </NavLink>
+    );
+  };
+
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}>
       <div className={styles.logo}>
@@ -58,22 +86,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       <nav className={styles.mobileNav}>
-        {NAV_ITEMS.map((item) => {
-          const ItemIcon = item.icon;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              aria-label={item.label}
-              className={({ isActive }) =>
-                `${styles.barItem} ${isActive ? styles.barItemActive : ""}`
-              }
-            >
-              <ItemIcon className={styles.barIcon} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
+        {NAV_ITEMS.slice(0, mid).map(renderBarItem)}
+        <button type="button" className={styles.barAdd} onClick={handleAdd} aria-label="Adicionar">
+          <PlusIcon className={styles.barAddIcon} />
+        </button>
+        {NAV_ITEMS.slice(mid).map(renderBarItem)}
       </nav>
     </aside>
   );
