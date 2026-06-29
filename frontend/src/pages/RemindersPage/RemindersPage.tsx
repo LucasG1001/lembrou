@@ -7,7 +7,6 @@ import { BellIcon, CalendarIcon } from "../../components/Sidebar/Sidebar.icons";
 import { ReminderCalendar } from "../../components/ReminderCalendar/ReminderCalendar";
 import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
 import { recurrenceLabel, remainingLabel, dayRemainingLabel } from "../../utils/format";
-import { todayLabel } from "../../utils/dashboard";
 import { formatDateKey } from "../../utils/dateUtils";
 import { useMinuteTick } from "../../hooks/useMinuteTick";
 import type { Reminder } from "../../types/reminder";
@@ -61,7 +60,7 @@ export function RemindersPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <p className={styles.date}>{todayLabel()}</p>
+        <h2 className={styles.sectionTitle}>Esta semana</h2>
         <div className={styles.headerActions}>
           <button
             type="button"
@@ -98,6 +97,7 @@ export function RemindersPage() {
           iconFor={iconForBell}
           onItemClick={(item) => setSelected(byId.get(item.id) ?? null)}
           onItemLongPress={(item) => navigate(`/lembretes/r/${item.id}`)}
+          weekTitle={null}
           emptyMessage="Nenhum lembrete ativo agendado."
         />
       )}
