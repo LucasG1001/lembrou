@@ -9,6 +9,7 @@ import { TodayHabits } from "../../components/TodayHabits/TodayHabits";
 import { groupByDay, type TimelineItem } from "../../utils/agenda";
 import { formatDateKey, getToday, isScheduledDay } from "../../utils/dateUtils";
 import { getHabitIcon } from "../../utils/habitIcons";
+import { apiErrorMessage } from "../../utils/apiError";
 import type { Habit, HabitFormData } from "../../types/habit";
 import styles from "./HabitsPage.module.css";
 
@@ -50,6 +51,7 @@ export function HabitsPage() {
 
   const [selected, setSelected] = useState<Habit | null>(null);
   const [editing, setEditing] = useState<Habit | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const formMode: "create" | "edit" | null = editing
@@ -60,11 +62,13 @@ export function HabitsPage() {
 
   const openCreate = useCallback(() => {
     setEditing(null);
+    setFormError(null);
     setSearchParams({ novo: "1" });
   }, [setSearchParams]);
 
   const closeForm = useCallback(() => {
     setEditing(null);
+    setFormError(null);
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
 
@@ -80,14 +84,19 @@ export function HabitsPage() {
         formMode === "edit" && editing
           ? updateHabit(editing.id, data)
           : createHabit(data);
-      action.catch(() => undefined).finally(closeForm);
+      setFormError(null);
+      action
+        .then(closeForm)
+        .catch((err) => setFormError(apiErrorMessage(err, "Não foi possível salvar o hábito.")));
     },
     [formMode, editing, updateHabit, createHabit, closeForm]
   );
 
   const handleDelete = useCallback(
     (id: string) => {
-      deleteHabit(id).catch(() => undefined);
+      deleteHabit(id).catch((err) =>
+        window.alert(apiErrorMessage(err, "Não foi possível excluir o hábito."))
+      );
       setSelected(null);
     },
     [deleteHabit]
@@ -108,7 +117,9 @@ export function HabitsPage() {
 
   const handleToggle = useCallback(
     (habitId: string, dateKey: string, completed: boolean) =>
-      setCompletion(habitId, dateKey, completed ? "clear" : "done").catch(() => undefined),
+      setCompletion(habitId, dateKey, completed ? "clear" : "done").catch((err) =>
+        window.alert(apiErrorMessage(err, "Não foi possível atualizar o hábito."))
+      ),
     [setCompletion]
   );
 
@@ -186,6 +197,7 @@ export function HabitsPage() {
               ? { name: editing.name, icon: editing.icon, selectedDays: editing.selectedDays }
               : undefined
           }
+          error={formError}
           onSave={handleSave}
           onClose={closeForm}
         />

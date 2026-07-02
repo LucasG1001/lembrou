@@ -65,6 +65,24 @@ export function ClockIcon({ className }: IconProps) {
   );
 }
 
+export function BoardIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M8 7v10" />
+      <path d="M16 7v6" />
+    </Icon>
+  );
+}
+
+export function CaretDownIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="m6 9 6 6 6-6" />
+    </Icon>
+  );
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <Icon className={className}>

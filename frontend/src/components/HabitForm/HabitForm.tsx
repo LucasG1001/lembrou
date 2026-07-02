@@ -8,11 +8,12 @@ import styles from "./HabitForm.module.css";
 interface HabitFormProps {
   mode: "create" | "edit";
   initialData?: HabitFormData;
+  error?: string | null;
   onSave: (data: HabitFormData) => void;
   onClose: () => void;
 }
 
-export function HabitForm({ mode, initialData, onSave, onClose }: HabitFormProps) {
+export function HabitForm({ mode, initialData, error, onSave, onClose }: HabitFormProps) {
   const [name, setName] = useState(initialData?.name ?? "");
   const [icon, setIcon] = useState(initialData?.icon ?? DEFAULT_HABIT_ICON_KEY);
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(initialData?.selectedDays ?? []);
@@ -83,6 +84,8 @@ export function HabitForm({ mode, initialData, onSave, onClose }: HabitFormProps
         <span className={styles.label}>Dias</span>
         <DaySelector selectedDays={selectedDays} onChange={handleDaysChange} error={daysError} />
       </div>
+
+      {error && <p className={styles.formError}>{error}</p>}
     </Modal>
   );
 }

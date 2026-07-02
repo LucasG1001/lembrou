@@ -95,12 +95,14 @@ export function countRemindersByDay(reminders: { eventAt: string }[]): Map<strin
   return map;
 }
 
+const TZ = "America/Sao_Paulo";
+
 export function itemTime(item: TimelineItem, withDate: boolean): string {
   const d = new Date(item.when);
   const time = item.hasTime
-    ? d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    ? d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: TZ })
     : "";
   if (!withDate) return time || "—";
-  const date = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  const date = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: TZ });
   return time ? `${date} ${time}` : date;
 }

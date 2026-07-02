@@ -32,8 +32,8 @@ export function useReminders() {
     };
   }, [refreshKey]);
 
+  // Recarrega em segundo plano: mantém a lista atual visível em vez de piscar "Carregando…".
   const reload = useCallback(() => {
-    setLoading(true);
     setError(null);
     setRefreshKey((k) => k + 1);
   }, []);

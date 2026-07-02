@@ -5,6 +5,7 @@ import { DashboardPage } from "./pages/DashboardPage/DashboardPage";
 import { RemindersPage } from "./pages/RemindersPage/RemindersPage";
 import { ReminderForm } from "./components/ReminderForm/ReminderForm";
 import { HabitsPage } from "./pages/HabitsPage/HabitsPage";
+import { ProjectsPage } from "./pages/ProjectsPage/ProjectsPage";
 import styles from "./App.module.css";
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
@@ -35,6 +36,7 @@ function App() {
               <Route path="r/:id" element={<ReminderForm />} />
             </Route>
             <Route path="/habitos" element={<HabitsPage />} />
+            <Route path="/projetos" element={<ProjectsPage />} />
           </Routes>
         </main>
       </div>

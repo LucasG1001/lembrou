@@ -102,6 +102,12 @@
   color: var(--danger);
 }
 
+.pending {
+  background-color: transparent;
+  border: 1.5px dashed var(--accent);
+  color: var(--text-secondary);
+}
+
 .notScheduled {
   background-color: var(--bg-card);
   color: var(--text-muted);
@@ -150,6 +156,11 @@
 .legendMissed {
   background-color: transparent;
   border: 1.5px solid rgba(248, 113, 113, 0.4);
+}
+
+.legendPending {
+  background-color: transparent;
+  border: 1.5px dashed var(--accent);
 }
 
 .legendNotScheduled {

@@ -12,7 +12,7 @@ interface CompletionGridProps {
 
 const WEEKDAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
 
-type DayState = "completed" | "missed" | "notScheduled" | "future";
+type DayState = "completed" | "missed" | "pending" | "notScheduled" | "future";
 
 interface CalendarDay {
   day: number;
@@ -49,7 +49,7 @@ function getDayState(
   }
 
   if (isSameDay(date, today)) {
-    return "notScheduled";
+    return "pending";
   }
 
   return "missed";
@@ -137,6 +137,7 @@ export function CompletionGrid({ completions, selectedDays, createdAt }: Complet
   const stateClassMap: Record<DayState, string> = {
     completed: styles.completed ?? "",
     missed: styles.missed ?? "",
+    pending: styles.pending ?? "",
     notScheduled: styles.notScheduled ?? "",
     future: styles.future ?? "",
   };
@@ -196,6 +197,10 @@ export function CompletionGrid({ completions, selectedDays, createdAt }: Complet
         <span className={styles.legendItem}>
           <span className={`${styles.legendDot} ${styles.legendMissed}`} />
           Perdido
+        </span>
+        <span className={styles.legendItem}>
+          <span className={`${styles.legendDot} ${styles.legendPending}`} />
+          Pendente hoje
         </span>
         <span className={styles.legendItem}>
           <span className={`${styles.legendDot} ${styles.legendNotScheduled}`} />

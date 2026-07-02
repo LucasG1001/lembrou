@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Sidebar.module.css";
-import { BellIcon, CheckIcon, ChevronIcon, LogoIcon, PlusIcon } from "./Sidebar.icons";
+import { BellIcon, BoardIcon, CheckIcon, ChevronIcon, LogoIcon, PlusIcon } from "./Sidebar.icons";
 
 interface NavItem {
   path: string;
@@ -12,6 +12,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { path: "/lembretes", label: "Lembretes", icon: BellIcon },
   { path: "/habitos", label: "Hábitos", icon: CheckIcon },
+  { path: "/projetos", label: "Projetos", icon: BoardIcon },
 ];
 
 interface SidebarProps {
@@ -26,6 +27,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const handleAdd = () => {
     if (location.pathname.startsWith("/habitos")) {
       navigate("/habitos?novo=1");
+    } else if (location.pathname.startsWith("/projetos")) {
+      navigate("/projetos?novo=1");
     } else {
       navigate("/lembretes/novo");
     }
