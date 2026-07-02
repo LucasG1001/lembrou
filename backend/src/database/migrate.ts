@@ -91,4 +91,45 @@ export async function migrate(): Promise<void> {
       UNIQUE(habit_id, date)
     );
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name        TEXT NOT NULL,
+      position    INTEGER NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS board_lists (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      name        TEXT NOT NULL,
+      position    INTEGER NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS board_lists_project_idx ON board_lists (project_id);
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS cards (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      list_id     UUID NOT NULL REFERENCES board_lists(id) ON DELETE CASCADE,
+      title       TEXT NOT NULL,
+      done        BOOLEAN NOT NULL DEFAULT FALSE,
+      position    INTEGER NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS cards_list_idx ON cards (list_id);
+  `);
 }

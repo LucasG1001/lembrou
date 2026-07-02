@@ -1,4 +1,5 @@
 import { MONTH_PT } from "./month";
+import { formatDateKey } from "./dateUtils";
 
 export interface TimelineItem {
   id: string;
@@ -83,6 +84,15 @@ export function groupByMonth(items: TimelineItem[]): TimelineGroup[] {
       items: list,
     };
   });
+}
+
+export function countRemindersByDay(reminders: { eventAt: string }[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const reminder of reminders) {
+    const key = formatDateKey(new Date(reminder.eventAt));
+    map.set(key, (map.get(key) ?? 0) + 1);
+  }
+  return map;
 }
 
 export function itemTime(item: TimelineItem, withDate: boolean): string {

@@ -18,17 +18,23 @@ export async function processDue(now: Date = new Date()): Promise<void> {
   for (const reminder of due) {
     try {
       const { message, patch } = decide(reminder, now);
-      // Notificação só com o alerta de texto — as ações agora são feitas pelo app.
-      const messageId = await sendNotification({ ...message });
-      if (messageId === null) {
-        console.warn(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") processado sem id de mensagem (notify-api não configurada?).`);
-      } else {
-        console.log(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") notificado: ${reminder.phase} → ${patch.phase ?? reminder.phase}.`);
+      // Persiste a transição antes de enviar: se a escrita falhasse depois do envio,
+      // a fase/contagem não avançaria e a mesma notificação repetiria a cada tick.
+      await reminderModel.update(reminder.id, patch);
+      try {
+        const messageId = await sendNotification({ ...message });
+        if (messageId === null) {
+          console.warn(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") processado sem id de mensagem (notify-api não configurada?).`);
+        } else {
+          console.log(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") notificado: ${reminder.phase} → ${patch.phase ?? reminder.phase}.`);
+          await reminderModel.update(reminder.id, { lastMessageId: messageId }).catch(() => undefined);
+        }
+      } catch (error) {
+        console.error(`[scheduler] falha ao enviar notificação do lembrete ${reminder.id} ("${reminder.title}"):`, error);
       }
-      await reminderModel.update(reminder.id, messageId ? { ...patch, lastMessageId: messageId } : patch);
     } catch (error) {
       console.error(`[scheduler] falha ao processar lembrete ${reminder.id} ("${reminder.title}"):`, error);
-      // Não trava o lote: adia ~1 min mantendo a fase para tentar de novo.
+      // Nada foi enviado ainda: adia ~1 min mantendo a fase para tentar de novo.
       await reminderModel.update(reminder.id, { nextNotifyAt: addMinutes(now, 1) }).catch(() => undefined);
     }
   }

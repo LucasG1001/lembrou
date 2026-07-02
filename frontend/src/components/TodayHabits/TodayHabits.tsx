@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import type { Habit } from "../../types/habit";
 import { getToday, getTodayKey, isScheduledDay } from "../../utils/dateUtils";
 import { getHabitIcon } from "../../utils/habitIcons";
+import { moveRelativeTo } from "../../utils/reorder";
 import styles from "./TodayHabits.module.css";
 
 interface TodayHabitsProps {
@@ -12,20 +13,6 @@ interface TodayHabitsProps {
 
 const LONG_PRESS_MS = 400;
 const MOVE_THRESHOLD = 10;
-
-function moveRelativeTo(
-  order: string[],
-  dragId: string,
-  overId: string,
-  after: boolean
-): string[] {
-  if (dragId === overId) return order;
-  const next = order.filter((x) => x !== dragId);
-  const idx = next.indexOf(overId);
-  if (idx === -1) return order;
-  next.splice(after ? idx + 1 : idx, 0, dragId);
-  return next;
-}
 
 export function TodayHabits({ habits, onToggle, onReorder }: TodayHabitsProps) {
   const todayKey = getTodayKey();

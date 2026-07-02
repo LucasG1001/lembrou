@@ -9,6 +9,7 @@ import cors from "cors";
 import { migrate } from "./database/migrate.js";
 import { reminderRoutes } from "./routes/reminderRoutes.js";
 import { habitRoutes } from "./routes/habitRoutes.js";
+import { projectRoutes } from "./routes/projectRoutes.js";
 import { telegramRoutes } from "./routes/callbackRoutes.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import { startScheduler } from "./services/reminderScheduler.js";
@@ -25,6 +26,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/habits", habitRoutes);
+app.use("/api/projects", projectRoutes);
 app.use("/api/telegram", telegramRoutes);
 
 const clientDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");
@@ -42,6 +44,9 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 async function start(): Promise<void> {
+  if (!process.env.CALLBACK_SECRET) {
+    console.warn("[startup] CALLBACK_SECRET não definido — /api/telegram/callback está aberto sem autenticação.");
+  }
   await migrate();
   app.listen(PORT, () => {
     process.stdout.write(`RemindMe backend rodando em http://localhost:${PORT}\n`);

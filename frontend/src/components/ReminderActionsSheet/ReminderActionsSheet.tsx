@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { CheckIcon, ClockIcon } from "../Sidebar/Sidebar.icons";
 import { toFormParts } from "../../utils/format";
+import { useDismiss } from "../../hooks/useDismiss";
 import type { Reminder, RescheduleInput } from "../../types/reminder";
 import styles from "./ReminderActionsSheet.module.css";
 
@@ -43,13 +43,7 @@ export function ReminderActionsSheet({
   onCustom,
   onCancel,
 }: ReminderActionsSheetProps) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  useDismiss(onClose);
 
   const presets = reminder.isAllDay ? ALL_DAY_PRESETS : TIMED_PRESETS;
   const base = Math.max(now, Date.parse(reminder.eventAt));

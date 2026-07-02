@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { formatDateKey, getToday, isSameDay } from "../../utils/dateUtils";
 import { MONTH_PT } from "../../utils/month";
 import { getHolidays } from "../../utils/holidays";
+import { useDismiss } from "../../hooks/useDismiss";
 import styles from "./ReminderCalendar.module.css";
 
 interface ReminderCalendarProps {
@@ -15,13 +16,7 @@ export function ReminderCalendar({ countByDay, onClose }: ReminderCalendarProps)
   const today = getToday();
   const [view, setView] = useState(() => ({ year: today.getFullYear(), month: today.getMonth() }));
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  useDismiss(onClose);
 
   const handlePrev = useCallback(() => {
     setView((p) => (p.month === 0 ? { year: p.year - 1, month: 11 } : { year: p.year, month: p.month - 1 }));

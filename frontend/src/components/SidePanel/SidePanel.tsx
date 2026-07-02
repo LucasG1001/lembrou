@@ -1,8 +1,9 @@
-import { createElement, useState, useEffect, useCallback } from "react";
+import { createElement, useState } from "react";
 import type { Habit } from "../../types/habit";
 import { formatDateDisplay } from "../../utils/dateUtils";
 import { getLevelColor } from "../../utils/levelUtils";
 import { getHabitIcon } from "../../utils/habitIcons";
+import { useDismiss } from "../../hooks/useDismiss";
 import { LevelBadge } from "../LevelBadge/LevelBadge";
 import { CompletionGrid } from "../CompletionGrid/CompletionGrid";
 import styles from "./SidePanel.module.css";
@@ -17,19 +18,7 @@ interface SidePanelProps {
 export function SidePanel({ habit, onClose, onEdit, onDelete }: SidePanelProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    },
-    [onClose]
-  );
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+  useDismiss(onClose);
 
   function handleBackdropClick() {
     setConfirmDelete(false);

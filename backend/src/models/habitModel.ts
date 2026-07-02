@@ -126,36 +126,36 @@ export async function setCompletion(
   completed: boolean,
   options: { locked?: boolean; force?: boolean } = {}
 ): Promise<void> {
-  const existing = await getCompletion(habitId, date);
+  const result = await pool.query(
+    `INSERT INTO habit_completions (habit_id, date, completed, locked)
+     VALUES ($1, $2, $3, COALESCE($4, FALSE))
+     ON CONFLICT (habit_id, date) DO UPDATE
+       SET completed = EXCLUDED.completed,
+           locked = COALESCE($4, habit_completions.locked)
+       WHERE NOT habit_completions.locked OR $5`,
+    [habitId, date, completed, options.locked ?? null, options.force ?? false]
+  );
 
-  if (existing?.locked && !options.force) {
+  if ((result.rowCount ?? 0) === 0) {
     throw new CompletionLockedError();
-  }
-
-  const locked = options.locked ?? existing?.locked ?? false;
-
-  if (existing) {
-    await pool.query(
-      "UPDATE habit_completions SET completed = $1, locked = $2 WHERE habit_id = $3 AND date = $4",
-      [completed, locked, habitId, date]
-    );
-  } else {
-    await pool.query(
-      "INSERT INTO habit_completions (habit_id, date, completed, locked) VALUES ($1, $2, $3, $4)",
-      [habitId, date, completed, locked]
-    );
   }
 
   await touchHabit(habitId);
 }
 
 export async function clearCompletion(habitId: string, date: string): Promise<void> {
-  const existing = await getCompletion(habitId, date);
+  const result = await pool.query(
+    "DELETE FROM habit_completions WHERE habit_id = $1 AND date = $2 AND NOT locked",
+    [habitId, date]
+  );
 
-  if (existing?.locked) {
-    throw new CompletionLockedError();
+  if ((result.rowCount ?? 0) === 0) {
+    const existing = await getCompletion(habitId, date);
+    if (existing?.locked) {
+      throw new CompletionLockedError();
+    }
+    return;
   }
 
-  await pool.query("DELETE FROM habit_completions WHERE habit_id = $1 AND date = $2", [habitId, date]);
   await touchHabit(habitId);
 }

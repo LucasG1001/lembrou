@@ -4,8 +4,7 @@ import { useReminders } from "../../hooks/useReminders";
 import { useHabits } from "../../hooks/useHabits";
 import { BellIcon, CheckIcon, CalendarIcon } from "../../components/Sidebar/Sidebar.icons";
 import { ReminderCalendar } from "../../components/ReminderCalendar/ReminderCalendar";
-import { formatDateKey } from "../../utils/dateUtils";
-import { groupByDay, itemTime, startOfToday, type TimelineItem } from "../../utils/agenda";
+import { countRemindersByDay, groupByDay, itemTime, startOfToday, type TimelineItem } from "../../utils/agenda";
 import {
   summarizeReminders,
   summarizeHabits,
@@ -29,14 +28,7 @@ export function DashboardPage() {
   const reminderSummary = useMemo(() => summarizeReminders(reminders), [reminders]);
   const habitSummary = useMemo(() => summarizeHabits(habits), [habits]);
 
-  const countByDay = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const reminder of reminders) {
-      const key = formatDateKey(new Date(reminder.eventAt));
-      map.set(key, (map.get(key) ?? 0) + 1);
-    }
-    return map;
-  }, [reminders]);
+  const countByDay = useMemo(() => countRemindersByDay(reminders), [reminders]);
 
   const dayGroups = useMemo(() => {
     const start = startOfToday();

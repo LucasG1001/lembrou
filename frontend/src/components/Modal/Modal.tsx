@@ -1,4 +1,5 @@
-import { useCallback, useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { useDismiss } from "../../hooks/useDismiss";
 import styles from "./Modal.module.css";
 
 interface ModalProps {
@@ -18,17 +19,7 @@ export function Modal({
   submitDisabled = false,
   children,
 }: ModalProps) {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    },
-    [onClose]
-  );
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+  useDismiss(onClose);
 
   function handleBackdropClick(e: React.MouseEvent) {
     if (e.target === e.currentTarget) onClose();

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import type { DayOfWeek, HabitCompletion } from "../../types/habit";
 import { formatDateKey, getDayOfWeek, getToday, isSameDay } from "../../utils/dateUtils";
+import { MONTH_PT } from "../../utils/month";
 import styles from "./CompletionGrid.module.css";
 
 interface CompletionGridProps {
@@ -10,21 +11,6 @@ interface CompletionGridProps {
 }
 
 const WEEKDAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
-
-const MONTH_NAMES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
 
 type DayState = "completed" | "missed" | "notScheduled" | "future";
 
@@ -167,7 +153,7 @@ export function CompletionGrid({ completions, selectedDays, createdAt }: Complet
           ‹
         </button>
         <span className={styles.monthLabel}>
-          {MONTH_NAMES[viewMonth.month]} {viewMonth.year}
+          {MONTH_PT[viewMonth.month]} {viewMonth.year}
         </span>
         <button
           className={styles.navButton}

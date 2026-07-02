@@ -5,9 +5,8 @@ import { ReminderActionsSheet } from "../../components/ReminderActionsSheet/Remi
 import { Timeline } from "../../components/Timeline/Timeline";
 import { BellIcon, CalendarIcon } from "../../components/Sidebar/Sidebar.icons";
 import { ReminderCalendar } from "../../components/ReminderCalendar/ReminderCalendar";
-import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
+import { countRemindersByDay, groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
 import { recurrenceLabel, remainingLabel, dayRemainingLabel } from "../../utils/format";
-import { formatDateKey } from "../../utils/dateUtils";
 import { useMinuteTick } from "../../hooks/useMinuteTick";
 import type { Reminder } from "../../types/reminder";
 import styles from "./RemindersPage.module.css";
@@ -38,14 +37,7 @@ export function RemindersPage() {
 
   const byId = useMemo(() => new Map(reminders.map((r) => [r.id, r])), [reminders]);
 
-  const countByDay = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const reminder of reminders) {
-      const key = formatDateKey(new Date(reminder.eventAt));
-      map.set(key, (map.get(key) ?? 0) + 1);
-    }
-    return map;
-  }, [reminders]);
+  const countByDay = useMemo(() => countRemindersByDay(reminders), [reminders]);
 
   const selectedReminder = selected ? byId.get(selected.id) ?? selected : null;
 
