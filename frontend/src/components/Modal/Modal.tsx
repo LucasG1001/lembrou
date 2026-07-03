@@ -8,6 +8,8 @@ interface ModalProps {
   onSubmit: () => void;
   submitLabel?: string;
   submitDisabled?: boolean;
+  hideClose?: boolean;
+  footerStart?: ReactNode;
   children: ReactNode;
 }
 
@@ -17,6 +19,8 @@ export function Modal({
   onSubmit,
   submitLabel = "Salvar",
   submitDisabled = false,
+  hideClose = false,
+  footerStart,
   children,
 }: ModalProps) {
   useDismiss(onClose);
@@ -39,22 +43,29 @@ export function Modal({
       aria-modal="true"
     >
       <form className={styles.modal} onSubmit={handleSubmit}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Fechar">
-            ×
-          </button>
-        </div>
+        {(title || !hideClose) && (
+          <div className={styles.header}>
+            {title && <h2 className={styles.title}>{title}</h2>}
+            {!hideClose && (
+              <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Fechar">
+                ×
+              </button>
+            )}
+          </div>
+        )}
 
         <div className={styles.body}>{children}</div>
 
         <div className={styles.footer}>
-          <button type="button" className={styles.cancelButton} onClick={onClose}>
-            Cancelar
-          </button>
-          <button type="submit" className={styles.saveButton} disabled={submitDisabled}>
-            {submitLabel}
-          </button>
+          {footerStart ?? <span />}
+          <div className={styles.footerActions}>
+            <button type="button" className={styles.cancelButton} onClick={onClose}>
+              Cancelar
+            </button>
+            <button type="submit" className={styles.saveButton} disabled={submitDisabled}>
+              {submitLabel}
+            </button>
+          </div>
         </div>
       </form>
     </div>

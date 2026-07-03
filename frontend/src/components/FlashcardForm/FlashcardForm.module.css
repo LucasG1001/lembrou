@@ -30,10 +30,67 @@
   border-color: var(--color-accent);
 }
 
+.tagWrapper {
+  display: block;
+}
+
+.suggestions {
+  position: fixed;
+  z-index: 300;
+  list-style: none;
+  margin: 0;
+  padding: var(--spacing-xs);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.suggestion:hover {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
 .formError {
   color: var(--color-error);
   background: var(--color-error-subtle);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   font-size: var(--font-size-base);
+}
+
+.deleteButton {
+  color: var(--color-error);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  padding: 10px 20px;
+  border-radius: var(--radius-button);
+  border: 1px solid transparent;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.deleteButton:hover {
+  background: var(--color-error-subtle);
+}
+
+.deleteConfirm,
+.deleteConfirm:hover {
+  background: var(--color-error-subtle);
+  border-color: var(--color-error);
 }

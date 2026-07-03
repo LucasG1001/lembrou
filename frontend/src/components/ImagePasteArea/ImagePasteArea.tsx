@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { ClipboardEvent } from "react";
 import { compressImage } from "../../utils/imageCompress";
 import styles from "./ImagePasteArea.module.css";
@@ -28,6 +28,14 @@ export function ImagePasteArea({
 }: ImagePasteAreaProps) {
   const [processing, setProcessing] = useState(false);
   const [pasteError, setPasteError] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
 
   async function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>) {
     const files = Array.from(e.clipboardData.items)
@@ -71,18 +79,17 @@ export function ImagePasteArea({
       </label>
       <textarea
         id={id}
+        ref={textareaRef}
         className={styles.textarea}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onPaste={handlePaste}
         placeholder={placeholder}
-        rows={3}
+        rows={1}
         maxLength={10000}
         autoFocus={autoFocus}
       />
-      <span className={styles.hint}>
-        {processing ? "Processando imagem…" : "Cole imagens com Ctrl+V"}
-      </span>
+      {processing && <span className={styles.hint}>Processando imagem…</span>}
       {pasteError && <p className={styles.pasteError}>{pasteError}</p>}
       {images.length > 0 && (
         <div className={styles.thumbs}>

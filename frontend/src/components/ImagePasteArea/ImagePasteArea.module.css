@@ -19,8 +19,9 @@
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
   font-size: 16px;
-  resize: vertical;
-  min-height: 84px;
+  resize: none;
+  overflow: hidden;
+  min-height: 0;
   transition: border-color var(--transition-fast);
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Flashcard, Grade } from "../../types/flashcard";
 import { fetchDueFlashcards } from "../../services/flashcardService";
 import { apiErrorMessage } from "../../utils/apiError";
+import { previewIntervals } from "../../utils/flashcardUtils";
 import styles from "./FlashcardReview.module.css";
 
 interface FlashcardReviewProps {
@@ -70,6 +71,8 @@ export function FlashcardReview({ onReview }: FlashcardReviewProps) {
     );
   }
 
+  const intervals = previewIntervals(card);
+
   return (
     <div className={styles.session}>
       <div className={styles.counters}>
@@ -115,7 +118,8 @@ export function FlashcardReview({ onReview }: FlashcardReviewProps) {
               onClick={() => handleGrade(grade)}
               disabled={grading}
             >
-              {label}
+              <span className={styles.gradeLabel}>{label}</span>
+              <span className={styles.gradeInterval}>{intervals[grade]}</span>
             </button>
           ))}
         </div>

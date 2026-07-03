@@ -81,7 +81,13 @@
   display: flex;
   gap: 12px;
   padding: 0 24px 24px;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footerActions {
+  display: flex;
+  gap: 12px;
 }
 
 .cancelButton {
