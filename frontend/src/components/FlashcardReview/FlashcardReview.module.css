@@ -1,0 +1,189 @@
+.session {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.counters {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.counter {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+}
+
+.counterFresh {
+  color: var(--color-info);
+  background: var(--color-info-subtle);
+}
+
+.counterReview {
+  color: var(--color-warning);
+  background: var(--color-warning-subtle);
+}
+
+.counterDone {
+  color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2xl);
+  animation: cardEnter var(--transition-base);
+}
+
+.tag {
+  align-self: flex-start;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+}
+
+.question {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  white-space: pre-wrap;
+}
+
+.answerBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: var(--spacing-base);
+  animation: fadeIn var(--transition-base);
+}
+
+.answer {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+}
+
+.images {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.image {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.revealButton {
+  background: var(--color-accent);
+  color: #fff;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.revealButton:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.grades {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.gradeButton {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  transition: filter var(--transition-fast), transform var(--transition-fast);
+}
+
+.gradeButton:hover:not(:disabled) {
+  filter: brightness(1.25);
+  transform: translateY(-1px);
+}
+
+.gradeButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.gradeAgain {
+  color: var(--color-error);
+  background: var(--color-error-subtle);
+  border-color: var(--color-error);
+}
+
+.gradeHard {
+  color: var(--color-warning);
+  background: var(--color-warning-subtle);
+  border-color: var(--color-warning);
+}
+
+.gradeGood {
+  color: var(--color-info);
+  background: var(--color-info-subtle);
+  border-color: var(--color-info);
+}
+
+.gradeEasy {
+  color: var(--color-success);
+  background: var(--color-success-subtle);
+  border-color: var(--color-success);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  background: var(--color-bg-card);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.emptyTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.muted {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+}
+
+.error {
+  color: var(--color-error);
+  background: var(--color-error-subtle);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: var(--spacing-lg);
+  }
+
+  .grades {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

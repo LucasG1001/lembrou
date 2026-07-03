@@ -132,4 +132,27 @@ export async function migrate(): Promise<void> {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS cards_list_idx ON cards (list_id);
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS flashcards (
+      id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      question          TEXT NOT NULL,
+      answer            TEXT NOT NULL,
+      question_images   TEXT[] NOT NULL DEFAULT '{}',
+      answer_images     TEXT[] NOT NULL DEFAULT '{}',
+      tag               TEXT,
+      ease_factor       REAL NOT NULL DEFAULT 2.5,
+      interval_days     INTEGER NOT NULL DEFAULT 0,
+      repetitions       INTEGER NOT NULL DEFAULT 0,
+      lapses            INTEGER NOT NULL DEFAULT 0,
+      next_review_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_reviewed_at  TIMESTAMPTZ,
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS flashcards_due_idx ON flashcards (next_review_at);
+  `);
 }

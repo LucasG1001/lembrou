@@ -10,6 +10,7 @@ import { migrate } from "./database/migrate.js";
 import { reminderRoutes } from "./routes/reminderRoutes.js";
 import { habitRoutes } from "./routes/habitRoutes.js";
 import { projectRoutes } from "./routes/projectRoutes.js";
+import { flashcardRoutes } from "./routes/flashcardRoutes.js";
 import { telegramRoutes } from "./routes/callbackRoutes.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import { startScheduler } from "./services/reminderScheduler.js";
@@ -18,7 +19,7 @@ const app = express();
 const PORT = process.env.PORT || 3333;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
@@ -27,6 +28,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/telegram", telegramRoutes);
 
 const clientDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");

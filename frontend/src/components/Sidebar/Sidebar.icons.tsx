@@ -75,6 +75,16 @@ export function BoardIcon({ className }: IconProps) {
   );
 }
 
+export function LayersIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="m12 2 9 5-9 5-9-5 9-5" />
+      <path d="m3 12 9 5 9-5" />
+      <path d="m3 17 9 5 9-5" />
+    </Icon>
+  );
+}
+
 export function CaretDownIcon({ className }: IconProps) {
   return (
     <Icon className={className}>
