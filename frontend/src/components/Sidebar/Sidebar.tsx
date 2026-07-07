@@ -1,7 +1,8 @@
 import type { ComponentType } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Sidebar.module.css";
-import { BellIcon, BoardIcon, CheckIcon, ChevronIcon, LayersIcon, LogoIcon, PlusIcon } from "./Sidebar.icons";
+import { useCalendar } from "../../context/useCalendar";
+import { BellIcon, BoardIcon, CalendarIcon, CheckIcon, ChevronIcon, LayersIcon, LogoIcon, PlusIcon } from "./Sidebar.icons";
 
 interface NavItem {
   path: string;
@@ -24,6 +25,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { open: openCalendar } = useCalendar();
 
   const handleAdd = () => {
     if (location.pathname.startsWith("/habitos")) {
@@ -89,6 +91,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             </NavLink>
           );
         })}
+        <button
+          type="button"
+          className={styles.navItem}
+          onClick={openCalendar}
+          title="Calendário"
+        >
+          <CalendarIcon className={styles.navIcon} />
+          <span className={styles.navLabel}>Calendário</span>
+        </button>
       </nav>
 
       <nav className={styles.mobileNav}>
@@ -98,6 +109,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </button>
         {NAV_ITEMS.slice(mid).map(renderBarItem)}
       </nav>
+
+      <button
+        type="button"
+        className={styles.mobileCalendarFab}
+        onClick={openCalendar}
+        aria-label="Calendário"
+        title="Calendário"
+      >
+        <CalendarIcon className={styles.mobileCalendarIcon} />
+      </button>
     </aside>
   );
 }

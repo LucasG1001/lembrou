@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { BoardList, Card, Project } from "../types/project";
+import type { BoardList, Card, CardPatch, Project } from "../types/project";
 import {
   fetchProjects,
   fetchBoard,
@@ -155,7 +155,7 @@ export function useProjects() {
   }, []);
 
   const updateCard = useCallback(
-    async (cardId: string, patch: { title?: string; done?: boolean }) => {
+    async (cardId: string, patch: CardPatch) => {
       let previous: BoardList[] | null = null;
       setBoard((prev) => {
         previous = prev;

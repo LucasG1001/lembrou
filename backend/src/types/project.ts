@@ -14,11 +14,19 @@ export interface ProjectRow {
   updated_at: string;
 }
 
+export interface ChecklistItem {
+  text: string;
+  done: boolean;
+}
+
 export interface Card {
   id: string;
   listId: string;
   title: string;
   done: boolean;
+  description: string;
+  images: string[];
+  checklist: ChecklistItem[];
   position: number;
   createdAt: string;
   updatedAt: string;
@@ -29,6 +37,9 @@ export interface CardRow {
   list_id: string;
   title: string;
   done: boolean;
+  description: string;
+  images: string[];
+  checklist: string;
   position: number;
   created_at: string;
   updated_at: string;
@@ -68,4 +79,7 @@ export interface ListPatch {
 export interface CardPatch {
   title?: string;
   done?: boolean;
+  description?: string;
+  images?: string[];
+  checklist?: ChecklistItem[];
 }

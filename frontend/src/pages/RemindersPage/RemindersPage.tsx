@@ -4,8 +4,8 @@ import { useReminders } from "../../hooks/useReminders";
 import { ReminderActionsSheet } from "../../components/ReminderActionsSheet/ReminderActionsSheet";
 import { Timeline } from "../../components/Timeline/Timeline";
 import { BellIcon, CalendarIcon } from "../../components/Sidebar/Sidebar.icons";
-import { ReminderCalendar } from "../../components/ReminderCalendar/ReminderCalendar";
-import { countRemindersByDay, groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
+import { useCalendar } from "../../context/useCalendar";
+import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
 import { recurrenceLabel, remainingLabel, dayRemainingLabel } from "../../utils/format";
 import { apiErrorMessage } from "../../utils/apiError";
 import { useMinuteTick } from "../../hooks/useMinuteTick";
@@ -32,13 +32,11 @@ const iconForBell = () => BellIcon;
 export function RemindersPage() {
   const navigate = useNavigate();
   const { reminders, loading, error, reload, acknowledge, reschedule, cancel } = useReminders();
+  const { open: openCalendar } = useCalendar();
 
   const [selected, setSelected] = useState<Reminder | null>(null);
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const byId = useMemo(() => new Map(reminders.map((r) => [r.id, r])), [reminders]);
-
-  const countByDay = useMemo(() => countRemindersByDay(reminders), [reminders]);
 
   const selectedReminder = selected ? byId.get(selected.id) ?? selected : null;
 
@@ -59,7 +57,7 @@ export function RemindersPage() {
             type="button"
             className={styles.calendarButton}
             aria-label="Abrir calendário"
-            onClick={() => setCalendarOpen(true)}
+            onClick={openCalendar}
           >
             <CalendarIcon className={styles.calendarIcon} />
           </button>
@@ -117,10 +115,6 @@ export function RemindersPage() {
             )
           }
         />
-      )}
-
-      {calendarOpen && (
-        <ReminderCalendar countByDay={countByDay} onClose={() => setCalendarOpen(false)} />
       )}
 
       <Outlet context={{ reload }} />

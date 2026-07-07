@@ -6,11 +6,19 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface ChecklistItem {
+  text: string;
+  done: boolean;
+}
+
 export interface Card {
   id: string;
   listId: string;
   title: string;
   done: boolean;
+  description: string;
+  images: string[];
+  checklist: ChecklistItem[];
   position: number;
   createdAt: string;
   updatedAt: string;
@@ -33,4 +41,7 @@ export interface ProjectBoard extends Project {
 export interface CardPatch {
   title?: string;
   done?: boolean;
+  description?: string;
+  images?: string[];
+  checklist?: ChecklistItem[];
 }

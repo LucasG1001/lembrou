@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import type { ClipboardEvent } from "react";
+import type { ChangeEvent, ClipboardEvent } from "react";
 import { compressImage } from "../../utils/imageCompress";
 import styles from "./ImagePasteArea.module.css";
 
@@ -29,6 +29,7 @@ export function ImagePasteArea({
   const [processing, setProcessing] = useState(false);
   const [pasteError, setPasteError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useLayoutEffect(() => {
     const el = textareaRef.current;
@@ -37,14 +38,8 @@ export function ImagePasteArea({
     el.style.height = `${el.scrollHeight}px`;
   }, [value]);
 
-  async function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>) {
-    const files = Array.from(e.clipboardData.items)
-      .filter((item) => item.type.startsWith("image/"))
-      .map((item) => item.getAsFile())
-      .filter((file): file is File => Boolean(file));
+  async function addFiles(files: File[]) {
     if (files.length === 0) return;
-
-    e.preventDefault();
     setPasteError(null);
 
     const available = MAX_IMAGES - images.length;
@@ -61,10 +56,26 @@ export function ImagePasteArea({
         setPasteError(`No máximo ${MAX_IMAGES} imagens por campo.`);
       }
     } catch {
-      setPasteError("Não foi possível processar a imagem colada.");
+      setPasteError("Não foi possível processar a imagem.");
     } finally {
       setProcessing(false);
     }
+  }
+
+  async function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>) {
+    const files = Array.from(e.clipboardData.items)
+      .filter((item) => item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => Boolean(file));
+    if (files.length === 0) return;
+    e.preventDefault();
+    await addFiles(files);
+  }
+
+  function handlePick(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    void addFiles(files);
   }
 
   function removeImage(index: number) {
@@ -88,6 +99,25 @@ export function ImagePasteArea({
         rows={1}
         maxLength={10000}
         autoFocus={autoFocus}
+      />
+      <div className={styles.tools}>
+        <button
+          type="button"
+          className={styles.addImage}
+          onClick={() => fileInputRef.current?.click()}
+          disabled={images.length >= MAX_IMAGES}
+        >
+          ＋ Adicionar imagem
+        </button>
+        <span className={styles.hint}>ou cole (Ctrl+V)</span>
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={handlePick}
       />
       {processing && <span className={styles.hint}>Processando imagem…</span>}
       {pasteError && <p className={styles.pasteError}>{pasteError}</p>}

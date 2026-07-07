@@ -190,6 +190,10 @@
   display: none;
 }
 
+.mobileCalendarFab {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .sidebar {
     top: auto;
@@ -267,5 +271,31 @@
     width: 34px;
     height: 34px;
     stroke-width: 2.75;
+  }
+
+  .mobileCalendarFab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: var(--spacing-base);
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + var(--spacing-base));
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: #fff;
+    box-shadow: var(--shadow-lg);
+    z-index: 90;
+    transition: background var(--transition-fast), transform var(--transition-fast);
+  }
+
+  .mobileCalendarFab:active {
+    transform: scale(0.92);
+  }
+
+  .mobileCalendarIcon {
+    width: 24px;
+    height: 24px;
   }
 }

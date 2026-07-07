@@ -4,9 +4,10 @@ import { useProjects } from "../../hooks/useProjects";
 import { ProjectSwitcher } from "../../components/ProjectSwitcher/ProjectSwitcher";
 import { BoardListColumn } from "../../components/BoardList/BoardList";
 import { InlineTextEdit } from "../../components/InlineTextEdit/InlineTextEdit";
+import { CardDetailPanel } from "../../components/CardDetailPanel/CardDetailPanel";
 import { moveCardInBoard, moveRelativeTo } from "../../utils/reorder";
 import { apiErrorMessage } from "../../utils/apiError";
-import type { BoardList, Card } from "../../types/project";
+import type { BoardList, Card, CardPatch } from "../../types/project";
 import styles from "./ProjectsPage.module.css";
 
 const LONG_PRESS_MS = 400;
@@ -67,7 +68,7 @@ export function ProjectsPage() {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [detailCardId, setDetailCardId] = useState<string | null>(null);
   const [renamingListId, setRenamingListId] = useState<string | null>(null);
   const [composerListId, setComposerListId] = useState<string | null>(null);
   const [addingList, setAddingList] = useState(false);
@@ -333,9 +334,10 @@ export function ProjectsPage() {
         if (moved) clearPress();
       };
 
-      const onTouchEnd = () => {
+      const onTouchEnd = (ev: TouchEvent) => {
         if (finished) return;
         clearPress();
+        if (ev.cancelable) ev.preventDefault();
         onTap();
       };
 
@@ -345,7 +347,7 @@ export function ProjectsPage() {
       }, LONG_PRESS_MS);
 
       window.addEventListener("touchmove", onTouchMove, { passive: false });
-      window.addEventListener("touchend", onTouchEnd);
+      window.addEventListener("touchend", onTouchEnd, { passive: false });
       window.addEventListener("touchcancel", onTouchEnd);
       return;
     }
@@ -421,17 +423,15 @@ export function ProjectsPage() {
   };
 
   const handleCardPointerDown = (e: React.PointerEvent, card: Card) => {
-    if (editingCardId === card.id) return;
-    beginPress(e, card.id, "card", () => setEditingCardId(card.id));
+    beginPress(e, card.id, "card", () => setDetailCardId(card.id));
   };
 
   const handleHeaderPointerDown = (e: React.PointerEvent, listId: string) => {
     beginPress(e, listId, "list", () => setRenamingListId(listId));
   };
 
-  const handleCommitCardTitle = (card: Card, title: string) => {
-    setEditingCardId(null);
-    updateCard(card.id, { title }).catch((err) => alertError(err, "Não foi possível salvar o cartão."));
+  const handleSaveCardDetail = (card: Card, patch: CardPatch) => {
+    updateCard(card.id, patch).catch((err) => alertError(err, "Não foi possível salvar o cartão."));
   };
 
   const handleToggleDone = (card: Card) => {
@@ -477,6 +477,9 @@ export function ProjectsPage() {
   const dragging = Boolean(dragCardId || dragListId);
   const cardDrop = drop?.kind === "card" ? drop : null;
   const listDrop = drop?.kind === "list" ? drop : null;
+  const detailCard = detailCardId
+    ? board?.flatMap((l) => l.cards).find((c) => c.id === detailCardId) ?? null
+    : null;
 
   return (
     <div className={styles.page}>
@@ -547,7 +550,6 @@ export function ProjectsPage() {
                     cardDrop && cardDrop.overCardId === null && cardDrop.listId === list.id
                   )}
                   listDropTarget={listDrop?.overListId === list.id}
-                  editingCardId={editingCardId}
                   renaming={renamingListId === list.id}
                   composerOpen={activeComposerListId === list.id}
                   onHeaderPointerDown={handleHeaderPointerDown}
@@ -562,8 +564,6 @@ export function ProjectsPage() {
                   onAddCard={handleAddCard}
                   onCardPointerDown={handleCardPointerDown}
                   onToggleDone={handleToggleDone}
-                  onCommitCardTitle={handleCommitCardTitle}
-                  onCancelCardEdit={() => setEditingCardId(null)}
                   onDeleteCard={handleDeleteCard}
                 />
               ))}
@@ -606,6 +606,17 @@ export function ProjectsPage() {
         >
           {ghost.title}
         </div>
+      )}
+
+      {detailCard && (
+        <CardDetailPanel
+          card={detailCard}
+          onSave={(patch) => handleSaveCardDetail(detailCard, patch)}
+          onDelete={(card) =>
+            deleteCard(card.id).catch((err) => alertError(err, "Não foi possível excluir o cartão."))
+          }
+          onClose={() => setDetailCardId(null)}
+        />
       )}
     </div>
   );

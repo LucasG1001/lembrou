@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useReminders } from "../../hooks/useReminders";
 import { useHabits } from "../../hooks/useHabits";
 import { BellIcon, CheckIcon, CalendarIcon } from "../../components/Sidebar/Sidebar.icons";
-import { ReminderCalendar } from "../../components/ReminderCalendar/ReminderCalendar";
-import { countRemindersByDay, groupByDay, itemTime, startOfToday, type TimelineItem } from "../../utils/agenda";
+import { useCalendar } from "../../context/useCalendar";
+import { groupByDay, itemTime, startOfToday, type TimelineItem } from "../../utils/agenda";
 import {
   summarizeReminders,
   summarizeHabits,
@@ -22,13 +22,10 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { reminders, loading: remindersLoading } = useReminders();
   const { habits, loading: habitsLoading } = useHabits();
-
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const { open: openCalendar } = useCalendar();
 
   const reminderSummary = useMemo(() => summarizeReminders(reminders), [reminders]);
   const habitSummary = useMemo(() => summarizeHabits(habits), [habits]);
-
-  const countByDay = useMemo(() => countRemindersByDay(reminders), [reminders]);
 
   const dayGroups = useMemo(() => {
     const start = startOfToday();
@@ -60,7 +57,7 @@ export function DashboardPage() {
             type="button"
             className={styles.calendarButton}
             aria-label="Abrir calendário"
-            onClick={() => setCalendarOpen(true)}
+            onClick={openCalendar}
           >
             <CalendarIcon className={styles.calendarIcon} />
           </button>
@@ -186,10 +183,6 @@ export function DashboardPage() {
             </section>
           )}
         </div>
-      )}
-
-      {calendarOpen && (
-        <ReminderCalendar countByDay={countByDay} onClose={() => setCalendarOpen(false)} />
       )}
     </div>
   );

@@ -7,12 +7,24 @@ import type {
   Card,
   CardPatch,
   CardRow,
+  ChecklistItem,
   ListPatch,
   Project,
   ProjectBoard,
   ProjectPatch,
   ProjectRow,
 } from "../types/project.js";
+
+function parseChecklist(raw: unknown): ChecklistItem[] {
+  if (Array.isArray(raw)) return raw as ChecklistItem[];
+  if (typeof raw !== "string") return [];
+  try {
+    const value = JSON.parse(raw);
+    return Array.isArray(value) ? (value as ChecklistItem[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 function toProject(row: ProjectRow): Project {
   return {
@@ -30,6 +42,9 @@ function toCard(row: CardRow): Card {
     listId: row.list_id,
     title: row.title,
     done: row.done,
+    description: row.description ?? "",
+    images: row.images ?? [],
+    checklist: parseChecklist(row.checklist),
     position: row.position,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -186,7 +201,18 @@ export async function createCard(listId: string, title: string): Promise<Card | 
 }
 
 export async function updateCard(id: string, patch: CardPatch): Promise<Card | null> {
-  const { sets, values, nextIndex } = buildUpdateSet(patch, { title: "title", done: "done" });
+  const { checklist, ...rest } = patch;
+  const { sets, values, nextIndex } = buildUpdateSet(rest, {
+    title: "title",
+    done: "done",
+    description: "description",
+    images: "images",
+  });
+  let idIndex = nextIndex;
+  if (checklist !== undefined) {
+    sets.push(`checklist = $${idIndex++}`);
+    values.push(JSON.stringify(checklist));
+  }
   if (sets.length === 0) {
     const existing = await pool.query<CardRow>("SELECT * FROM cards WHERE id = $1", [id]);
     return existing.rows[0] ? toCard(existing.rows[0]) : null;
@@ -194,7 +220,7 @@ export async function updateCard(id: string, patch: CardPatch): Promise<Card | n
   sets.push("updated_at = NOW()");
   values.push(id);
   const result = await pool.query<CardRow>(
-    `UPDATE cards SET ${sets.join(", ")} WHERE id = $${nextIndex} RETURNING *`,
+    `UPDATE cards SET ${sets.join(", ")} WHERE id = $${idIndex} RETURNING *`,
     values
   );
   return result.rows[0] ? toCard(result.rows[0]) : null;

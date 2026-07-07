@@ -65,7 +65,6 @@ interface BoardListColumnProps {
   dropCardId: string | null;
   dropOnEmpty: boolean;
   listDropTarget: boolean;
-  editingCardId: string | null;
   renaming: boolean;
   composerOpen: boolean;
   onHeaderPointerDown: (e: React.PointerEvent, listId: string) => void;
@@ -77,8 +76,6 @@ interface BoardListColumnProps {
   onAddCard: (listId: string, title: string) => void;
   onCardPointerDown: (e: React.PointerEvent, card: Card) => void;
   onToggleDone: (card: Card) => void;
-  onCommitCardTitle: (card: Card, title: string) => void;
-  onCancelCardEdit: () => void;
   onDeleteCard: (card: Card) => void;
 }
 
@@ -89,7 +86,6 @@ export function BoardListColumn({
   dropCardId,
   dropOnEmpty,
   listDropTarget,
-  editingCardId,
   renaming,
   composerOpen,
   onHeaderPointerDown,
@@ -101,8 +97,6 @@ export function BoardListColumn({
   onAddCard,
   onCardPointerDown,
   onToggleDone,
-  onCommitCardTitle,
-  onCancelCardEdit,
   onDeleteCard,
 }: BoardListColumnProps) {
   return (
@@ -150,13 +144,10 @@ export function BoardListColumn({
           <BoardCard
             key={card.id}
             card={card}
-            editing={editingCardId === card.id}
             dragging={dragCardId === card.id}
             dropTarget={dropCardId === card.id}
             onPointerDown={onCardPointerDown}
             onToggleDone={onToggleDone}
-            onCommitTitle={onCommitCardTitle}
-            onCancelEdit={onCancelCardEdit}
             onDelete={onDeleteCard}
           />
         ))}

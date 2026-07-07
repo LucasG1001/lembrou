@@ -1,36 +1,27 @@
 import type { Card } from "../../types/project";
-import { InlineTextEdit } from "../InlineTextEdit/InlineTextEdit";
 import styles from "./BoardCard.module.css";
 
 interface BoardCardProps {
   card: Card;
-  editing: boolean;
   dragging: boolean;
   dropTarget: boolean;
   onPointerDown: (e: React.PointerEvent, card: Card) => void;
   onToggleDone: (card: Card) => void;
-  onCommitTitle: (card: Card, title: string) => void;
-  onCancelEdit: () => void;
   onDelete: (card: Card) => void;
 }
 
-export function BoardCard({
-  card,
-  editing,
-  dragging,
-  dropTarget,
-  onPointerDown,
-  onToggleDone,
-  onCommitTitle,
-  onCancelEdit,
-  onDelete,
-}: BoardCardProps) {
+export function BoardCard({ card, dragging, dropTarget, onPointerDown, onToggleDone, onDelete }: BoardCardProps) {
+  const hasDescription = card.description.trim().length > 0;
+  const checklistTotal = card.checklist.length;
+  const checklistDone = card.checklist.filter((item) => item.done).length;
+  const hasMeta = hasDescription || card.images.length > 0 || checklistTotal > 0;
+
   return (
     <div
       data-card-id={card.id}
       className={`${styles.card} ${card.done ? styles.done : ""} ${dragging ? styles.dragging : ""} ${
-        editing ? styles.editing : ""
-      } ${dropTarget ? styles.dropTarget : ""}`}
+        dropTarget ? styles.dropTarget : ""
+      }`}
       onPointerDown={(e) => onPointerDown(e, card)}
       onContextMenu={(e) => e.preventDefault()}
     >
@@ -54,29 +45,38 @@ export function BoardCard({
         </svg>
       </button>
 
-      {editing ? (
-        <InlineTextEdit
-          initial={card.title}
-          multiline
-          className={styles.titleInput}
-          onCommit={(title) => onCommitTitle(card, title)}
-          onCancel={onCancelEdit}
-        />
-      ) : (
+      <div className={styles.content}>
         <span className={styles.title}>{card.title}</span>
-      )}
+        {hasMeta && (
+          <span className={styles.meta}>
+            {hasDescription && (
+              <span className={styles.metaItem} aria-label="Tem descrição" title="Tem descrição">
+                📝
+              </span>
+            )}
+            {card.images.length > 0 && (
+              <span className={styles.metaItem} aria-label={`${card.images.length} imagem(ns)`}>
+                🖼 {card.images.length}
+              </span>
+            )}
+            {checklistTotal > 0 && (
+              <span className={styles.metaItem} aria-label="Checklist">
+                ☑ {checklistDone}/{checklistTotal}
+              </span>
+            )}
+          </span>
+        )}
+      </div>
 
-      {!editing && (
-        <button
-          type="button"
-          className={styles.delete}
-          aria-label="Excluir cartão"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => onDelete(card)}
-        >
-          ×
-        </button>
-      )}
+      <button
+        type="button"
+        className={styles.delete}
+        aria-label="Excluir cartão"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={() => onDelete(card)}
+      >
+        ×
+      </button>
     </div>
   );
 }

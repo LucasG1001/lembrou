@@ -33,14 +33,34 @@
   cursor: text;
 }
 
-.title {
+.content {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.title {
   min-width: 0;
   font-size: var(--font-size-base);
   line-height: 1.4;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   padding-top: 1px;
+}
+
+.meta {
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .done .title {

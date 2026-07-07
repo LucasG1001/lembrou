@@ -7,6 +7,7 @@ import { ReminderForm } from "./components/ReminderForm/ReminderForm";
 import { HabitsPage } from "./pages/HabitsPage/HabitsPage";
 import { ProjectsPage } from "./pages/ProjectsPage/ProjectsPage";
 import { FlashcardsPage } from "./pages/FlashcardsPage/FlashcardsPage";
+import { CalendarProvider } from "./context/CalendarContext";
 import styles from "./App.module.css";
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
@@ -26,10 +27,11 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className={styles.layout}>
-        <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
-        <main className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""}`}>
-          <Routes>
+      <CalendarProvider>
+        <div className={styles.layout}>
+          <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
+          <main className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""}`}>
+            <Routes>
             <Route path="/" element={<Navigate to="/lembretes" replace />} />
             <Route path="/inicio" element={<DashboardPage />} />
             <Route path="/lembretes" element={<RemindersPage />}>
@@ -39,9 +41,10 @@ function App() {
             <Route path="/habitos" element={<HabitsPage />} />
             <Route path="/projetos" element={<ProjectsPage />} />
             <Route path="/flashcards" element={<FlashcardsPage />} />
-          </Routes>
-        </main>
-      </div>
+            </Routes>
+          </main>
+        </div>
+      </CalendarProvider>
     </BrowserRouter>
   );
 }

@@ -133,6 +133,10 @@ export async function migrate(): Promise<void> {
     CREATE INDEX IF NOT EXISTS cards_list_idx ON cards (list_id);
   `);
 
+  await pool.query(`ALTER TABLE cards ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT ''`);
+  await pool.query(`ALTER TABLE cards ADD COLUMN IF NOT EXISTS images TEXT[] NOT NULL DEFAULT '{}'`);
+  await pool.query(`ALTER TABLE cards ADD COLUMN IF NOT EXISTS checklist TEXT NOT NULL DEFAULT '[]'`);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS flashcards (
       id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
