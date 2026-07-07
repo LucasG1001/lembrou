@@ -62,6 +62,9 @@ interface BoardListColumnProps {
   list: BoardList;
   dragging: boolean;
   dragCardId: string | null;
+  dropCardId: string | null;
+  dropOnEmpty: boolean;
+  listDropTarget: boolean;
   editingCardId: string | null;
   renaming: boolean;
   composerOpen: boolean;
@@ -83,6 +86,9 @@ export function BoardListColumn({
   list,
   dragging,
   dragCardId,
+  dropCardId,
+  dropOnEmpty,
+  listDropTarget,
   editingCardId,
   renaming,
   composerOpen,
@@ -102,7 +108,9 @@ export function BoardListColumn({
   return (
     <section
       data-list-id={list.id}
-      className={`${styles.list} ${dragging ? styles.dragging : ""}`}
+      className={`${styles.list} ${dragging ? styles.dragging : ""} ${
+        listDropTarget ? styles.listDropTarget : ""
+      }`}
       aria-label={list.name}
     >
       <header
@@ -134,13 +142,17 @@ export function BoardListColumn({
         </button>
       </header>
 
-      <div className={styles.cards} data-cards>
+      <div
+        className={`${styles.cards} ${dropOnEmpty ? styles.cardsDropTarget : ""}`}
+        data-cards
+      >
         {list.cards.map((card) => (
           <BoardCard
             key={card.id}
             card={card}
             editing={editingCardId === card.id}
             dragging={dragCardId === card.id}
+            dropTarget={dropCardId === card.id}
             onPointerDown={onCardPointerDown}
             onToggleDone={onToggleDone}
             onCommitTitle={onCommitCardTitle}

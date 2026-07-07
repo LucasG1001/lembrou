@@ -5,6 +5,8 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: var(--spacing-2xl);
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .header {
@@ -15,16 +17,55 @@
 }
 
 .board {
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-base);
   overflow-x: auto;
+  overflow-y: hidden;
   padding-bottom: var(--spacing-base);
-  min-height: 320px;
+  cursor: grab;
 }
 
 .boardDragging {
   scroll-snap-type: none !important;
+}
+
+.grabbing {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.cardGhost,
+.listGhost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  opacity: 0.92;
+  will-change: transform;
+}
+
+.cardGhost {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.listGhost {
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-semibold);
 }
 
 .addListColumn {
@@ -40,6 +81,7 @@
   background: var(--color-bg-card);
   text-align: left;
   font-size: var(--font-size-base);
+  cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
@@ -103,6 +145,7 @@
 @media (max-width: 768px) {
   .page {
     padding: var(--spacing-base);
+    height: calc(100dvh - var(--mobile-nav-height) - env(safe-area-inset-bottom));
   }
 
   .board {

@@ -23,6 +23,12 @@
   border-color: var(--color-accent);
 }
 
+.dropTarget {
+  border-color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
 .editing {
   cursor: text;
 }

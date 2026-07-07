@@ -16,8 +16,31 @@ const EDGE_SCROLL_STEP = 14;
 
 type DragType = "card" | "list";
 
+type Ghost = { type: DragType; width: number; title: string; done: boolean };
+
+type DropTarget =
+  | { kind: "card"; listId: string; index: number; overCardId: string | null }
+  | { kind: "list"; overListId: string; order: string[] };
+
 function alertError(err: unknown, fallback: string): void {
   window.alert(apiErrorMessage(err, fallback));
+}
+
+function sameDrop(a: DropTarget | null, b: DropTarget | null): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.kind !== b.kind) return false;
+  if (a.kind === "card" && b.kind === "card")
+    return a.listId === b.listId && a.index === b.index && a.overCardId === b.overCardId;
+  if (a.kind === "list" && b.kind === "list") return a.overListId === b.overListId;
+  return false;
+}
+
+function boardChanged(a: BoardList[], b: BoardList[]): boolean {
+  return a.some((l, i) => {
+    const o = b[i];
+    if (!o || o.id !== l.id || o.cards.length !== l.cards.length) return true;
+    return l.cards.some((c, j) => c.id !== o.cards[j]?.id);
+  });
 }
 
 export function ProjectsPage() {
@@ -52,13 +75,15 @@ export function ProjectsPage() {
 
   const [dragCardId, setDragCardId] = useState<string | null>(null);
   const [dragListId, setDragListId] = useState<string | null>(null);
-  const [previewLists, setPreviewLists] = useState<BoardList[] | null>(null);
+  const [ghost, setGhost] = useState<Ghost | null>(null);
+  const [drop, setDrop] = useState<DropTarget | null>(null);
 
   const boardRef = useRef<BoardList[] | null>(null);
-  const previewRef = useRef<BoardList[] | null>(null);
   const dragTypeRef = useRef<DragType | null>(null);
   const dragIdRef = useRef<string | null>(null);
-  const baseRef = useRef<BoardList[] | null>(null);
+  const dropRef = useRef<DropTarget | null>(null);
+  const ghostOffsetRef = useRef({ x: 0, y: 0 });
+  const ghostElRef = useRef<HTMLDivElement | null>(null);
   const pressTimerRef = useRef<number | null>(null);
   const lastPointRef = useRef({ x: 0, y: 0 });
   const rafRef = useRef<number | null>(null);
@@ -101,111 +126,139 @@ export function ProjectsPage() {
     }
   };
 
-  const updateCardPreview = (x: number, y: number) => {
+  const computeCardDrop = (x: number, y: number): DropTarget | null => {
     const dragId = dragIdRef.current;
-    const current = previewRef.current;
-    if (!dragId || !current) return;
+    const current = boardRef.current;
+    if (!dragId || !current) return null;
     const el = document.elementFromPoint(x, y);
-    if (!el) return;
+    if (!el) return null;
 
-    let toListId: string;
-    let index: number;
     const cardEl = el.closest("[data-card-id]");
     if (cardEl) {
       const overId = cardEl.getAttribute("data-card-id")!;
-      if (overId === dragId) return;
+      if (overId === dragId) return null;
       const list = current.find((l) => l.cards.some((c) => c.id === overId));
-      if (!list) return;
+      if (!list) return null;
       const rect = cardEl.getBoundingClientRect();
       const after = y > rect.top + rect.height / 2;
       const ids = list.cards.filter((c) => c.id !== dragId).map((c) => c.id);
       const overIndex = ids.indexOf(overId);
-      if (overIndex === -1) return;
-      toListId = list.id;
-      index = after ? overIndex + 1 : overIndex;
-    } else {
-      const listEl = el.closest("[data-list-id]");
-      if (!listEl) return;
-      const listId = listEl.getAttribute("data-list-id")!;
-      const list = current.find((l) => l.id === listId);
-      if (!list) return;
-      toListId = listId;
-      index = list.cards.filter((c) => c.id !== dragId).length;
+      if (overIndex === -1) return null;
+      return {
+        kind: "card",
+        listId: list.id,
+        index: after ? overIndex + 1 : overIndex,
+        overCardId: overId,
+      };
     }
 
-    const curList = current.find((l) => l.cards.some((c) => c.id === dragId));
-    const curIndex = curList ? curList.cards.findIndex((c) => c.id === dragId) : -1;
-    if (curList?.id === toListId && curIndex === index) return;
-
-    const next = moveCardInBoard(current, dragId, toListId, index);
-    previewRef.current = next;
-    setPreviewLists(next);
+    const listEl = el.closest("[data-list-id]");
+    if (listEl) {
+      const listId = listEl.getAttribute("data-list-id")!;
+      const list = current.find((l) => l.id === listId);
+      if (!list) return null;
+      const index = list.cards.filter((c) => c.id !== dragId).length;
+      return { kind: "card", listId, index, overCardId: null };
+    }
+    return null;
   };
 
-  const updateListPreview = (x: number, y: number) => {
+  const computeListDrop = (x: number, y: number): DropTarget | null => {
     const dragId = dragIdRef.current;
-    const current = previewRef.current;
-    if (!dragId || !current) return;
-    const el = document.elementFromPoint(x, y)?.closest("[data-list-id]");
-    const overId = el?.getAttribute("data-list-id");
-    if (!overId || overId === dragId) return;
-    const rect = el!.getBoundingClientRect();
-    const after = x > rect.left + rect.width / 2;
+    const current = boardRef.current;
+    if (!dragId || !current) return null;
+    const listEl = document.elementFromPoint(x, y)?.closest("[data-list-id]");
+    const overId = listEl?.getAttribute("data-list-id");
+    if (!overId || overId === dragId) return null;
     const order = current.map((l) => l.id);
+    const rect = listEl!.getBoundingClientRect();
+    const after = x > rect.left + rect.width / 2;
     const nextOrder = moveRelativeTo(order, dragId, overId, after);
-    if (nextOrder.every((id, i) => id === order[i])) return;
-    const byId = new Map(current.map((l) => [l.id, l]));
-    const next = nextOrder.map((id) => byId.get(id)!);
-    previewRef.current = next;
-    setPreviewLists(next);
+    if (nextOrder.every((id, i) => id === order[i])) return null;
+    return { kind: "list", overListId: overId, order: nextOrder };
   };
 
-  const commitCardDrop = (cardId: string, final: BoardList[], base: BoardList[]) => {
-    const finalList = final.find((l) => l.cards.some((c) => c.id === cardId));
-    const baseList = base.find((l) => l.cards.some((c) => c.id === cardId));
-    if (!finalList || !baseList) return;
-    const finalIndex = finalList.cards.findIndex((c) => c.id === cardId);
-    const baseIndex = baseList.cards.findIndex((c) => c.id === cardId);
-    if (finalList.id === baseList.id && finalIndex === baseIndex) return;
-    moveCard(cardId, finalList.id, finalIndex).catch((err) =>
-      alertError(err, "Não foi possível mover o cartão.")
-    );
+  const applyMove = (x: number, y: number) => {
+    lastPointRef.current = { x, y };
+    const el = ghostElRef.current;
+    if (el) {
+      const off = ghostOffsetRef.current;
+      el.style.transform = `translate(${x - off.x}px, ${y - off.y}px)`;
+    }
+    const next = dragTypeRef.current === "card" ? computeCardDrop(x, y) : computeListDrop(x, y);
+    if (next && !sameDrop(next, dropRef.current)) {
+      dropRef.current = next;
+      setDrop(next);
+    }
   };
 
-  const commitListDrop = (final: BoardList[], base: BoardList[]) => {
-    const order = final.map((l) => l.id);
-    if (order.every((id, i) => id === base[i]?.id)) return;
-    reorderLists(order).catch((err) => alertError(err, "Não foi possível reordenar as listas."));
+  const commitDrop = (dragId: string, type: DragType) => {
+    const target = dropRef.current;
+    if (!target) return;
+    if (type === "card" && target.kind === "card") {
+      const current = boardRef.current;
+      if (current && !boardChanged(current, moveCardInBoard(current, dragId, target.listId, target.index)))
+        return;
+      moveCard(dragId, target.listId, target.index).catch((err) =>
+        alertError(err, "Não foi possível mover o cartão.")
+      );
+    } else if (type === "list" && target.kind === "list") {
+      reorderLists(target.order).catch((err) =>
+        alertError(err, "Não foi possível reordenar as listas.")
+      );
+    }
   };
 
-  const startDrag = (id: string, type: DragType) => {
-    const base = boardRef.current;
-    if (!base) return;
-    if (type === "card" && !base.some((l) => l.cards.some((c) => c.id === id))) return;
-    if (type === "list" && !base.some((l) => l.id === id)) return;
+  const startDrag = (id: string, type: DragType, isTouch: boolean) => {
+    const current = boardRef.current;
+    if (!current) return;
+    if (type === "card" && !current.some((l) => l.cards.some((c) => c.id === id))) return;
+    if (type === "list" && !current.some((l) => l.id === id)) return;
+    const el = document.querySelector(
+      type === "card" ? `[data-card-id="${id}"]` : `[data-list-id="${id}"]`
+    ) as HTMLElement | null;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const { x: sx, y: sy } = lastPointRef.current;
+    ghostOffsetRef.current = { x: sx - rect.left, y: sy - rect.top };
+
+    let title: string;
+    let done = false;
+    if (type === "card") {
+      const card = current.flatMap((l) => l.cards).find((c) => c.id === id);
+      title = card?.title ?? "";
+      done = card?.done ?? false;
+    } else {
+      title = current.find((l) => l.id === id)?.name ?? "";
+    }
 
     dragTypeRef.current = type;
     dragIdRef.current = id;
-    baseRef.current = base;
-    previewRef.current = base;
-    setPreviewLists(base);
+    dropRef.current = null;
+    setDrop(null);
+    setGhost({ type, width: rect.width, title, done });
     if (type === "card") setDragCardId(id);
     else setDragListId(id);
 
-    const preventTouch = (ev: TouchEvent) => ev.preventDefault();
-
-    const onMove = (ev: PointerEvent) => {
+    const onPointerMove = (ev: PointerEvent) => {
       ev.preventDefault();
-      lastPointRef.current = { x: ev.clientX, y: ev.clientY };
-      if (type === "card") updateCardPreview(ev.clientX, ev.clientY);
-      else updateListPreview(ev.clientX, ev.clientY);
+      applyMove(ev.clientX, ev.clientY);
+    };
+
+    const onTouchMove = (ev: TouchEvent) => {
+      ev.preventDefault();
+      const t = ev.touches[0];
+      if (t) applyMove(t.clientX, t.clientY);
     };
 
     const cleanup = () => {
-      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
-      window.removeEventListener("touchmove", preventTouch);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onUp);
+      window.removeEventListener("touchcancel", onCancel);
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
@@ -215,21 +268,16 @@ export function ProjectsPage() {
     const resetDrag = () => {
       dragTypeRef.current = null;
       dragIdRef.current = null;
-      baseRef.current = null;
-      previewRef.current = null;
-      setPreviewLists(null);
+      dropRef.current = null;
+      setDrop(null);
+      setGhost(null);
       setDragCardId(null);
       setDragListId(null);
     };
 
     const onUp = () => {
       cleanup();
-      const final = previewRef.current;
-      const baseLists = baseRef.current;
-      if (final && baseLists) {
-        if (type === "card") commitCardDrop(id, final, baseLists);
-        else commitListDrop(final, baseLists);
-      }
+      commitDrop(id, type);
       resetDrag();
     };
 
@@ -238,10 +286,15 @@ export function ProjectsPage() {
       resetDrag();
     };
 
-    window.addEventListener("pointermove", onMove, { passive: false });
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onCancel);
-    window.addEventListener("touchmove", preventTouch, { passive: false });
+    if (isTouch) {
+      window.addEventListener("touchmove", onTouchMove, { passive: false });
+      window.addEventListener("touchend", onUp);
+      window.addEventListener("touchcancel", onCancel);
+    } else {
+      window.addEventListener("pointermove", onPointerMove, { passive: false });
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onCancel);
+    }
 
     const loop = () => {
       autoScrollAtEdges();
@@ -256,15 +309,49 @@ export function ProjectsPage() {
 
     const start = { x: e.clientX, y: e.clientY };
     lastPointRef.current = start;
-    const isTouch = e.pointerType === "touch";
     let finished = false;
+
+    if (e.pointerType === "touch") {
+      const clearPress = () => {
+        finished = true;
+        if (pressTimerRef.current) {
+          clearTimeout(pressTimerRef.current);
+          pressTimerRef.current = null;
+        }
+        window.removeEventListener("touchmove", onTouchMove);
+        window.removeEventListener("touchend", onTouchEnd);
+        window.removeEventListener("touchcancel", onTouchEnd);
+      };
+
+      const onTouchMove = (ev: TouchEvent) => {
+        if (finished) return;
+        const t = ev.touches[0];
+        if (!t) return;
+        const moved =
+          Math.abs(t.clientX - start.x) > MOVE_THRESHOLD ||
+          Math.abs(t.clientY - start.y) > MOVE_THRESHOLD;
+        if (moved) clearPress();
+      };
+
+      const onTouchEnd = () => {
+        if (finished) return;
+        clearPress();
+        onTap();
+      };
+
+      pressTimerRef.current = window.setTimeout(() => {
+        clearPress();
+        startDrag(id, type, true);
+      }, LONG_PRESS_MS);
+
+      window.addEventListener("touchmove", onTouchMove, { passive: false });
+      window.addEventListener("touchend", onTouchEnd);
+      window.addEventListener("touchcancel", onTouchEnd);
+      return;
+    }
 
     const clearPress = () => {
       finished = true;
-      if (pressTimerRef.current) {
-        clearTimeout(pressTimerRef.current);
-        pressTimerRef.current = null;
-      }
       window.removeEventListener("pointermove", onPressMove);
       window.removeEventListener("pointerup", onPressUp);
       window.removeEventListener("pointercancel", onPressCancel);
@@ -277,7 +364,7 @@ export function ProjectsPage() {
         Math.abs(ev.clientY - start.y) > MOVE_THRESHOLD;
       if (!moved) return;
       clearPress();
-      if (!isTouch) startDrag(id, type);
+      startDrag(id, type, false);
     };
 
     const onPressUp = () => {
@@ -290,15 +377,47 @@ export function ProjectsPage() {
       clearPress();
     };
 
-    if (isTouch) {
-      pressTimerRef.current = window.setTimeout(() => {
-        clearPress();
-        startDrag(id, type);
-      }, LONG_PRESS_MS);
-    }
     window.addEventListener("pointermove", onPressMove);
     window.addEventListener("pointerup", onPressUp);
     window.addEventListener("pointercancel", onPressCancel);
+  };
+
+  const handleBoardPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-card-id], header, button, input, textarea, [contenteditable="true"]'))
+      return;
+    const boardEl = boardScrollRef.current;
+    if (!boardEl) return;
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startLeft = boardEl.scrollLeft;
+    const cardsEl = target.closest("[data-cards]") as HTMLElement | null;
+    const startTop = cardsEl?.scrollTop ?? 0;
+    let moved = false;
+
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (!moved) {
+        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+        moved = true;
+        boardEl.classList.add(styles.grabbing);
+      }
+      boardEl.scrollLeft = startLeft - dx;
+      if (cardsEl) cardsEl.scrollTop = startTop - dy;
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      boardEl.classList.remove(styles.grabbing);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
   };
 
   const handleCardPointerDown = (e: React.PointerEvent, card: Card) => {
@@ -322,7 +441,7 @@ export function ProjectsPage() {
   };
 
   const handleDeleteCard = (card: Card) => {
-    if (!window.confirm(`Excluir "${card.title}"?`)) return;
+    if (!card.done && !window.confirm(`Excluir "${card.title}"?`)) return;
     deleteCard(card.id).catch((err) => alertError(err, "Não foi possível excluir o cartão."));
   };
 
@@ -354,8 +473,10 @@ export function ProjectsPage() {
   };
 
   const currentProject = projects.find((p) => p.id === currentProjectId) ?? null;
-  const lists = previewLists ?? board;
+  const lists = board;
   const dragging = Boolean(dragCardId || dragListId);
+  const cardDrop = drop?.kind === "card" ? drop : null;
+  const listDrop = drop?.kind === "list" ? drop : null;
 
   return (
     <div className={styles.page}>
@@ -413,6 +534,7 @@ export function ProjectsPage() {
             <div
               ref={boardScrollRef}
               className={`${styles.board} ${dragging ? styles.boardDragging : ""}`}
+              onPointerDown={handleBoardPointerDown}
             >
               {lists.map((list) => (
                 <BoardListColumn
@@ -420,6 +542,11 @@ export function ProjectsPage() {
                   list={list}
                   dragging={dragListId === list.id}
                   dragCardId={dragCardId}
+                  dropCardId={cardDrop?.overCardId ?? null}
+                  dropOnEmpty={Boolean(
+                    cardDrop && cardDrop.overCardId === null && cardDrop.listId === list.id
+                  )}
+                  listDropTarget={listDrop?.overListId === list.id}
                   editingCardId={editingCardId}
                   renaming={renamingListId === list.id}
                   composerOpen={activeComposerListId === list.id}
@@ -462,6 +589,23 @@ export function ProjectsPage() {
             </div>
           )}
         </>
+      )}
+
+      {ghost && (
+        <div
+          ref={(el) => {
+            ghostElRef.current = el;
+            if (el) {
+              const { x, y } = lastPointRef.current;
+              const off = ghostOffsetRef.current;
+              el.style.transform = `translate(${x - off.x}px, ${y - off.y}px)`;
+            }
+          }}
+          className={ghost.type === "card" ? styles.cardGhost : styles.listGhost}
+          style={{ width: ghost.width }}
+        >
+          {ghost.title}
+        </div>
       )}
     </div>
   );

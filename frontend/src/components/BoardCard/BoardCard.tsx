@@ -6,6 +6,7 @@ interface BoardCardProps {
   card: Card;
   editing: boolean;
   dragging: boolean;
+  dropTarget: boolean;
   onPointerDown: (e: React.PointerEvent, card: Card) => void;
   onToggleDone: (card: Card) => void;
   onCommitTitle: (card: Card, title: string) => void;
@@ -17,6 +18,7 @@ export function BoardCard({
   card,
   editing,
   dragging,
+  dropTarget,
   onPointerDown,
   onToggleDone,
   onCommitTitle,
@@ -28,7 +30,7 @@ export function BoardCard({
       data-card-id={card.id}
       className={`${styles.card} ${card.done ? styles.done : ""} ${dragging ? styles.dragging : ""} ${
         editing ? styles.editing : ""
-      }`}
+      } ${dropTarget ? styles.dropTarget : ""}`}
       onPointerDown={(e) => onPointerDown(e, card)}
       onContextMenu={(e) => e.preventDefault()}
     >
