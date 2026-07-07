@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { CompletionStatus, Habit, HabitFormData } from "../types/habit";
+import type { Habit, HabitFormData } from "../types/habit";
 
 export async function fetchHabits(): Promise<Habit[]> {
   const response = await api.get<Habit[]>("/api/habits");
@@ -28,8 +28,8 @@ export async function deleteHabit(id: string): Promise<void> {
 export async function setHabitCompletion(
   habitId: string,
   date: string,
-  status: CompletionStatus
+  count: number
 ): Promise<Habit> {
-  const response = await api.patch<Habit>(`/api/habits/${habitId}/completion/${date}`, { status });
+  const response = await api.patch<Habit>(`/api/habits/${habitId}/completion/${date}`, { count });
   return response.data;
 }

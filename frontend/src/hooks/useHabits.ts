@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { CompletionStatus, Habit, HabitFormData } from "../types/habit";
+import type { Habit, HabitFormData } from "../types/habit";
 import {
   fetchHabits,
   createHabit as apiCreateHabit,
@@ -19,7 +19,7 @@ interface UseHabitsReturn {
   updateHabit: (id: string, data: HabitFormData) => Promise<void>;
   deleteHabit: (id: string) => Promise<void>;
   reorderHabits: (orderedIds: string[]) => Promise<void>;
-  setCompletion: (habitId: string, date: string, status: CompletionStatus) => Promise<void>;
+  setCompletion: (habitId: string, date: string, count: number) => Promise<void>;
 }
 
 function recalculateHabitStats(habit: Habit): Habit {
@@ -27,6 +27,16 @@ function recalculateHabitStats(habit: Habit): Habit {
   const longestStreak = calculateLongestStreak(habit.completions, habit.selectedDays, habit.createdAt);
   const level = calculateLevel(longestStreak, habit.completions, habit.selectedDays);
   return { ...habit, currentStreak, longestStreak, level };
+}
+
+function applyCount(habit: Habit, date: string, count: number): Habit {
+  const clamped = Math.max(0, Math.min(count, habit.targetCount));
+  const others = habit.completions.filter((c) => c.date !== date);
+  const completions =
+    clamped <= 0
+      ? others
+      : [...others, { date, count: clamped, completed: clamped >= habit.targetCount, locked: false }];
+  return { ...habit, completions };
 }
 
 export function useHabits(): UseHabitsReturn {
@@ -56,9 +66,19 @@ export function useHabits(): UseHabitsReturn {
     setHabits((prev) => prev.filter((h) => h.id !== id));
   }
 
-  async function setCompletion(habitId: string, date: string, status: CompletionStatus): Promise<void> {
-    const updated = await setHabitCompletion(habitId, date, status);
-    setHabits((prev) => prev.map((h) => (h.id === habitId ? recalculateHabitStats(updated) : h)));
+  async function setCompletion(habitId: string, date: string, count: number): Promise<void> {
+    let previous: Habit[] = [];
+    setHabits((prev) => {
+      previous = prev;
+      return prev.map((h) => (h.id === habitId ? recalculateHabitStats(applyCount(h, date, count)) : h));
+    });
+    try {
+      const updated = await setHabitCompletion(habitId, date, count);
+      setHabits((prev) => prev.map((h) => (h.id === habitId ? recalculateHabitStats(updated) : h)));
+    } catch (err) {
+      setHabits(previous);
+      throw err;
+    }
   }
 
   async function reorderHabits(orderedIds: string[]): Promise<void> {

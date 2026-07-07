@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import type { Habit } from "../../types/habit";
 import { getToday, getTodayKey, isScheduledDay } from "../../utils/dateUtils";
 import { getHabitIcon } from "../../utils/habitIcons";
@@ -7,7 +7,7 @@ import styles from "./TodayHabits.module.css";
 
 interface TodayHabitsProps {
   habits: Habit[];
-  onToggle: (habitId: string, dateKey: string, completed: boolean) => void;
+  onToggle: (habitId: string, dateKey: string, nextCount: number) => void;
   onReorder: (orderedVisibleIds: string[]) => void;
 }
 
@@ -21,10 +21,12 @@ export function TodayHabits({ habits, onToggle, onReorder }: TodayHabitsProps) {
     const date = getToday();
     return habits
       .filter((habit) => isScheduledDay(date, habit.selectedDays))
-      .map((habit) => ({
-        habit,
-        completed: habit.completions.some((c) => c.date === todayKey && c.completed),
-      }));
+      .map((habit) => {
+        const completion = habit.completions.find((c) => c.date === todayKey);
+        const target = Math.max(1, habit.targetCount);
+        const count = Math.min(completion?.count ?? 0, target);
+        return { habit, count, target, completed: count >= target };
+      });
   }, [habits, todayKey]);
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -110,9 +112,10 @@ export function TodayHabits({ habits, onToggle, onReorder }: TodayHabitsProps) {
       {renderIds.map((id) => {
         const entry = entryById.get(id);
         if (!entry) return null;
-        const { habit, completed } = entry;
+        const { habit, count, target, completed } = entry;
         const Icon = getHabitIcon(habit.icon);
         const isDragging = draggingId === habit.id;
+        const pct = Math.min(100, Math.round((count / target) * 100));
         return (
           <button
             key={habit.id}
@@ -121,9 +124,10 @@ export function TodayHabits({ habits, onToggle, onReorder }: TodayHabitsProps) {
             className={`${styles.square} ${completed ? styles.done : ""} ${
               isDragging ? styles.dragging : ""
             }`}
+            style={{ "--progress": pct } as CSSProperties}
             aria-pressed={completed}
-            aria-label={habit.name}
-            title={habit.name}
+            aria-label={target > 1 ? `${habit.name} (${count}/${target})` : habit.name}
+            title={target > 1 ? `${habit.name} — ${count}/${target}` : habit.name}
             onPointerDown={(e) => {
               clearTimer();
               movedRef.current = false;
@@ -147,7 +151,10 @@ export function TodayHabits({ habits, onToggle, onReorder }: TodayHabitsProps) {
             onPointerUp={() => {
               if (draggingRef.current) return;
               clearTimer();
-              if (!movedRef.current) onToggle(habit.id, todayKey, completed);
+              if (!movedRef.current) {
+                const next = count >= target ? 0 : count + 1;
+                onToggle(habit.id, todayKey, next);
+              }
               movedRef.current = false;
             }}
             onPointerCancel={() => {
@@ -156,7 +163,9 @@ export function TodayHabits({ habits, onToggle, onReorder }: TodayHabitsProps) {
             }}
             onContextMenu={(e) => e.preventDefault()}
           >
-            <Icon className={styles.icon} />
+            <span className={styles.inner}>
+              <Icon className={styles.icon} />
+            </span>
           </button>
         );
       })}

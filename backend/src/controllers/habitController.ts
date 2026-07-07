@@ -1,5 +1,5 @@
 import {
-  completionStatusSchema,
+  completionCountSchema,
   createHabitSchema,
   reorderHabitsSchema,
   updateHabitSchema,
@@ -63,19 +63,17 @@ export const setCompletion = asyncHandler("Erro ao atualizar conclusão.", async
     res.status(400).json({ error: "Data inválida (use YYYY-MM-DD)." });
     return;
   }
-  const parsed = completionStatusSchema.safeParse(req.body);
+  const parsed = completionCountSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Status inválido." });
+    res.status(400).json({ error: "Contagem inválida." });
     return;
   }
 
-  const { status } = parsed.data;
-  if (status === "done") {
-    await habitModel.setCompletion(id, date, true);
-  } else if (status === "notDone") {
-    await habitModel.setCompletion(id, date, false);
-  } else {
+  const { count } = parsed.data;
+  if (count <= 0) {
     await habitModel.clearCompletion(id, date);
+  } else {
+    await habitModel.setCompletionCount(id, date, count);
   }
 
   const habit = await habitModel.findById(id);

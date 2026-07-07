@@ -6,14 +6,15 @@ const baseHabit = z.object({
   selectedDays: z
     .array(z.number().int().min(0).max(6))
     .min(1, "Escolha ao menos um dia."),
+  targetCount: z.number().int().min(1, "Meta mínima é 1.").max(50, "Meta máxima é 50.").default(1),
 });
 
 export const createHabitSchema = baseHabit;
 
 export const updateHabitSchema = baseHabit;
 
-export const completionStatusSchema = z.object({
-  status: z.enum(["done", "notDone", "clear"]),
+export const completionCountSchema = z.object({
+  count: z.number().int().min(0),
 });
 
 export const reorderHabitsSchema = z.object({

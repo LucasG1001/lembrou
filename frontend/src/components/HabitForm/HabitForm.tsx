@@ -17,6 +17,7 @@ export function HabitForm({ mode, initialData, error, onSave, onClose }: HabitFo
   const [name, setName] = useState(initialData?.name ?? "");
   const [icon, setIcon] = useState(initialData?.icon ?? DEFAULT_HABIT_ICON_KEY);
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(initialData?.selectedDays ?? []);
+  const [targetCount, setTargetCount] = useState(initialData?.targetCount ?? 1);
   const [daysError, setDaysError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -29,7 +30,7 @@ export function HabitForm({ mode, initialData, error, onSave, onClose }: HabitFo
       setDaysError("Selecione pelo menos um dia");
       return;
     }
-    onSave({ name: name.trim(), icon, selectedDays });
+    onSave({ name: name.trim(), icon, selectedDays, targetCount });
   }
 
   function handleDaysChange(days: DayOfWeek[]) {
@@ -83,6 +84,25 @@ export function HabitForm({ mode, initialData, error, onSave, onClose }: HabitFo
       <div className={styles.field}>
         <span className={styles.label}>Dias</span>
         <DaySelector selectedDays={selectedDays} onChange={handleDaysChange} error={daysError} />
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="habit-target">
+          Meta por dia (conclusões)
+        </label>
+        <input
+          id="habit-target"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={50}
+          className={styles.input}
+          value={targetCount}
+          onChange={(e) => {
+            const n = Math.floor(Number(e.target.value));
+            setTargetCount(Number.isFinite(n) ? Math.min(50, Math.max(1, n)) : 1);
+          }}
+        />
       </div>
 
       {error && <p className={styles.formError}>{error}</p>}

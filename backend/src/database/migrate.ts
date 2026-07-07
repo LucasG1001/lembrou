@@ -82,6 +82,10 @@ export async function migrate(): Promise<void> {
   `);
 
   await pool.query(`
+    ALTER TABLE habits ADD COLUMN IF NOT EXISTS target_count INTEGER NOT NULL DEFAULT 1;
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS habit_completions (
       id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       habit_id    UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
@@ -90,6 +94,14 @@ export async function migrate(): Promise<void> {
       locked      BOOLEAN NOT NULL DEFAULT FALSE,
       UNIQUE(habit_id, date)
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE habit_completions ADD COLUMN IF NOT EXISTS count INTEGER NOT NULL DEFAULT 0;
+  `);
+
+  await pool.query(`
+    UPDATE habit_completions SET count = 1 WHERE completed = TRUE AND count = 0;
   `);
 
   await pool.query(`

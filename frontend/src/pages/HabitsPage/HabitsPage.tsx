@@ -116,8 +116,8 @@ export function HabitsPage() {
   );
 
   const handleToggle = useCallback(
-    (habitId: string, dateKey: string, completed: boolean) =>
-      setCompletion(habitId, dateKey, completed ? "clear" : "done").catch((err) =>
+    (habitId: string, dateKey: string, nextCount: number) =>
+      setCompletion(habitId, dateKey, nextCount).catch((err) =>
         window.alert(apiErrorMessage(err, "Não foi possível atualizar o hábito."))
       ),
     [setCompletion]
@@ -194,7 +194,12 @@ export function HabitsPage() {
           mode={formMode}
           initialData={
             formMode === "edit" && editing
-              ? { name: editing.name, icon: editing.icon, selectedDays: editing.selectedDays }
+              ? {
+                  name: editing.name,
+                  icon: editing.icon,
+                  selectedDays: editing.selectedDays,
+                  targetCount: editing.targetCount,
+                }
               : undefined
           }
           error={formError}
