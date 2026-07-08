@@ -1,96 +1,235 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(2px);
+  z-index: 40;
+  animation: fadeIn var(--transition-base) ease;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: 460px;
+  max-width: 92vw;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-drawer);
+  border-left: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  animation: drawerIn var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes drawerIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+}
+
+.closeButton:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
 .field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .label {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.04em;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
 }
 
-.input {
-  width: 100%;
-  padding: 12px 16px;
-  background-color: var(--color-bg-card);
+.catPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.catPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.catPill:hover {
   color: var(--color-text-primary);
-  font-size: 16px;
-  transition: border-color var(--transition-fast);
 }
 
-.input::placeholder {
-  color: var(--color-text-tertiary);
-}
-
-.input:focus {
+.catPillActive {
   border-color: var(--color-accent);
 }
 
-.tagWrapper {
-  display: block;
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex: none;
 }
 
-.suggestions {
-  position: fixed;
-  z-index: 300;
-  list-style: none;
-  margin: 0;
-  padding: var(--spacing-xs);
-  background: var(--color-bg-tertiary);
+.preview {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  max-height: 160px;
-  overflow-y: auto;
+}
+
+.previewFront,
+.previewBack {
+  padding: var(--spacing-base);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-sm);
+  min-height: 80px;
 }
 
-.suggestion {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  color: var(--color-text-primary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+.previewFront {
+  background: var(--color-bg-secondary);
 }
 
-.suggestion:hover {
-  background: var(--color-accent-subtle);
+.previewBack {
+  background: var(--color-bg-tertiary);
+  border-top: 1px solid var(--color-accent);
+}
+
+.previewKind,
+.previewKindBack {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+}
+
+.previewKindBack {
   color: var(--color-accent);
+}
+
+.previewText {
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .formError {
   color: var(--color-error);
   background: var(--color-error-subtle);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md);
   border-radius: var(--radius-md);
   font-size: var(--font-size-base);
 }
 
-.deleteButton {
-  color: var(--color-error);
-  font-size: var(--font-size-base);
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-base) var(--spacing-xl);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.footerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.cancelButton {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
-  padding: 10px 20px;
-  border-radius: var(--radius-button);
-  border: 1px solid transparent;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.deleteButton:hover {
-  background: var(--color-error-subtle);
+.cancelButton:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
 }
 
-.deleteConfirm,
-.deleteConfirm:hover {
+.saveButton {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+  transition: background var(--transition-fast);
+}
+
+.saveButton:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-error);
   background: var(--color-error-subtle);
-  border-color: var(--color-error);
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
+}
+
+.deleteConfirm {
+  background: var(--color-error);
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
 }

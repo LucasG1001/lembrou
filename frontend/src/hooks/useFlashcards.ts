@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Flashcard, FlashcardFormData, FlashcardSummary, Grade } from "../types/flashcard";
+import type { Flashcard, FlashcardFormData, FlashcardSummary } from "../types/flashcard";
 import {
   fetchFlashcards,
   createFlashcard as apiCreateFlashcard,
   updateFlashcard as apiUpdateFlashcard,
   deleteFlashcard as apiDeleteFlashcard,
   reviewFlashcard as apiReviewFlashcard,
+  setFlashcardCategory as apiSetFlashcardCategory,
 } from "../services/flashcardService";
 import { countDue } from "../utils/flashcardUtils";
 
@@ -17,7 +18,9 @@ interface UseFlashcardsReturn {
   createCard: (data: FlashcardFormData) => Promise<void>;
   updateCard: (id: string, data: FlashcardFormData) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
-  applyReview: (id: string, grade: Grade) => Promise<Flashcard>;
+  bulkDelete: (ids: string[]) => Promise<void>;
+  bulkMove: (ids: string[], categoryId: string | null) => Promise<void>;
+  applyReview: (id: string, correct: boolean) => Promise<Flashcard>;
 }
 
 export function useFlashcards(): UseFlashcardsReturn {
@@ -36,7 +39,7 @@ export function useFlashcards(): UseFlashcardsReturn {
 
   async function createCard(data: FlashcardFormData): Promise<void> {
     const created = await apiCreateFlashcard(data);
-    setCards((prev) => [...prev, created]);
+    setCards((prev) => [created, ...prev]);
   }
 
   async function updateCard(id: string, data: FlashcardFormData): Promise<void> {
@@ -49,11 +52,34 @@ export function useFlashcards(): UseFlashcardsReturn {
     setCards((prev) => prev.filter((c) => c.id !== id));
   }
 
-  async function applyReview(id: string, grade: Grade): Promise<Flashcard> {
-    const updated = await apiReviewFlashcard(id, grade);
+  async function bulkDelete(ids: string[]): Promise<void> {
+    await Promise.all(ids.map((id) => apiDeleteFlashcard(id)));
+    const removed = new Set(ids);
+    setCards((prev) => prev.filter((c) => !removed.has(c.id)));
+  }
+
+  async function bulkMove(ids: string[], categoryId: string | null): Promise<void> {
+    const updated = await Promise.all(ids.map((id) => apiSetFlashcardCategory(id, categoryId)));
+    const byId = new Map(updated.map((c) => [c.id, c]));
+    setCards((prev) => prev.map((c) => byId.get(c.id) ?? c));
+  }
+
+  async function applyReview(id: string, correct: boolean): Promise<Flashcard> {
+    const updated = await apiReviewFlashcard(id, correct);
     setCards((prev) => prev.map((c) => (c.id === id ? updated : c)));
     return updated;
   }
 
-  return { cards, loading, error, dueCount, createCard, updateCard, deleteCard, applyReview };
+  return {
+    cards,
+    loading,
+    error,
+    dueCount,
+    createCard,
+    updateCard,
+    deleteCard,
+    bulkDelete,
+    bulkMove,
+    applyReview,
+  };
 }

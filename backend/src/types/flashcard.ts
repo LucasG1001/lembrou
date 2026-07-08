@@ -2,11 +2,8 @@ export interface FlashcardSummary {
   id: string;
   question: string;
   answer: string;
-  tag: string | null;
-  easeFactor: number;
-  intervalDays: number;
-  repetitions: number;
-  lapses: number;
+  categoryId: string | null;
+  box: number;
   nextReviewAt: string;
   lastReviewedAt: string | null;
   createdAt: string;
@@ -24,11 +21,8 @@ export interface FlashcardRow {
   answer: string;
   question_images: string[];
   answer_images: string[];
-  tag: string | null;
-  ease_factor: number;
-  interval_days: number;
-  repetitions: number;
-  lapses: number;
+  category_id: string | null;
+  box: number;
   next_review_at: string;
   last_reviewed_at: string | null;
   created_at: string;
@@ -42,7 +36,7 @@ export interface NewFlashcard {
   answer: string;
   questionImages: string[];
   answerImages: string[];
-  tag: string | null;
+  categoryId: string | null;
 }
 
 export interface FlashcardPatch {
@@ -50,5 +44,5 @@ export interface FlashcardPatch {
   answer?: string;
   questionImages?: string[];
   answerImages?: string[];
-  tag?: string | null;
+  categoryId?: string | null;
 }

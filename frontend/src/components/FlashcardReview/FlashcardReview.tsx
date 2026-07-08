@@ -1,132 +1,293 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Flashcard, Grade } from "../../types/flashcard";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Flashcard } from "../../types/flashcard";
+import type { FlashcardCategory } from "../../types/flashcardCategory";
 import { fetchDueFlashcards } from "../../services/flashcardService";
 import { apiErrorMessage } from "../../utils/apiError";
-import { previewIntervals } from "../../utils/flashcardUtils";
+import { NEUTRAL_TINTS, tints } from "../../utils/flashcardPalette";
 import styles from "./FlashcardReview.module.css";
 
 interface FlashcardReviewProps {
-  onReview: (id: string, grade: Grade) => Promise<Flashcard>;
+  categories: FlashcardCategory[];
+  onReview: (id: string, correct: boolean) => Promise<Flashcard>;
 }
 
-const GRADES: { grade: Grade; label: string; className: string }[] = [
-  { grade: "again", label: "Errei", className: "gradeAgain" },
-  { grade: "hard", label: "Difícil", className: "gradeHard" },
-  { grade: "good", label: "Bom", className: "gradeGood" },
-  { grade: "easy", label: "Fácil", className: "gradeEasy" },
-];
+const ALL = "all";
 
-export function FlashcardReview({ onReview }: FlashcardReviewProps) {
-  const [queue, setQueue] = useState<Flashcard[]>([]);
+function shuffle<T>(input: T[]): T[] {
+  const arr = input.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+  }
+  return arr;
+}
+
+export function FlashcardReview({ categories, onReview }: FlashcardReviewProps) {
+  const [due, setDue] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [revealed, setRevealed] = useState(false);
-  const [grading, setGrading] = useState(false);
-  const [done, setDone] = useState(0);
+
+  const [category, setCategory] = useState<string>(ALL);
+  const [queue, setQueue] = useState<string[]>([]);
+  const [pos, setPos] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [correct, setCorrect] = useState(0);
+  const [wrong, setWrong] = useState(0);
+  const gradedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     fetchDueFlashcards()
-      .then(setQueue)
-      .catch(() => setError("Não foi possível carregar a sessão de revisão."))
+      .then((cards) => {
+        setDue(cards);
+        setQueue(shuffle(cards.map((c) => c.id)));
+      })
+      .catch(() => setError("Não foi possível carregar a sessão de estudo."))
       .finally(() => setLoading(false));
   }, []);
 
-  const counts = useMemo(() => {
-    const fresh = queue.filter((c) => c.repetitions === 0).length;
-    return { fresh, review: queue.length - fresh };
-  }, [queue]);
+  const byId = useMemo(() => new Map(due.map((c) => [c.id, c])), [due]);
 
-  const card = queue[0];
+  const build = useCallback(
+    (cat: string) => {
+      const ids = due.filter((c) => cat === ALL || c.categoryId === cat).map((c) => c.id);
+      gradedRef.current = new Set();
+      setCategory(cat);
+      setQueue(shuffle(ids));
+      setPos(0);
+      setFlipped(false);
+      setCorrect(0);
+      setWrong(0);
+    },
+    [due]
+  );
 
-  async function handleGrade(grade: Grade) {
-    if (!card || grading) return;
-    setGrading(true);
-    setError(null);
-    try {
-      const updated = await onReview(card.id, grade);
-      setQueue((prev) => (grade === "again" ? [...prev.slice(1), updated] : prev.slice(1)));
-      if (grade !== "again") setDone((d) => d + 1);
-      setRevealed(false);
-    } catch (err) {
-      setError(apiErrorMessage(err, "Não foi possível registrar a revisão."));
-    } finally {
-      setGrading(false);
+  const currentId = pos < queue.length ? queue[pos] : undefined;
+  const card = currentId ? byId.get(currentId) : undefined;
+  const finished = queue.length > 0 && pos >= queue.length;
+
+  const flip = useCallback(() => setFlipped((f) => !f), []);
+
+  const mark = useCallback(
+    (ok: boolean) => {
+      if (!currentId) return;
+      if (!gradedRef.current.has(currentId)) {
+        gradedRef.current.add(currentId);
+        onReview(currentId, ok).catch((err) =>
+          setError(apiErrorMessage(err, "Não foi possível registrar a resposta."))
+        );
+      }
+      if (ok) {
+        setCorrect((c) => c + 1);
+      } else {
+        setWrong((w) => w + 1);
+        setQueue((q) => [...q, currentId]);
+      }
+      setPos((p) => p + 1);
+      setFlipped(false);
+    },
+    [currentId, onReview]
+  );
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && /INPUT|TEXTAREA/.test(target.tagName)) return;
+      if (!currentId) return;
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        flip();
+        return;
+      }
+      if (!flipped) return;
+      if (e.key === "2" || e.key === "ArrowRight") {
+        e.preventDefault();
+        mark(true);
+      } else if (e.key === "1" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        mark(false);
+      }
     }
-  }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [currentId, flipped, flip, mark]);
+
+  const catTints = (id: string | null) => {
+    const cat = id ? categories.find((c) => c.id === id) : undefined;
+    return cat ? tints(cat.color) : NEUTRAL_TINTS;
+  };
+  const catLabel = (id: string | null) =>
+    (id && categories.find((c) => c.id === id)?.name) || "Sem categoria";
 
   if (loading) return <p className={styles.muted}>Carregando…</p>;
+  if (error && due.length === 0) return <p className={styles.error}>{error}</p>;
 
-  if (!card) {
-    return (
-      <div className={styles.empty}>
-        <p className={styles.emptyTitle}>
-          {done > 0 ? "Sessão concluída." : "Nenhum cartão para revisar hoje."}
-        </p>
-        <p className={styles.muted}>
-          {done > 0
-            ? `Você revisou ${done} ${done === 1 ? "cartão" : "cartões"}.`
-            : "Volte mais tarde ou crie novos flashcards."}
-        </p>
-      </div>
-    );
-  }
+  const tabs = [
+    { id: ALL, label: "Todos", count: due.length },
+    ...categories.map((c) => ({
+      id: c.id,
+      label: c.name,
+      count: due.filter((d) => d.categoryId === c.id).length,
+    })),
+  ];
 
-  const intervals = previewIntervals(card);
+  const total = queue.length;
+  const answered = correct + wrong;
+  const accuracy = answered ? Math.round((correct / answered) * 100) : 0;
+  const progress = total ? Math.round((pos / total) * 100) : 0;
 
   return (
     <div className={styles.session}>
-      <div className={styles.counters}>
-        <span className={`${styles.counter} ${styles.counterFresh}`}>{counts.fresh} novos</span>
-        <span className={`${styles.counter} ${styles.counterReview}`}>{counts.review} a revisar</span>
-        <span className={`${styles.counter} ${styles.counterDone}`}>{done} feitos</span>
-      </div>
-
-      <div className={styles.card}>
-        {card.tag && <span className={styles.tag}>{card.tag}</span>}
-        <p className={styles.question}>{card.question}</p>
-        {card.questionImages.length > 0 && (
-          <div className={styles.images}>
-            {card.questionImages.map((src, index) => (
-              <img key={index} src={src} alt={`Imagem da pergunta ${index + 1}`} className={styles.image} />
-            ))}
-          </div>
-        )}
-
-        {revealed && (
-          <div className={styles.answerBlock}>
-            <p className={styles.answer}>{card.answer}</p>
-            {card.answerImages.length > 0 && (
-              <div className={styles.images}>
-                {card.answerImages.map((src, index) => (
-                  <img key={index} src={src} alt={`Imagem da resposta ${index + 1}`} className={styles.image} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      {revealed ? (
-        <div className={styles.grades}>
-          {GRADES.map(({ grade, label, className }) => (
+      <div className={styles.tabs} role="tablist">
+        {tabs.map((t) => {
+          const active = t.id === category;
+          return (
             <button
-              key={grade}
+              key={t.id}
               type="button"
-              className={`${styles.gradeButton} ${styles[className]}`}
-              onClick={() => handleGrade(grade)}
-              disabled={grading}
+              role="tab"
+              aria-selected={active}
+              className={`${styles.tab} ${active ? styles.tabActive : ""}`}
+              onClick={() => build(t.id)}
             >
-              <span className={styles.gradeLabel}>{label}</span>
-              <span className={styles.gradeInterval}>{intervals[grade]}</span>
+              {t.label}
+              <span className={styles.tabCount}>{t.count}</span>
             </button>
-          ))}
+          );
+        })}
+      </div>
+
+      {due.length === 0 ? (
+        <div className={styles.finished}>
+          <div className={styles.emoji}>✅</div>
+          <p className={styles.finishedTitle}>Nada para revisar agora</p>
+          <p className={styles.muted}>Volte mais tarde ou crie novos cartões.</p>
+        </div>
+      ) : finished ? (
+        <div className={styles.finished}>
+          <div className={styles.emoji}>🎉</div>
+          <p className={styles.finishedTitle}>Sessão concluída</p>
+          <p className={styles.muted}>
+            Você revisou os cards de <strong>{tabs.find((t) => t.id === category)?.label}</strong>.
+          </p>
+          <div className={styles.stats}>
+            <div className={styles.stat}>
+              <span className={`${styles.statValue} ${styles.statCorrect}`}>{correct}</span>
+              <span className={styles.statLabel}>acertos</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={`${styles.statValue} ${styles.statWrong}`}>{wrong}</span>
+              <span className={styles.statLabel}>erros</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>{accuracy}%</span>
+              <span className={styles.statLabel}>precisão</span>
+            </div>
+          </div>
+          <button type="button" className={styles.restart} onClick={() => build(category)}>
+            Estudar novamente
+          </button>
+        </div>
+      ) : queue.length === 0 ? (
+        <div className={styles.finished}>
+          <div className={styles.emoji}>🗂️</div>
+          <p className={styles.finishedTitle}>Nenhum card nesta categoria</p>
+          <p className={styles.muted}>Escolha outra categoria acima.</p>
         </div>
       ) : (
-        <button type="button" className={styles.revealButton} onClick={() => setRevealed(true)}>
-          Mostrar resposta
-        </button>
+        card && (
+          <>
+            <div className={styles.progressRow}>
+              <span>
+                Card <strong>{Math.min(pos + 1, total)} / {total}</strong>
+              </span>
+              <span className={styles.score}>
+                <span className={styles.scoreCorrect}>✓ {correct}</span>
+                <span className={styles.scoreWrong}>✕ {wrong}</span>
+              </span>
+            </div>
+            <div className={styles.progressTrack}>
+              <div className={styles.progressBar} style={{ width: `${progress}%` }} />
+            </div>
+
+            <div className={styles.cardOuter} onClick={flip} key={currentId}>
+              <div className={`${styles.cardInner} ${flipped ? styles.flipped : ""}`}>
+                <div className={`${styles.face} ${styles.front}`}>
+                  <div className={styles.faceHeader}>
+                    <span
+                      className={styles.tag}
+                      style={{
+                        background: catTints(card.categoryId).bg,
+                        color: catTints(card.categoryId).fg,
+                        borderColor: catTints(card.categoryId).border,
+                      }}
+                    >
+                      {catLabel(card.categoryId)}
+                    </span>
+                    <span className={styles.faceKind}>PERGUNTA</span>
+                  </div>
+                  <div className={styles.faceBody}>
+                    <p className={styles.question}>{card.question}</p>
+                    {card.questionImages.length > 0 && (
+                      <div className={styles.images}>
+                        {card.questionImages.map((src, i) => (
+                          <img key={i} src={src} alt={`Pergunta ${i + 1}`} className={styles.image} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.hint}>clique ou espaço para virar</div>
+                </div>
+
+                <div className={`${styles.face} ${styles.back}`}>
+                  <div className={styles.faceHeader}>
+                    <span
+                      className={styles.tag}
+                      style={{
+                        background: catTints(card.categoryId).bg,
+                        color: catTints(card.categoryId).fg,
+                        borderColor: catTints(card.categoryId).border,
+                      }}
+                    >
+                      {catLabel(card.categoryId)}
+                    </span>
+                    <span className={styles.faceKindBack}>RESPOSTA</span>
+                  </div>
+                  <div className={styles.faceBody}>
+                    <p className={styles.answer}>{card.answer}</p>
+                    {card.answerImages.length > 0 && (
+                      <div className={styles.images}>
+                        {card.answerImages.map((src, i) => (
+                          <img key={i} src={src} alt={`Resposta ${i + 1}`} className={styles.image} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.hint}>como você foi?</div>
+                </div>
+              </div>
+            </div>
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            <div className={styles.controls}>
+              <button
+                type="button"
+                className={`${styles.control} ${styles.controlWrong}`}
+                onClick={() => mark(false)}
+              >
+                Errei <span className={styles.controlKey}>1 / ←</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.control} ${styles.controlCorrect}`}
+                onClick={() => mark(true)}
+              >
+                Acertei <span className={styles.controlKey}>2 / →</span>
+              </button>
+            </div>
+            <p className={styles.footnote}>Errados voltam ao fim da fila até você acertar</p>
+          </>
+        )
       )}
     </div>
   );

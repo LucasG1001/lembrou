@@ -1,31 +1,42 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useFlashcards } from "../../hooks/useFlashcards";
+import { useFlashcardCategories } from "../../hooks/useFlashcardCategories";
 import { FlashcardReview } from "../../components/FlashcardReview/FlashcardReview";
 import { FlashcardList } from "../../components/FlashcardList/FlashcardList";
 import { FlashcardForm } from "../../components/FlashcardForm/FlashcardForm";
+import { FlashcardCategoryModal } from "../../components/FlashcardCategoryModal/FlashcardCategoryModal";
 import { fetchFlashcard } from "../../services/flashcardService";
 import { apiErrorMessage } from "../../utils/apiError";
 import type { Flashcard, FlashcardFormData } from "../../types/flashcard";
 import styles from "./FlashcardsPage.module.css";
 
-export function FlashcardsPage() {
-  const { cards, loading, error, dueCount, createCard, updateCard, deleteCard, applyReview } =
-    useFlashcards();
+type Mode = "study" | "manage";
 
-  const [tab, setTab] = useState<"review" | "all">("review");
+export function FlashcardsPage() {
+  const {
+    cards,
+    loading,
+    error,
+    dueCount,
+    createCard,
+    updateCard,
+    deleteCard,
+    bulkDelete,
+    bulkMove,
+    applyReview,
+  } = useFlashcards();
+  const {
+    categories,
+    createCategory,
+    deleteCategory,
+  } = useFlashcardCategories();
+
+  const [mode, setMode] = useState<Mode>("study");
   const [editing, setEditing] = useState<Flashcard | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [reviewKey, setReviewKey] = useState(0);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const existingTags = useMemo(() => {
-    const unique = new Set<string>();
-    for (const card of cards) {
-      if (card.tag) unique.add(card.tag);
-    }
-    return Array.from(unique).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [cards]);
 
   const formMode: "create" | "edit" | null = editing
     ? "edit"
@@ -36,6 +47,7 @@ export function FlashcardsPage() {
   const openCreate = useCallback(() => {
     setEditing(null);
     setFormError(null);
+    setMode("manage");
     setSearchParams({ novo: "1" });
   }, [setSearchParams]);
 
@@ -51,10 +63,7 @@ export function FlashcardsPage() {
       const action = isEdit ? updateCard(editing.id, data) : createCard(data);
       setFormError(null);
       action
-        .then(() => {
-          if (!isEdit) setReviewKey((k) => k + 1);
-          closeForm();
-        })
+        .then(closeForm)
         .catch((err) => setFormError(apiErrorMessage(err, "Não foi possível salvar o flashcard.")));
     },
     [formMode, editing, updateCard, createCard, closeForm]
@@ -64,9 +73,7 @@ export function FlashcardsPage() {
     setFormError(null);
     fetchFlashcard(id)
       .then(setEditing)
-      .catch((err) =>
-        window.alert(apiErrorMessage(err, "Não foi possível carregar o flashcard."))
-      );
+      .catch((err) => window.alert(apiErrorMessage(err, "Não foi possível carregar o flashcard.")));
   }, []);
 
   const handleDelete = useCallback(() => {
@@ -83,27 +90,27 @@ export function FlashcardsPage() {
           <button
             type="button"
             role="tab"
-            aria-selected={tab === "review"}
-            className={`${styles.tab} ${tab === "review" ? styles.tabActive : ""}`}
-            onClick={() => setTab("review")}
+            aria-selected={mode === "study"}
+            className={`${styles.tab} ${mode === "study" ? styles.tabActive : ""}`}
+            onClick={() => setMode("study")}
           >
-            Revisar
+            Estudar
             {dueCount > 0 && <span className={styles.badge}>{dueCount}</span>}
           </button>
           <button
             type="button"
             role="tab"
-            aria-selected={tab === "all"}
-            className={`${styles.tab} ${tab === "all" ? styles.tabActive : ""}`}
-            onClick={() => setTab("all")}
+            aria-selected={mode === "manage"}
+            className={`${styles.tab} ${mode === "manage" ? styles.tabActive : ""}`}
+            onClick={() => setMode("manage")}
           >
-            Todas
+            Gerenciar
           </button>
         </div>
 
         <button className={styles.newButton} aria-label="Novo flashcard" onClick={openCreate}>
           <span className={styles.newPlus} aria-hidden="true">+</span>
-          <span className={styles.newLabel}>Novo flashcard</span>
+          <span className={styles.newLabel}>Novo cartão</span>
         </button>
       </div>
 
@@ -111,21 +118,37 @@ export function FlashcardsPage() {
       {error && <p className={styles.error}>{error}</p>}
 
       {!loading && !error && (
-        tab === "review" ? (
-          <FlashcardReview key={reviewKey} onReview={applyReview} />
+        mode === "study" ? (
+          <FlashcardReview categories={categories} onReview={applyReview} />
         ) : (
-          <FlashcardList cards={cards} onSelect={handleEdit} />
+          <FlashcardList
+            cards={cards}
+            categories={categories}
+            onEdit={handleEdit}
+            onDelete={bulkDelete}
+            onMove={bulkMove}
+            onManageCategories={() => setCategoryModalOpen(true)}
+          />
         )
       )}
 
       {formMode && (
         <FlashcardForm
           initialData={formMode === "edit" && editing ? editing : undefined}
-          existingTags={existingTags}
+          categories={categories}
           error={formError}
           onSave={handleSave}
           onClose={closeForm}
           onDelete={formMode === "edit" && editing ? handleDelete : undefined}
+        />
+      )}
+
+      {categoryModalOpen && (
+        <FlashcardCategoryModal
+          categories={categories}
+          onCreate={createCategory}
+          onDelete={deleteCategory}
+          onClose={() => setCategoryModalOpen(false)}
         />
       )}
     </div>

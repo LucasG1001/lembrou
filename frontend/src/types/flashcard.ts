@@ -1,14 +1,9 @@
-export type Grade = "again" | "hard" | "good" | "easy";
-
 export interface FlashcardSummary {
   id: string;
   question: string;
   answer: string;
-  tag: string | null;
-  easeFactor: number;
-  intervalDays: number;
-  repetitions: number;
-  lapses: number;
+  categoryId: string | null;
+  box: number;
   nextReviewAt: string;
   lastReviewedAt: string | null;
   createdAt: string;
@@ -25,5 +20,5 @@ export interface FlashcardFormData {
   answer: string;
   questionImages: string[];
   answerImages: string[];
-  tag: string | null;
+  categoryId: string | null;
 }

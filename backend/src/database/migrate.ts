@@ -150,23 +150,75 @@ export async function migrate(): Promise<void> {
   await pool.query(`ALTER TABLE cards ADD COLUMN IF NOT EXISTS checklist TEXT NOT NULL DEFAULT '[]'`);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS flashcard_categories (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name        TEXT NOT NULL,
+      color       TEXT NOT NULL,
+      position    INTEGER NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS flashcards (
       id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       question          TEXT NOT NULL,
       answer            TEXT NOT NULL,
       question_images   TEXT[] NOT NULL DEFAULT '{}',
       answer_images     TEXT[] NOT NULL DEFAULT '{}',
-      tag               TEXT,
-      ease_factor       REAL NOT NULL DEFAULT 2.5,
-      interval_days     INTEGER NOT NULL DEFAULT 0,
-      repetitions       INTEGER NOT NULL DEFAULT 0,
-      lapses            INTEGER NOT NULL DEFAULT 0,
+      category_id       UUID REFERENCES flashcard_categories(id) ON DELETE SET NULL,
+      box               INTEGER NOT NULL DEFAULT 1,
       next_review_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       last_reviewed_at  TIMESTAMPTZ,
       created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  // Sistema de Leitner + categorias: colunas novas para DBs que ainda têm o schema SM-2.
+  await pool.query(`
+    ALTER TABLE flashcards ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES flashcard_categories(id) ON DELETE SET NULL;
+  `);
+  await pool.query(`
+    ALTER TABLE flashcards ADD COLUMN IF NOT EXISTS box INTEGER NOT NULL DEFAULT 1;
+  `);
+
+  // Backfill 1x: enquanto a coluna legada `tag` existir, distintas viram categorias
+  // (cor rotacionada da paleta) e os cards são religados; depois a coluna some.
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'flashcards' AND column_name = 'tag'
+      ) THEN
+        INSERT INTO flashcard_categories (name, color, position)
+        SELECT t.tag,
+               (ARRAY['#b7aefc','#6ee7a8','#ff9b8a','#8fc5ff','#f0c878'])[(t.rn % 5) + 1],
+               t.rn
+        FROM (
+          SELECT DISTINCT tag, (ROW_NUMBER() OVER (ORDER BY tag) - 1)::int AS rn
+          FROM flashcards
+          WHERE tag IS NOT NULL AND tag <> ''
+        ) t
+        WHERE NOT EXISTS (SELECT 1 FROM flashcard_categories c WHERE c.name = t.tag);
+
+        UPDATE flashcards f
+        SET category_id = c.id
+        FROM flashcard_categories c
+        WHERE f.category_id IS NULL AND f.tag IS NOT NULL AND f.tag = c.name;
+
+        ALTER TABLE flashcards DROP COLUMN tag;
+      END IF;
+    END $$;
+  `);
+
+  // Remove o estado do SM-2 (substituído pelo Leitner via coluna `box`).
+  await pool.query(`ALTER TABLE flashcards DROP COLUMN IF EXISTS ease_factor`);
+  await pool.query(`ALTER TABLE flashcards DROP COLUMN IF EXISTS interval_days`);
+  await pool.query(`ALTER TABLE flashcards DROP COLUMN IF EXISTS repetitions`);
+  await pool.query(`ALTER TABLE flashcards DROP COLUMN IF EXISTS lapses`);
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS flashcards_due_idx ON flashcards (next_review_at);

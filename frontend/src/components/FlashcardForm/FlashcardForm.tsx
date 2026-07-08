@@ -1,12 +1,14 @@
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
 import type { Flashcard, FlashcardFormData } from "../../types/flashcard";
-import { Modal } from "../Modal/Modal";
+import type { FlashcardCategory } from "../../types/flashcardCategory";
 import { ImagePasteArea } from "../ImagePasteArea/ImagePasteArea";
+import { useDismiss } from "../../hooks/useDismiss";
+import { NEUTRAL_TINTS, tints } from "../../utils/flashcardPalette";
 import styles from "./FlashcardForm.module.css";
 
 interface FlashcardFormProps {
   initialData?: Flashcard;
-  existingTags?: string[];
+  categories: FlashcardCategory[];
   error?: string | null;
   onSave: (data: FlashcardFormData) => void;
   onClose: () => void;
@@ -15,7 +17,7 @@ interface FlashcardFormProps {
 
 export function FlashcardForm({
   initialData,
-  existingTags = [],
+  categories,
   error,
   onSave,
   onClose,
@@ -25,125 +27,128 @@ export function FlashcardForm({
   const [answer, setAnswer] = useState(initialData?.answer ?? "");
   const [questionImages, setQuestionImages] = useState<string[]>(initialData?.questionImages ?? []);
   const [answerImages, setAnswerImages] = useState<string[]>(initialData?.answerImages ?? []);
-  const [tag, setTag] = useState(initialData?.tag ?? "");
-  const [tagFocused, setTagFocused] = useState(false);
+  const [categoryId, setCategoryId] = useState<string | null>(
+    initialData?.categoryId ?? categories[0]?.id ?? null
+  );
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const positionMenu = useCallback((menu: HTMLUListElement | null) => {
-    if (!menu || !inputRef.current) return;
-    const rect = inputRef.current.getBoundingClientRect();
-    menu.style.left = `${rect.left}px`;
-    menu.style.top = `${rect.bottom + 4}px`;
-    menu.style.width = `${rect.width}px`;
-  }, []);
+  useDismiss(onClose);
 
-  const suggestions = existingTags.filter((t) => {
-    const query = tag.trim().toLowerCase();
-    return t.toLowerCase() !== query && (query === "" || t.toLowerCase().includes(query));
-  });
-  const showSuggestions = tagFocused && suggestions.length > 0;
+  const isValid = question.trim().length > 0 && answer.trim().length > 0;
 
-  function handleSubmit() {
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isValid) return;
     onSave({
       question: question.trim(),
       answer: answer.trim(),
       questionImages,
       answerImages,
-      tag: tag.trim() || null,
+      categoryId,
     });
   }
 
-  const isValid = question.trim().length > 0 && answer.trim().length > 0;
-
-  const deleteAction =
-    initialData && onDelete ? (
-      <button
-        type="button"
-        className={`${styles.deleteButton} ${confirmDelete ? styles.deleteConfirm : ""}`}
-        onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}
-        onBlur={() => setConfirmDelete(false)}
-      >
-        {confirmDelete ? "Confirmar?" : "Excluir"}
-      </button>
-    ) : undefined;
+  const catOptions: { id: string | null; label: string; color: string | null }[] = [
+    ...categories.map((c) => ({ id: c.id as string | null, label: c.name, color: c.color })),
+    { id: null, label: "Sem categoria", color: null },
+  ];
 
   return (
-    <Modal
-      title=""
-      hideClose
-      onClose={onClose}
-      onSubmit={handleSubmit}
-      submitDisabled={!isValid}
-      footerStart={deleteAction}
-    >
-      <ImagePasteArea
-        id="flashcard-question"
-        label="Pergunta"
-        value={question}
-        onChange={setQuestion}
-        images={questionImages}
-        onImagesChange={setQuestionImages}
-        autoFocus
-      />
-
-      <ImagePasteArea
-        id="flashcard-answer"
-        label="Resposta"
-        value={answer}
-        onChange={setAnswer}
-        images={answerImages}
-        onImagesChange={setAnswerImages}
-      />
-
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="flashcard-tag">
-          Tag (opcional)
-        </label>
-        <div className={styles.tagWrapper}>
-          <input
-            id="flashcard-tag"
-            ref={inputRef}
-            type="text"
-            className={styles.input}
-            value={tag}
-            onChange={(e) => setTag(e.target.value.slice(0, 100))}
-            onFocus={() => setTagFocused(true)}
-            onBlur={() => setTagFocused(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setTagFocused(false);
-            }}
-            maxLength={100}
-            autoComplete="off"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            data-lpignore="true"
-            data-1p-ignore
-          />
-          {showSuggestions && (
-            <ul className={styles.suggestions} ref={positionMenu}>
-              {suggestions.map((t) => (
-                <li key={t}>
-                  <button
-                    type="button"
-                    className={styles.suggestion}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setTag(t);
-                      setTagFocused(false);
-                    }}
-                  >
-                    {t}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+    <div className={styles.backdrop} onClick={onClose}>
+      <form className={styles.drawer} onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>{initialData ? "Editar cartão" : "Novo cartão"}</h2>
+          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Fechar">
+            ×
+          </button>
         </div>
-      </div>
 
-      {error && <p className={styles.formError}>{error}</p>}
-    </Modal>
+        <div className={styles.body}>
+          <div className={styles.field}>
+            <label className={styles.label}>Categoria</label>
+            <div className={styles.catPills}>
+              {catOptions.map((opt) => {
+                const active = opt.id === categoryId;
+                const t = opt.color ? tints(opt.color) : NEUTRAL_TINTS;
+                return (
+                  <button
+                    key={opt.id ?? "none"}
+                    type="button"
+                    className={`${styles.catPill} ${active ? styles.catPillActive : ""}`}
+                    onClick={() => setCategoryId(opt.id)}
+                    style={active ? { background: t.bg, color: t.fg, borderColor: t.border } : undefined}
+                  >
+                    {opt.color && <span className={styles.dot} style={{ background: t.dot }} />}
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <ImagePasteArea
+            id="flashcard-question"
+            label="Frente (pergunta)"
+            value={question}
+            onChange={setQuestion}
+            images={questionImages}
+            onImagesChange={setQuestionImages}
+            autoFocus
+          />
+
+          <ImagePasteArea
+            id="flashcard-answer"
+            label="Verso (resposta)"
+            value={answer}
+            onChange={setAnswer}
+            images={answerImages}
+            onImagesChange={setAnswerImages}
+          />
+
+          <div className={styles.field}>
+            <label className={styles.label}>Pré-visualização</label>
+            <div className={styles.preview}>
+              <div className={styles.previewFront}>
+                <span className={styles.previewKind}>FRENTE</span>
+                <p className={styles.previewText}>
+                  {question.trim() || "A frente do cartão aparece aqui…"}
+                </p>
+              </div>
+              <div className={styles.previewBack}>
+                <span className={styles.previewKindBack}>VERSO</span>
+                <p className={styles.previewText}>
+                  {answer.trim() || "O verso (resposta) aparece aqui…"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {error && <p className={styles.formError}>{error}</p>}
+        </div>
+
+        <div className={styles.footer}>
+          {initialData && onDelete ? (
+            <button
+              type="button"
+              className={`${styles.deleteButton} ${confirmDelete ? styles.deleteConfirm : ""}`}
+              onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}
+              onBlur={() => setConfirmDelete(false)}
+            >
+              {confirmDelete ? "Confirmar?" : "Excluir"}
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className={styles.footerActions}>
+            <button type="button" className={styles.cancelButton} onClick={onClose}>
+              Cancelar
+            </button>
+            <button type="submit" className={styles.saveButton} disabled={!isValid}>
+              {initialData ? "Salvar alterações" : "Criar cartão"}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 }

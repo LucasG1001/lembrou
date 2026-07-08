@@ -11,6 +11,7 @@ import { reminderRoutes } from "./routes/reminderRoutes.js";
 import { habitRoutes } from "./routes/habitRoutes.js";
 import { projectRoutes } from "./routes/projectRoutes.js";
 import { flashcardRoutes } from "./routes/flashcardRoutes.js";
+import { flashcardCategoryRoutes } from "./routes/flashcardCategoryRoutes.js";
 import { telegramRoutes } from "./routes/callbackRoutes.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import { startScheduler } from "./services/reminderScheduler.js";
@@ -29,6 +30,7 @@ app.use("/api/reminders", reminderRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/flashcards", flashcardRoutes);
+app.use("/api/flashcard-categories", flashcardCategoryRoutes);
 app.use("/api/telegram", telegramRoutes);
 
 const clientDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");

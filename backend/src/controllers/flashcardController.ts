@@ -73,7 +73,7 @@ export const reviewFlashcard = asyncHandler("Erro ao revisar flashcard.", async 
     respondValidationError(res, parsed.error);
     return;
   }
-  const flashcard = await flashcardModel.reviewFlashcard(id, parsed.data.grade, new Date());
+  const flashcard = await flashcardModel.reviewFlashcard(id, parsed.data.correct, new Date());
   if (!flashcard) {
     res.status(404).json({ error: FLASHCARD_NOT_FOUND });
     return;

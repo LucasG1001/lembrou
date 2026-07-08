@@ -1,74 +1,28 @@
-import { addMinutes, spDateAtTime } from "../lib/dateUtils.js";
+import { spDateAtTime } from "../lib/dateUtils.js";
 
-export type Grade = "again" | "hard" | "good" | "easy";
+export const MAX_BOX = 5;
+const DAY_START_HOUR = 4;
 
-export interface SchedulerState {
-  easeFactor: number;
-  intervalDays: number;
-  repetitions: number;
-  lapses: number;
-}
+// Sistema de Leitner: cada caixa tem um intervalo em dias (índice = caixa − 1).
+export const BOX_INTERVALS_DAYS = [1, 2, 4, 7, 15];
 
-export interface ReviewOutcome extends SchedulerState {
+export interface ReviewOutcome {
+  box: number;
   nextReviewAt: Date;
 }
 
-const MIN_EASE = 1.3;
-const RELEARN_MINUTES = 10;
-const DAY_START_HOUR = 4;
-
-export const INITIAL_STATE: SchedulerState = {
-  easeFactor: 2.5,
-  intervalDays: 0,
-  repetitions: 0,
-  lapses: 0,
-};
-
-function dueAt(now: Date, intervalDays: number): Date {
-  return spDateAtTime(now, intervalDays, DAY_START_HOUR, 0);
+export function clampBox(box: number): number {
+  if (!Number.isFinite(box) || box < 1) return 1;
+  if (box > MAX_BOX) return MAX_BOX;
+  return Math.floor(box);
 }
 
-export function review(state: SchedulerState, grade: Grade, now: Date): ReviewOutcome {
-  if (grade === "again") {
-    return {
-      easeFactor: Math.max(MIN_EASE, state.easeFactor - 0.2),
-      intervalDays: 0,
-      repetitions: 0,
-      lapses: state.lapses + 1,
-      nextReviewAt: addMinutes(now, RELEARN_MINUTES),
-    };
-  }
-
-  let easeFactor = state.easeFactor;
-  let intervalDays: number;
-
-  if (grade === "hard") {
-    easeFactor = Math.max(MIN_EASE, state.easeFactor - 0.15);
-    intervalDays =
-      state.repetitions === 0
-        ? 1
-        : Math.max(state.intervalDays + 1, Math.round(state.intervalDays * 1.2));
-  } else if (grade === "good") {
-    if (state.repetitions === 0) {
-      intervalDays = 1;
-    } else if (state.repetitions === 1) {
-      intervalDays = 6;
-    } else {
-      intervalDays = Math.round(state.intervalDays * state.easeFactor);
-    }
-  } else {
-    easeFactor = state.easeFactor + 0.15;
-    intervalDays =
-      state.repetitions === 0
-        ? 4
-        : Math.max(state.intervalDays + 1, Math.round(state.intervalDays * state.easeFactor * 1.3));
-  }
-
+export function review(box: number, correct: boolean, now: Date): ReviewOutcome {
+  const current = clampBox(box);
+  const nextBox = correct ? Math.min(current + 1, MAX_BOX) : 1;
+  const intervalDays = BOX_INTERVALS_DAYS[nextBox - 1]!;
   return {
-    easeFactor,
-    intervalDays,
-    repetitions: state.repetitions + 1,
-    lapses: state.lapses,
-    nextReviewAt: dueAt(now, intervalDays),
+    box: nextBox,
+    nextReviewAt: spDateAtTime(now, intervalDays, DAY_START_HOUR, 0),
   };
 }

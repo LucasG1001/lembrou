@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { Flashcard, FlashcardFormData, FlashcardSummary, Grade } from "../types/flashcard";
+import type { Flashcard, FlashcardFormData, FlashcardSummary } from "../types/flashcard";
 
 export async function fetchFlashcards(): Promise<FlashcardSummary[]> {
   const response = await api.get<FlashcardSummary[]>("/api/flashcards");
@@ -26,11 +26,16 @@ export async function updateFlashcard(id: string, data: FlashcardFormData): Prom
   return response.data;
 }
 
+export async function setFlashcardCategory(id: string, categoryId: string | null): Promise<Flashcard> {
+  const response = await api.put<Flashcard>(`/api/flashcards/${id}`, { categoryId });
+  return response.data;
+}
+
 export async function deleteFlashcard(id: string): Promise<void> {
   await api.delete(`/api/flashcards/${id}`);
 }
 
-export async function reviewFlashcard(id: string, grade: Grade): Promise<Flashcard> {
-  const response = await api.post<Flashcard>(`/api/flashcards/${id}/review`, { grade });
+export async function reviewFlashcard(id: string, correct: boolean): Promise<Flashcard> {
+  const response = await api.post<Flashcard>(`/api/flashcards/${id}/review`, { correct });
   return response.data;
 }
