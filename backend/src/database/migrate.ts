@@ -56,9 +56,6 @@ export async function migrate(): Promise<void> {
       id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name            TEXT NOT NULL,
       selected_days   INTEGER[] NOT NULL,
-      current_streak  INTEGER NOT NULL DEFAULT 0,
-      longest_streak  INTEGER NOT NULL DEFAULT 0,
-      level           INTEGER NOT NULL DEFAULT 1,
       created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -93,7 +90,6 @@ export async function migrate(): Promise<void> {
       id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       habit_id    UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
       date        TEXT NOT NULL,
-      completed   BOOLEAN NOT NULL DEFAULT TRUE,
       locked      BOOLEAN NOT NULL DEFAULT FALSE,
       UNIQUE(habit_id, date)
     );
@@ -103,9 +99,23 @@ export async function migrate(): Promise<void> {
     ALTER TABLE habit_completions ADD COLUMN IF NOT EXISTS count INTEGER NOT NULL DEFAULT 0;
   `);
 
+  // Enquanto a coluna legada `completed` existir: preserva o dado no `count` e some.
   await pool.query(`
-    UPDATE habit_completions SET count = 1 WHERE completed = TRUE AND count = 0;
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'habit_completions' AND column_name = 'completed'
+      ) THEN
+        UPDATE habit_completions SET count = 1 WHERE completed = TRUE AND count = 0;
+        ALTER TABLE habit_completions DROP COLUMN completed;
+      END IF;
+    END $$;
   `);
+
+  await pool.query(`ALTER TABLE habits DROP COLUMN IF EXISTS current_streak`);
+  await pool.query(`ALTER TABLE habits DROP COLUMN IF EXISTS longest_streak`);
+  await pool.query(`ALTER TABLE habits DROP COLUMN IF EXISTS level`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS projects (

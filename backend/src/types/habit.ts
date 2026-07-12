@@ -12,9 +12,6 @@ export interface Habit {
   selectedDays: number[];
   targetCount: number;
   completions: HabitCompletion[];
-  currentStreak: number;
-  longestStreak: number;
-  level: number;
   position: number;
   createdAt: string;
   updatedAt: string;
@@ -26,9 +23,6 @@ export interface HabitRow {
   icon: string;
   selected_days: number[];
   target_count: number;
-  current_streak: number;
-  longest_streak: number;
-  level: number;
   position: number;
   created_at: string;
   updated_at: string;
@@ -37,7 +31,6 @@ export interface HabitRow {
 export interface HabitCompletionRow {
   habit_id: string;
   date: string;
-  completed: boolean;
   count: number;
   locked: boolean;
 }
