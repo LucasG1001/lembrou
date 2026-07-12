@@ -2,12 +2,13 @@ import { createReminderSchema, updateReminderSchema, rescheduleSchema } from "..
 import * as reminderModel from "../models/reminderModel.js";
 import { parseEventAt, computeNextOccurrence, isPastEvent, isOnOrAfter, toSpParts } from "../lib/dateUtils.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { respondValidationError } from "../lib/validation.js";
+import { parseBody, requireUuid } from "../lib/validation.js";
 import { finishOccurrence, initialSchedule } from "../services/reminderStateMachine.js";
 import type { ReminderStatus } from "../types/reminder.js";
 
 const VALID_STATUS: ReminderStatus[] = ["active", "done", "cancelled"];
 
+const NOT_FOUND = "Lembrete não encontrado.";
 const PAST_ERROR = "Não é possível agendar para uma data no passado.";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -26,21 +27,19 @@ export const getAll = asyncHandler("Erro ao buscar lembretes.", async (req, res)
 });
 
 export const getById = asyncHandler("Erro ao buscar lembrete.", async (req, res) => {
-  const reminder = await reminderModel.findById(String(req.params.id));
+  const id = String(req.params.id);
+  if (!requireUuid(res, id, NOT_FOUND)) return;
+  const reminder = await reminderModel.findById(id);
   if (!reminder) {
-    res.status(404).json({ error: "Lembrete não encontrado." });
+    res.status(404).json({ error: NOT_FOUND });
     return;
   }
   res.json(reminder);
 });
 
 export const create = asyncHandler("Erro ao criar lembrete.", async (req, res) => {
-  const parsed = createReminderSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const body = parsed.data;
+  const body = parseBody(res, createReminderSchema, req.body);
+  if (!body) return;
   const isAllDay = !body.time;
   const eventAt = parseEventAt(body.date, body.time ?? null);
   const now = new Date();
@@ -69,17 +68,15 @@ export const create = asyncHandler("Erro ao criar lembrete.", async (req, res) =
 });
 
 export const update = asyncHandler("Erro ao atualizar lembrete.", async (req, res) => {
-  const existing = await reminderModel.findById(String(req.params.id));
+  const id = String(req.params.id);
+  if (!requireUuid(res, id, NOT_FOUND)) return;
+  const existing = await reminderModel.findById(id);
   if (!existing) {
-    res.status(404).json({ error: "Lembrete não encontrado." });
+    res.status(404).json({ error: NOT_FOUND });
     return;
   }
-  const parsed = updateReminderSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const body = parsed.data;
+  const body = parseBody(res, updateReminderSchema, req.body);
+  if (!body) return;
   const isAllDay = !body.time;
   const eventAt = parseEventAt(body.date, body.time ?? null);
   const now = new Date();
@@ -113,17 +110,15 @@ export const update = asyncHandler("Erro ao atualizar lembrete.", async (req, re
 });
 
 export const reschedule = asyncHandler("Erro ao remarcar lembrete.", async (req, res) => {
-  const existing = await reminderModel.findById(String(req.params.id));
+  const id = String(req.params.id);
+  if (!requireUuid(res, id, NOT_FOUND)) return;
+  const existing = await reminderModel.findById(id);
   if (!existing) {
-    res.status(404).json({ error: "Lembrete não encontrado." });
+    res.status(404).json({ error: NOT_FOUND });
     return;
   }
-  const parsed = rescheduleSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const body = parsed.data;
+  const body = parseBody(res, rescheduleSchema, req.body);
+  if (!body) return;
   // Remarcar move só esta ocorrência: preserva o tipo e a regra/âncora da série.
   if (!existing.isAllDay && !body.time) {
     res.status(400).json({ error: "Informe a hora para remarcar este lembrete." });
@@ -165,18 +160,22 @@ export const reschedule = asyncHandler("Erro ao remarcar lembrete.", async (req,
 });
 
 export const remove = asyncHandler("Erro ao remover lembrete.", async (req, res) => {
-  const removed = await reminderModel.remove(String(req.params.id));
+  const id = String(req.params.id);
+  if (!requireUuid(res, id, NOT_FOUND)) return;
+  const removed = await reminderModel.remove(id);
   if (!removed) {
-    res.status(404).json({ error: "Lembrete não encontrado." });
+    res.status(404).json({ error: NOT_FOUND });
     return;
   }
   res.status(204).send();
 });
 
 export const acknowledge = asyncHandler("Erro ao confirmar lembrete.", async (req, res) => {
-  const reminder = await reminderModel.findById(String(req.params.id));
+  const id = String(req.params.id);
+  if (!requireUuid(res, id, NOT_FOUND)) return;
+  const reminder = await reminderModel.findById(id);
   if (!reminder) {
-    res.status(404).json({ error: "Lembrete não encontrado." });
+    res.status(404).json({ error: NOT_FOUND });
     return;
   }
   const now = new Date();
@@ -190,9 +189,11 @@ export const acknowledge = asyncHandler("Erro ao confirmar lembrete.", async (re
 });
 
 export const cancel = asyncHandler("Erro ao cancelar lembrete.", async (req, res) => {
-  const reminder = await reminderModel.findById(String(req.params.id));
+  const id = String(req.params.id);
+  if (!requireUuid(res, id, NOT_FOUND)) return;
+  const reminder = await reminderModel.findById(id);
   if (!reminder) {
-    res.status(404).json({ error: "Lembrete não encontrado." });
+    res.status(404).json({ error: NOT_FOUND });
     return;
   }
   const updated = await reminderModel.update(reminder.id, { status: "cancelled", nextNotifyAt: null });

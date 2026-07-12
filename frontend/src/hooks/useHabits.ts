@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import type { Habit, HabitFormData } from "../types/habit";
 import {
   fetchHabits,
@@ -8,6 +7,7 @@ import {
   reorderHabits as apiReorderHabits,
   setHabitCompletion,
 } from "../services/habitService";
+import { useFetchList } from "./useFetchList";
 import { calculateCurrentStreak, calculateLongestStreak } from "../utils/streakUtils";
 import { calculateLevel } from "../utils/levelUtils";
 
@@ -40,16 +40,15 @@ function applyCount(habit: Habit, date: string, count: number): Habit {
 }
 
 export function useHabits(): UseHabitsReturn {
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchHabits()
-      .then((data) => setHabits(data.map(recalculateHabitStats)))
-      .catch(() => setError("Não foi possível carregar os hábitos."))
-      .finally(() => setLoading(false));
-  }, []);
+  const {
+    items: habits,
+    setItems: setHabits,
+    loading,
+    error,
+  } = useFetchList<Habit>(
+    () => fetchHabits().then((data) => data.map(recalculateHabitStats)),
+    "Não foi possível carregar os hábitos."
+  );
 
   async function createHabit(data: HabitFormData): Promise<void> {
     const created = await apiCreateHabit(data);

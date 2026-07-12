@@ -1,4 +1,4 @@
-import { memo, type ComponentType, type ReactNode } from "react";
+import { memo, type ComponentType } from "react";
 import type { TimelineGroup, TimelineItem } from "../../utils/agenda";
 import { itemTime } from "../../utils/agenda";
 import { useLongPress } from "../../hooks/useLongPress";
@@ -10,10 +10,7 @@ interface TimelineProps {
   iconFor: (item: TimelineItem) => ComponentType<{ className?: string }>;
   onItemClick?: (item: TimelineItem) => void;
   onItemLongPress?: (item: TimelineItem) => void;
-  renderAction?: (item: TimelineItem) => ReactNode;
   emptyMessage?: string;
-  weekTitle?: string | null;
-  laterTitle?: string | null;
   hideGroupHeaders?: boolean;
 }
 
@@ -23,10 +20,7 @@ export const Timeline = memo(function Timeline({
   iconFor,
   onItemClick,
   onItemLongPress,
-  renderAction,
   emptyMessage = "Nada agendado nos próximos dias.",
-  weekTitle = "Esta semana",
-  laterTitle = "Mais adiante",
   hideGroupHeaders = false,
 }: TimelineProps) {
   const bindPress = useLongPress<TimelineItem>({
@@ -44,14 +38,13 @@ export const Timeline = memo(function Timeline({
         <div className={styles.groupItems}>
           {group.items.map((item) => {
             const Icon = iconFor(item);
-            const action = renderAction?.(item);
             const pressProps = onItemLongPress
               ? bindPress(item)
               : { onClick: () => onItemClick?.(item) };
             return (
               <div
                 key={item.id}
-                className={`${styles.item} ${action ? styles.itemWithAction : ""}`}
+                className={styles.item}
                 role="button"
                 tabIndex={0}
                 {...pressProps}
@@ -79,11 +72,6 @@ export const Timeline = memo(function Timeline({
                   )}
                 </span>
                 <span className={styles.itemDetail}>{item.detail}</span>
-                {action && (
-                  <span className={styles.itemAction} onClick={(e) => e.stopPropagation()}>
-                    {action}
-                  </span>
-                )}
               </div>
             );
           })}
@@ -94,14 +82,11 @@ export const Timeline = memo(function Timeline({
   return (
     <div className={styles.timeline}>
       {weekGroups.length > 0 && (
-        <div className={styles.block}>
-          {weekTitle && <div className={styles.blockTitle}>{weekTitle}</div>}
-          {renderGroups(weekGroups, false)}
-        </div>
+        <div className={styles.block}>{renderGroups(weekGroups, false)}</div>
       )}
       {laterGroups.length > 0 && (
         <div className={styles.block}>
-          {laterTitle && <div className={styles.blockTitle}>{laterTitle}</div>}
+          <div className={styles.blockTitle}>Mais adiante</div>
           {renderGroups(laterGroups, true)}
         </div>
       )}

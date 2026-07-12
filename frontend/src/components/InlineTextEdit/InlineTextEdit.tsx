@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useAutoGrow } from "../../hooks/useAutoGrow";
 
 interface InlineTextEditProps {
   initial: string;
@@ -28,12 +29,7 @@ export function InlineTextEdit({
     el.setSelectionRange(el.value.length, el.value.length);
   }, []);
 
-  useEffect(() => {
-    const el = fieldRef.current;
-    if (!el || !multiline) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [draft, multiline]);
+  useAutoGrow(fieldRef, draft, multiline);
 
   const finish = (commit: boolean) => {
     if (finishedRef.current) return;

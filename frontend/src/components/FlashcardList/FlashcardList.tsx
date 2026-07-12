@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FlashcardSummary } from "../../types/flashcard";
 import type { FlashcardCategory } from "../../types/flashcardCategory";
-import { NEUTRAL_TINTS, tints } from "../../utils/flashcardPalette";
+import { categoryLabel, categoryTints, NEUTRAL_TINTS, tints } from "../../utils/flashcardPalette";
 import styles from "./FlashcardList.module.css";
 
 interface FlashcardListProps {
@@ -28,8 +28,6 @@ export function FlashcardList({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [moveOpen, setMoveOpen] = useState(false);
 
-  const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-
   const counts = useMemo(() => {
     const map = new Map<Filter, number>();
     map.set("all", cards.length);
@@ -50,13 +48,8 @@ export function FlashcardList({
     });
   }, [cards, filter, search]);
 
-  function catTints(id: string | null) {
-    const cat = id ? catById.get(id) : undefined;
-    return cat ? tints(cat.color) : NEUTRAL_TINTS;
-  }
-  function catLabel(id: string | null) {
-    return (id && catById.get(id)?.name) || "Sem categoria";
-  }
+  const catTints = (id: string | null) => categoryTints(categories, id);
+  const catLabel = (id: string | null) => categoryLabel(categories, id);
 
   function toggle(id: string) {
     setSelected((prev) => {

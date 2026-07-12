@@ -1,5 +1,6 @@
 import { MONTH_PT } from "./month";
-import { formatDateKey } from "./dateUtils";
+import { diffDaysFromToday, getToday, spCalendarDay, spDateKey } from "./dateUtils";
+import { WEEKDAY_ABBR_PT } from "./weekdays";
 
 export interface TimelineItem {
   id: string;
@@ -19,12 +20,8 @@ export interface TimelineGroup {
   items: TimelineItem[];
 }
 
-const WEEKDAY_ABBR_PT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
 export function startOfToday(): number {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+  return getToday().getTime();
 }
 
 export function splitAgenda(items: TimelineItem[]): { week: TimelineItem[]; later: TimelineItem[] } {
@@ -39,20 +36,17 @@ export function splitAgenda(items: TimelineItem[]): { week: TimelineItem[]; late
 }
 
 function dayLabel(when: number): string {
-  const today = startOfToday();
-  const day = 24 * 60 * 60 * 1000;
-  const diff = Math.floor((when - today) / day);
+  const diff = diffDaysFromToday(when, Date.now());
   if (diff <= 0) return "Hoje";
   if (diff === 1) return "Amanhã";
-  const d = new Date(when);
+  const d = spCalendarDay(new Date(when));
   return `${WEEKDAY_ABBR_PT[d.getDay()]} ${d.getDate()}`;
 }
 
 export function groupByDay(items: TimelineItem[]): TimelineGroup[] {
   const map = new Map<string, TimelineItem[]>();
   for (const item of items) {
-    const d = new Date(item.when);
-    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const key = spDateKey(new Date(item.when));
     const list = map.get(key);
     if (list) list.push(item);
     else map.set(key, [item]);
@@ -65,17 +59,17 @@ export function groupByDay(items: TimelineItem[]): TimelineGroup[] {
 }
 
 export function groupByMonth(items: TimelineItem[]): TimelineGroup[] {
-  const currentYear = new Date().getFullYear();
+  const currentYear = spCalendarDay(new Date()).getFullYear();
   const map = new Map<string, TimelineItem[]>();
   for (const item of items) {
-    const d = new Date(item.when);
+    const d = spCalendarDay(new Date(item.when));
     const key = `${d.getFullYear()}-${d.getMonth()}`;
     const list = map.get(key);
     if (list) list.push(item);
     else map.set(key, [item]);
   }
   return Array.from(map.entries()).map(([key, list]) => {
-    const d = new Date(list[0]!.when);
+    const d = spCalendarDay(new Date(list[0]!.when));
     const month = MONTH_PT[d.getMonth()];
     const year = d.getFullYear();
     return {
@@ -89,7 +83,7 @@ export function groupByMonth(items: TimelineItem[]): TimelineGroup[] {
 export function countRemindersByDay(reminders: { eventAt: string }[]): Map<string, number> {
   const map = new Map<string, number>();
   for (const reminder of reminders) {
-    const key = formatDateKey(new Date(reminder.eventAt));
+    const key = spDateKey(new Date(reminder.eventAt));
     map.set(key, (map.get(key) ?? 0) + 1);
   }
   return map;

@@ -9,7 +9,7 @@ import { TodayHabits } from "../../components/TodayHabits/TodayHabits";
 import { groupByDay, type TimelineItem } from "../../utils/agenda";
 import { formatDateKey, getToday, isScheduledDay } from "../../utils/dateUtils";
 import { getHabitIcon } from "../../utils/habitIcons";
-import { apiErrorMessage } from "../../utils/apiError";
+import { alertApiError, apiErrorMessage } from "../../utils/apiError";
 import type { Habit, HabitFormData } from "../../types/habit";
 import styles from "./HabitsPage.module.css";
 
@@ -94,9 +94,7 @@ export function HabitsPage() {
 
   const handleDelete = useCallback(
     (id: string) => {
-      deleteHabit(id).catch((err) =>
-        window.alert(apiErrorMessage(err, "Não foi possível excluir o hábito."))
-      );
+      deleteHabit(id).catch((err) => alertApiError(err, "Não foi possível excluir o hábito."));
       setSelected(null);
     },
     [deleteHabit]
@@ -118,7 +116,7 @@ export function HabitsPage() {
   const handleToggle = useCallback(
     (habitId: string, dateKey: string, nextCount: number) =>
       setCompletion(habitId, dateKey, nextCount).catch((err) =>
-        window.alert(apiErrorMessage(err, "Não foi possível atualizar o hábito."))
+        alertApiError(err, "Não foi possível atualizar o hábito.")
       ),
     [setCompletion]
   );
@@ -171,7 +169,6 @@ export function HabitsPage() {
           laterGroups={[]}
           iconFor={iconForHabit}
           onItemClick={handleItemClick}
-          weekTitle={null}
           hideGroupHeaders
           emptyMessage="Nenhum hábito agendado para hoje."
         />

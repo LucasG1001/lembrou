@@ -1,5 +1,6 @@
 import { pool } from "../database/connection.js";
-import { buildUpdateSet } from "../lib/sqlUpdate.js";
+import { updateById } from "../database/transaction.js";
+import { buildUpdateSet, nextPositionSql } from "../lib/sqlUpdate.js";
 import type {
   FlashcardCategory,
   FlashcardCategoryPatch,
@@ -35,7 +36,7 @@ export async function findCategoryById(id: string): Promise<FlashcardCategory | 
 export async function createCategory(name: string, color: string): Promise<FlashcardCategory> {
   const result = await pool.query<FlashcardCategoryRow>(
     `INSERT INTO flashcard_categories (name, color, position)
-     VALUES ($1, $2, (SELECT COALESCE(MAX(position), -1) + 1 FROM flashcard_categories))
+     VALUES ($1, $2, ${nextPositionSql("flashcard_categories")})
      RETURNING *`,
     [name, color]
   );

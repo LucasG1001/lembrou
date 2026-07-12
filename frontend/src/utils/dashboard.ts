@@ -81,8 +81,14 @@ export function summarizeHabits(habits: Habit[]): HabitSummary {
   };
 }
 
+const TZ = "America/Sao_Paulo";
+
 export function greeting(): string {
-  const hour = new Date().getHours();
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hourCycle: "h23" }).format(
+      new Date()
+    )
+  );
   if (hour < 12) return "Bom dia";
   if (hour < 18) return "Boa tarde";
   return "Boa noite";
@@ -93,6 +99,7 @@ export function todayLabel(): string {
     weekday: "long",
     day: "2-digit",
     month: "long",
+    timeZone: TZ,
   });
 }
 

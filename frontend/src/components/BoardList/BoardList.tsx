@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { BoardList, Card } from "../../types/project";
 import { BoardCard } from "../BoardCard/BoardCard";
 import { InlineTextEdit } from "../InlineTextEdit/InlineTextEdit";
+import { useAutoGrow } from "../../hooks/useAutoGrow";
 import styles from "./BoardList.module.css";
 
 interface AddCardComposerProps {
@@ -17,12 +18,7 @@ function AddCardComposer({ onAdd, onClose }: AddCardComposerProps) {
     fieldRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    const el = fieldRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [draft]);
+  useAutoGrow(fieldRef, draft);
 
   const submit = (keepOpen: boolean) => {
     const title = draft.trim();

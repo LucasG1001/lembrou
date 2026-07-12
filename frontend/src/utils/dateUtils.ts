@@ -1,5 +1,27 @@
 import type { DayOfWeek } from "../types/habit";
 
+const SP_OFFSET_MS = 3 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Dia-calendário de São Paulo (UTC-3 fixo) como Date à meia-noite local desse dia. */
+export function spCalendarDay(instant: Date): Date {
+  const shifted = new Date(instant.getTime() - SP_OFFSET_MS);
+  return new Date(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+}
+
+export function spDateKey(instant: Date): string {
+  return formatDateKey(spCalendarDay(instant));
+}
+
+/** Diferença em dias-calendário de SP entre dois instantes (ms). */
+export function diffDaysFromToday(whenMs: number, nowMs: number): number {
+  const a = spCalendarDay(new Date(nowMs));
+  const b = spCalendarDay(new Date(whenMs));
+  const au = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+  const bu = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.round((bu - au) / DAY_MS);
+}
+
 export function formatDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -8,7 +30,7 @@ export function formatDateKey(date: Date): string {
 }
 
 export function formatDateDisplay(isoString: string): string {
-  const date = new Date(isoString);
+  const date = spCalendarDay(new Date(isoString));
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
@@ -43,8 +65,7 @@ export function isSameDay(a: Date, b: Date): boolean {
 }
 
 export function getToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return spCalendarDay(new Date());
 }
 
 export function getTodayKey(): string {

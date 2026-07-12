@@ -14,7 +14,7 @@ export const createHabitSchema = baseHabit;
 export const updateHabitSchema = baseHabit;
 
 export const completionCountSchema = z.object({
-  count: z.number().int().min(0),
+  count: z.number().int().min(0, "Contagem inválida."),
 });
 
 export const reorderHabitsSchema = z.object({

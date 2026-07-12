@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import {
   fetchReminders,
   deleteReminder,
@@ -6,37 +6,17 @@ import {
   rescheduleReminder,
   cancelReminder,
 } from "../services/reminderService";
+import { useFetchList } from "./useFetchList";
 import type { Reminder, RescheduleInput } from "../types/reminder";
 
 export function useReminders() {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // Busca dispara só por refresh; setState só dentro de callbacks.
-  useEffect(() => {
-    let active = true;
-    fetchReminders("active")
-      .then((data) => {
-        if (active) setReminders(data);
-      })
-      .catch(() => {
-        if (active) setError("Não foi possível carregar os lembretes.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [refreshKey]);
-
-  // Recarrega em segundo plano: mantém a lista atual visível em vez de piscar "Carregando…".
-  const reload = useCallback(() => {
-    setError(null);
-    setRefreshKey((k) => k + 1);
-  }, []);
+  const {
+    items: reminders,
+    setItems: setReminders,
+    loading,
+    error,
+    reload,
+  } = useFetchList<Reminder>(() => fetchReminders("active"), "Não foi possível carregar os lembretes.");
 
   const applyUpdate = useCallback((updated: Reminder) => {
     setReminders((prev) =>

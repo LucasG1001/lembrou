@@ -6,7 +6,8 @@ interface UseLongPressOptions<T> {
   delay?: number;
 }
 
-const MOVE_THRESHOLD = 10;
+export const MOVE_THRESHOLD = 10;
+export const LONG_PRESS_DRAG_MS = 400;
 
 interface LongPressHandlers {
   onPointerDown: (e: React.PointerEvent) => void;

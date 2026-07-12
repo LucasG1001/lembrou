@@ -1,5 +1,6 @@
 import { pool } from "../database/connection.js";
-import { buildUpdateSet } from "../lib/sqlUpdate.js";
+import { updateById, withTransaction } from "../database/transaction.js";
+import { buildUpdateSet, nextPositionSql } from "../lib/sqlUpdate.js";
 import { CompletionLockedError } from "./errors.js";
 import type {
   Habit,
@@ -58,7 +59,7 @@ export async function findById(id: string): Promise<Habit | null> {
 export async function create(entry: NewHabit): Promise<Habit> {
   const result = await pool.query<HabitRow>(
     `INSERT INTO habits (name, selected_days, icon, target_count, position)
-     VALUES ($1, $2, $3, $4, (SELECT COALESCE(MAX(position), -1) + 1 FROM habits))
+     VALUES ($1, $2, $3, $4, ${nextPositionSql("habits")})
      RETURNING *`,
     [entry.name, entry.selectedDays, entry.icon, entry.targetCount]
   );
@@ -66,22 +67,14 @@ export async function create(entry: NewHabit): Promise<Habit> {
 }
 
 export async function reorder(orderedIds: string[]): Promise<Habit[]> {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
+  await withTransaction(async (client) => {
     for (let i = 0; i < orderedIds.length; i++) {
       await client.query("UPDATE habits SET position = $1, updated_at = NOW() WHERE id = $2", [
         i,
         orderedIds[i],
       ]);
     }
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+  });
   return findAll();
 }
 
@@ -94,21 +87,13 @@ const COLUMN_MAP: Record<keyof HabitPatch, string> = {
 
 export async function update(id: string, patch: HabitPatch): Promise<Habit | null> {
   const { sets, values, nextIndex } = buildUpdateSet(patch, COLUMN_MAP);
-
-  if (sets.length === 0) return findById(id);
-
-  sets.push("updated_at = NOW()");
-  values.push(id);
-  const result = await pool.query<HabitRow>(
-    `UPDATE habits SET ${sets.join(", ")} WHERE id = $${nextIndex} RETURNING *`,
-    values
-  );
-  if (!result.rows[0]) return null;
+  const row = await updateById<HabitRow>("habits", id, sets, values, nextIndex);
+  if (!row) return null;
   const completions = await pool.query<HabitCompletionRow>(
     "SELECT habit_id, date, count, locked FROM habit_completions WHERE habit_id = $1",
     [id]
   );
-  return toHabit(result.rows[0], completions.rows);
+  return toHabit(row, completions.rows);
 }
 
 export async function remove(id: string): Promise<boolean> {

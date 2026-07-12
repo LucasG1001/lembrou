@@ -1,43 +1,34 @@
-import { api } from "./api";
+import { del, get, post, put } from "./api";
 import type { Reminder, ReminderInput, ReminderStatus, RescheduleInput } from "../types/reminder";
 
-export async function fetchReminders(status?: ReminderStatus): Promise<Reminder[]> {
-  const response = await api.get<Reminder[]>("/api/reminders", {
-    params: status ? { status } : undefined,
-  });
-  return response.data;
+export function fetchReminders(status?: ReminderStatus): Promise<Reminder[]> {
+  return get<Reminder[]>("/api/reminders", status ? { status } : undefined);
 }
 
-export async function fetchReminder(id: string): Promise<Reminder> {
-  const response = await api.get<Reminder>(`/api/reminders/${id}`);
-  return response.data;
+export function fetchReminder(id: string): Promise<Reminder> {
+  return get<Reminder>(`/api/reminders/${id}`);
 }
 
-export async function createReminder(input: ReminderInput): Promise<Reminder> {
-  const response = await api.post<Reminder>("/api/reminders", input);
-  return response.data;
+export function createReminder(input: ReminderInput): Promise<Reminder> {
+  return post<Reminder>("/api/reminders", input);
 }
 
-export async function updateReminder(id: string, input: ReminderInput): Promise<Reminder> {
-  const response = await api.put<Reminder>(`/api/reminders/${id}`, input);
-  return response.data;
+export function updateReminder(id: string, input: ReminderInput): Promise<Reminder> {
+  return put<Reminder>(`/api/reminders/${id}`, input);
 }
 
-export async function rescheduleReminder(id: string, input: RescheduleInput): Promise<Reminder> {
-  const response = await api.post<Reminder>(`/api/reminders/${id}/reschedule`, input);
-  return response.data;
+export function rescheduleReminder(id: string, input: RescheduleInput): Promise<Reminder> {
+  return post<Reminder>(`/api/reminders/${id}/reschedule`, input);
 }
 
-export async function deleteReminder(id: string): Promise<void> {
-  await api.delete(`/api/reminders/${id}`);
+export function deleteReminder(id: string): Promise<void> {
+  return del(`/api/reminders/${id}`);
 }
 
-export async function acknowledgeReminder(id: string): Promise<Reminder> {
-  const response = await api.post<Reminder>(`/api/reminders/${id}/acknowledge`);
-  return response.data;
+export function acknowledgeReminder(id: string): Promise<Reminder> {
+  return post<Reminder>(`/api/reminders/${id}/acknowledge`);
 }
 
-export async function cancelReminder(id: string): Promise<Reminder> {
-  const response = await api.post<Reminder>(`/api/reminders/${id}/cancel`);
-  return response.data;
+export function cancelReminder(id: string): Promise<Reminder> {
+  return post<Reminder>(`/api/reminders/${id}/cancel`);
 }

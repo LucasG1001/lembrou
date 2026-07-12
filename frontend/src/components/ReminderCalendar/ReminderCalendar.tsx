@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { formatDateKey, getToday, isSameDay } from "../../utils/dateUtils";
 import { MONTH_PT } from "../../utils/month";
+import { WEEKDAY_LETTERS } from "../../utils/weekdays";
 import { getHolidays } from "../../utils/holidays";
 import { useDismiss } from "../../hooks/useDismiss";
 import styles from "./ReminderCalendar.module.css";
@@ -9,8 +10,6 @@ interface ReminderCalendarProps {
   countByDay: Map<string, number>;
   onClose: () => void;
 }
-
-const WEEKDAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
 
 export function ReminderCalendar({ countByDay, onClose }: ReminderCalendarProps) {
   const today = getToday();
@@ -63,7 +62,7 @@ export function ReminderCalendar({ countByDay, onClose }: ReminderCalendarProps)
         </div>
 
         <div className={styles.weekHeader}>
-          {WEEKDAY_LABELS.map((label, i) => (
+          {WEEKDAY_LETTERS.map((label, i) => (
             <span key={i} className={styles.weekDay}>
               {label}
             </span>

@@ -8,7 +8,8 @@ import {
   cancelReminder,
 } from "../../services/reminderService";
 import type { RecurMode, RecurUnit, ReminderInput } from "../../types/reminder";
-import { toFormParts, spInstant, WEEKDAYS } from "../../utils/format";
+import { toFormParts, spInstant } from "../../utils/format";
+import { WEEKDAYS_PT } from "../../utils/weekdays";
 import { ChevronIcon } from "../Sidebar/Sidebar.icons";
 import { Modal } from "../Modal/Modal";
 import styles from "./ReminderForm.module.css";
@@ -290,7 +291,7 @@ export function ReminderForm() {
                   onChange={(e) => setRecurWeekday(e.target.value === "" ? null : Number(e.target.value))}
                 >
                   <option value="">Qualquer dia</option>
-                  {WEEKDAYS.map((w, i) => (
+                  {WEEKDAYS_PT.map((w, i) => (
                     <option key={i} value={i}>
                       {w}
                     </option>

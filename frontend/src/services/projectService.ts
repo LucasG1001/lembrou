@@ -1,64 +1,54 @@
-import { api } from "./api";
+import { del, get, post, put } from "./api";
 import type { BoardList, Card, CardPatch, Project, ProjectBoard } from "../types/project";
 
-export async function fetchProjects(): Promise<Project[]> {
-  const response = await api.get<Project[]>("/api/projects");
-  return response.data;
+export function fetchProjects(): Promise<Project[]> {
+  return get<Project[]>("/api/projects");
 }
 
-export async function fetchBoard(projectId: string): Promise<ProjectBoard> {
-  const response = await api.get<ProjectBoard>(`/api/projects/${projectId}`);
-  return response.data;
+export function fetchBoard(projectId: string): Promise<ProjectBoard> {
+  return get<ProjectBoard>(`/api/projects/${projectId}`);
 }
 
-export async function createProject(name: string): Promise<Project> {
-  const response = await api.post<Project>("/api/projects", { name });
-  return response.data;
+export function createProject(name: string): Promise<Project> {
+  return post<Project>("/api/projects", { name });
 }
 
-export async function updateProject(id: string, name: string): Promise<Project> {
-  const response = await api.put<Project>(`/api/projects/${id}`, { name });
-  return response.data;
+export function updateProject(id: string, name: string): Promise<Project> {
+  return put<Project>(`/api/projects/${id}`, { name });
 }
 
-export async function deleteProject(id: string): Promise<void> {
-  await api.delete(`/api/projects/${id}`);
+export function deleteProject(id: string): Promise<void> {
+  return del(`/api/projects/${id}`);
 }
 
-export async function createList(projectId: string, name: string): Promise<BoardList> {
-  const response = await api.post<BoardList>(`/api/projects/${projectId}/lists`, { name });
-  return response.data;
+export function createList(projectId: string, name: string): Promise<BoardList> {
+  return post<BoardList>(`/api/projects/${projectId}/lists`, { name });
 }
 
-export async function updateList(listId: string, name: string): Promise<BoardList> {
-  const response = await api.put<BoardList>(`/api/projects/lists/${listId}`, { name });
-  return response.data;
+export function updateList(listId: string, name: string): Promise<BoardList> {
+  return put<BoardList>(`/api/projects/lists/${listId}`, { name });
 }
 
-export async function deleteList(listId: string): Promise<void> {
-  await api.delete(`/api/projects/lists/${listId}`);
+export function deleteList(listId: string): Promise<void> {
+  return del(`/api/projects/lists/${listId}`);
 }
 
-export async function reorderLists(projectId: string, order: string[]): Promise<ProjectBoard> {
-  const response = await api.post<ProjectBoard>(`/api/projects/${projectId}/lists/reorder`, { order });
-  return response.data;
+export function reorderLists(projectId: string, order: string[]): Promise<ProjectBoard> {
+  return post<ProjectBoard>(`/api/projects/${projectId}/lists/reorder`, { order });
 }
 
-export async function createCard(listId: string, title: string): Promise<Card> {
-  const response = await api.post<Card>(`/api/projects/lists/${listId}/cards`, { title });
-  return response.data;
+export function createCard(listId: string, title: string): Promise<Card> {
+  return post<Card>(`/api/projects/lists/${listId}/cards`, { title });
 }
 
-export async function updateCard(cardId: string, patch: CardPatch): Promise<Card> {
-  const response = await api.put<Card>(`/api/projects/cards/${cardId}`, patch);
-  return response.data;
+export function updateCard(cardId: string, patch: CardPatch): Promise<Card> {
+  return put<Card>(`/api/projects/cards/${cardId}`, patch);
 }
 
-export async function deleteCard(cardId: string): Promise<void> {
-  await api.delete(`/api/projects/cards/${cardId}`);
+export function deleteCard(cardId: string): Promise<void> {
+  return del(`/api/projects/cards/${cardId}`);
 }
 
-export async function moveCard(cardId: string, toListId: string, position: number): Promise<ProjectBoard> {
-  const response = await api.post<ProjectBoard>(`/api/projects/cards/${cardId}/move`, { toListId, position });
-  return response.data;
+export function moveCard(cardId: string, toListId: string, position: number): Promise<ProjectBoard> {
+  return post<ProjectBoard>(`/api/projects/cards/${cardId}/move`, { toListId, position });
 }

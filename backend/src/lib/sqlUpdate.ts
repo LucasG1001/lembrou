@@ -1,3 +1,8 @@
+export function nextPositionSql(table: string, scopeSql = ""): string {
+  const where = scopeSql ? ` WHERE ${scopeSql}` : "";
+  return `(SELECT COALESCE(MAX(position), -1) + 1 FROM ${table}${where})`;
+}
+
 export function buildUpdateSet<T extends object>(
   patch: T,
   columnMap: Record<keyof T, string>

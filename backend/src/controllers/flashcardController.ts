@@ -1,4 +1,3 @@
-import type { Response } from "express";
 import {
   createFlashcardSchema,
   reviewFlashcardSchema,
@@ -6,15 +5,7 @@ import {
 } from "../schemas/flashcard.js";
 import * as flashcardModel from "../models/flashcardModel.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { respondValidationError } from "../lib/validation.js";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function requireUuid(res: Response, value: string, notFound: string): boolean {
-  if (UUID_RE.test(value)) return true;
-  res.status(404).json({ error: notFound });
-  return false;
-}
+import { parseBody, requireUuid } from "../lib/validation.js";
 
 const FLASHCARD_NOT_FOUND = "Flashcard não encontrado.";
 
@@ -40,24 +31,18 @@ export const getFlashcard = asyncHandler("Erro ao buscar flashcard.", async (req
 });
 
 export const createFlashcard = asyncHandler("Erro ao criar flashcard.", async (req, res) => {
-  const parsed = createFlashcardSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const flashcard = await flashcardModel.createFlashcard(parsed.data);
+  const body = parseBody(res, createFlashcardSchema, req.body);
+  if (!body) return;
+  const flashcard = await flashcardModel.createFlashcard(body);
   res.status(201).json(flashcard);
 });
 
 export const updateFlashcard = asyncHandler("Erro ao atualizar flashcard.", async (req, res) => {
   const id = String(req.params.id);
   if (!requireUuid(res, id, FLASHCARD_NOT_FOUND)) return;
-  const parsed = updateFlashcardSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const flashcard = await flashcardModel.updateFlashcard(id, parsed.data);
+  const body = parseBody(res, updateFlashcardSchema, req.body);
+  if (!body) return;
+  const flashcard = await flashcardModel.updateFlashcard(id, body);
   if (!flashcard) {
     res.status(404).json({ error: FLASHCARD_NOT_FOUND });
     return;
@@ -68,12 +53,9 @@ export const updateFlashcard = asyncHandler("Erro ao atualizar flashcard.", asyn
 export const reviewFlashcard = asyncHandler("Erro ao revisar flashcard.", async (req, res) => {
   const id = String(req.params.id);
   if (!requireUuid(res, id, FLASHCARD_NOT_FOUND)) return;
-  const parsed = reviewFlashcardSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const flashcard = await flashcardModel.reviewFlashcard(id, parsed.data.correct, new Date());
+  const body = parseBody(res, reviewFlashcardSchema, req.body);
+  if (!body) return;
+  const flashcard = await flashcardModel.reviewFlashcard(id, body.correct, new Date());
   if (!flashcard) {
     res.status(404).json({ error: FLASHCARD_NOT_FOUND });
     return;

@@ -3,6 +3,7 @@ import type { Habit } from "../../types/habit";
 import { getToday, getTodayKey, isScheduledDay } from "../../utils/dateUtils";
 import { getHabitIcon } from "../../utils/habitIcons";
 import { moveRelativeTo } from "../../utils/reorder";
+import { LONG_PRESS_DRAG_MS, MOVE_THRESHOLD } from "../../hooks/useLongPress";
 import styles from "./TodayHabits.module.css";
 
 interface TodayHabitsProps {
@@ -10,9 +11,6 @@ interface TodayHabitsProps {
   onToggle: (habitId: string, dateKey: string, nextCount: number) => void;
   onReorder: (orderedVisibleIds: string[]) => void;
 }
-
-const LONG_PRESS_MS = 400;
-const MOVE_THRESHOLD = 10;
 
 export function TodayHabits({ habits, onToggle, onReorder }: TodayHabitsProps) {
   const todayKey = getTodayKey();
@@ -135,7 +133,7 @@ export function TodayHabits({ habits, onToggle, onReorder }: TodayHabitsProps) {
               startRef.current = { x: e.clientX, y: e.clientY };
               if (canReorder) {
                 const base = visibleIds;
-                timerRef.current = setTimeout(() => startDrag(habit.id, base), LONG_PRESS_MS);
+                timerRef.current = setTimeout(() => startDrag(habit.id, base), LONG_PRESS_DRAG_MS);
               }
             }}
             onPointerMove={(e) => {

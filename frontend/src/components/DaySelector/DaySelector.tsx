@@ -1,4 +1,5 @@
 import type { DayOfWeek } from "../../types/habit";
+import { WEEKDAY_ABBR_PT } from "../../utils/weekdays";
 import styles from "./DaySelector.module.css";
 
 interface DaySelectorProps {
@@ -7,15 +8,10 @@ interface DaySelectorProps {
   error?: string;
 }
 
-const DAY_LABELS: { value: DayOfWeek; label: string }[] = [
-  { value: 0, label: "Dom" },
-  { value: 1, label: "Seg" },
-  { value: 2, label: "Ter" },
-  { value: 3, label: "Qua" },
-  { value: 4, label: "Qui" },
-  { value: 5, label: "Sex" },
-  { value: 6, label: "Sáb" },
-];
+const DAY_LABELS: { value: DayOfWeek; label: string }[] = WEEKDAY_ABBR_PT.map((label, value) => ({
+  value: value as DayOfWeek,
+  label,
+}));
 
 const ALL_DAYS: DayOfWeek[] = [0, 1, 2, 3, 4, 5, 6];
 

@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import type { DayOfWeek, HabitCompletion } from "../../types/habit";
-import { formatDateKey, getDayOfWeek, getToday, isSameDay } from "../../utils/dateUtils";
+import { formatDateKey, getDayOfWeek, getToday, isSameDay, spCalendarDay } from "../../utils/dateUtils";
 import { MONTH_PT } from "../../utils/month";
+import { WEEKDAY_LETTERS } from "../../utils/weekdays";
 import styles from "./CompletionGrid.module.css";
 
 interface CompletionGridProps {
@@ -9,8 +10,6 @@ interface CompletionGridProps {
   selectedDays: DayOfWeek[];
   createdAt: string;
 }
-
-const WEEKDAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
 
 type DayState = "completed" | "missed" | "pending" | "notScheduled" | "future";
 
@@ -92,10 +91,9 @@ export function CompletionGrid({ completions, selectedDays, createdAt }: Complet
     month: today.getMonth(),
   }));
 
-  const createdDate = new Date(createdAt);
-  const createdYear = createdDate.getFullYear();
-  const createdMonth = createdDate.getMonth();
-  const createdDay = new Date(createdYear, createdMonth, createdDate.getDate());
+  const createdDay = spCalendarDay(new Date(createdAt));
+  const createdYear = createdDay.getFullYear();
+  const createdMonth = createdDay.getMonth();
 
   const canGoPrev =
     viewMonth.year > createdYear ||
@@ -167,7 +165,7 @@ export function CompletionGrid({ completions, selectedDays, createdAt }: Complet
       </div>
 
       <div className={styles.weekHeader}>
-        {WEEKDAY_LABELS.map((label, i) => (
+        {WEEKDAY_LETTERS.map((label, i) => (
           <span key={i} className={styles.weekDay}>
             {label}
           </span>

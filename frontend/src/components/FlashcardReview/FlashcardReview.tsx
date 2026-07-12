@@ -3,7 +3,7 @@ import type { Flashcard } from "../../types/flashcard";
 import type { FlashcardCategory } from "../../types/flashcardCategory";
 import { fetchDueFlashcards } from "../../services/flashcardService";
 import { apiErrorMessage } from "../../utils/apiError";
-import { NEUTRAL_TINTS, tints } from "../../utils/flashcardPalette";
+import { categoryLabel, categoryTints } from "../../utils/flashcardPalette";
 import styles from "./FlashcardReview.module.css";
 
 interface FlashcardReviewProps {
@@ -111,12 +111,8 @@ export function FlashcardReview({ categories, onReview }: FlashcardReviewProps) 
     return () => window.removeEventListener("keydown", onKey);
   }, [currentId, flipped, flip, mark]);
 
-  const catTints = (id: string | null) => {
-    const cat = id ? categories.find((c) => c.id === id) : undefined;
-    return cat ? tints(cat.color) : NEUTRAL_TINTS;
-  };
-  const catLabel = (id: string | null) =>
-    (id && categories.find((c) => c.id === id)?.name) || "Sem categoria";
+  const catTints = (id: string | null) => categoryTints(categories, id);
+  const catLabel = (id: string | null) => categoryLabel(categories, id);
 
   if (loading) return <p className={styles.muted}>Carregando…</p>;
   if (error && due.length === 0) return <p className={styles.error}>{error}</p>;

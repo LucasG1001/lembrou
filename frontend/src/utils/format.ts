@@ -1,8 +1,8 @@
 import type { Reminder, RecurUnit } from "../types/reminder";
+import { WEEKDAYS_PT } from "./weekdays";
+import { diffDaysFromToday } from "./dateUtils";
 
 const TZ = "America/Sao_Paulo";
-
-export const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 const UNIT_SINGULAR: Record<RecurUnit, string> = {
   day: "dia",
@@ -46,7 +46,7 @@ export function recurrenceLabel(reminder: Reminder): string | null {
   const unit = n === 1 ? UNIT_SINGULAR[reminder.recurUnit] : UNIT_PLURAL[reminder.recurUnit];
   let base = n === 1 ? `A cada ${unit}` : `A cada ${n} ${unit}`;
   if (reminder.recurWeekday !== null) {
-    base = `${base}, ${WEEKDAYS[reminder.recurWeekday].toLowerCase()}`;
+    base = `${base}, ${WEEKDAYS_PT[reminder.recurWeekday]!.toLowerCase()}`;
   }
   if (reminder.recurMode === "relative") {
     base = `${base} (a partir da conclusão)`;
@@ -81,12 +81,7 @@ export function remainingLabel(targetMs: number, nowMs: number): { text: string;
 
 /** Contagem por dias para itens de dia inteiro (sem horário): hoje / amanhã / faltam N dias. */
 export function dayRemainingLabel(targetMs: number, nowMs: number): { text: string; overdue: boolean } {
-  const DAY = 24 * 60 * 60 * 1000;
-  const startToday = new Date(nowMs);
-  startToday.setHours(0, 0, 0, 0);
-  const startTarget = new Date(targetMs);
-  startTarget.setHours(0, 0, 0, 0);
-  const diff = Math.round((startTarget.getTime() - startToday.getTime()) / DAY);
+  const diff = diffDaysFromToday(targetMs, nowMs);
   if (diff === 0) return { text: "hoje", overdue: false };
   if (diff === 1) return { text: "amanhã", overdue: false };
   if (diff > 1) return { text: `faltam ${diff} dias`, overdue: false };

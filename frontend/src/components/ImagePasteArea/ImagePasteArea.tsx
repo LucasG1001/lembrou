@@ -1,6 +1,7 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { ChangeEvent, ClipboardEvent } from "react";
 import { compressImage } from "../../utils/imageCompress";
+import { useAutoGrow } from "../../hooks/useAutoGrow";
 import styles from "./ImagePasteArea.module.css";
 
 const MAX_IMAGES = 6;
@@ -31,12 +32,7 @@ export function ImagePasteArea({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useLayoutEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
+  useAutoGrow(textareaRef, value);
 
   async function addFiles(files: File[]) {
     if (files.length === 0) return;

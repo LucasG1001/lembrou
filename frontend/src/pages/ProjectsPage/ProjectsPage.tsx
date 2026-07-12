@@ -6,12 +6,11 @@ import { BoardListColumn } from "../../components/BoardList/BoardList";
 import { InlineTextEdit } from "../../components/InlineTextEdit/InlineTextEdit";
 import { CardDetailPanel } from "../../components/CardDetailPanel/CardDetailPanel";
 import { moveCardInBoard, moveRelativeTo } from "../../utils/reorder";
-import { apiErrorMessage } from "../../utils/apiError";
+import { LONG_PRESS_DRAG_MS, MOVE_THRESHOLD } from "../../hooks/useLongPress";
+import { alertApiError } from "../../utils/apiError";
 import type { BoardList, Card, CardPatch } from "../../types/project";
 import styles from "./ProjectsPage.module.css";
 
-const LONG_PRESS_MS = 400;
-const MOVE_THRESHOLD = 10;
 const EDGE_SCROLL_PX = 48;
 const EDGE_SCROLL_STEP = 14;
 
@@ -22,10 +21,6 @@ type Ghost = { type: DragType; width: number; title: string; done: boolean };
 type DropTarget =
   | { kind: "card"; listId: string; index: number; overCardId: string | null }
   | { kind: "list"; overListId: string; order: string[] };
-
-function alertError(err: unknown, fallback: string): void {
-  window.alert(apiErrorMessage(err, fallback));
-}
 
 function sameDrop(a: DropTarget | null, b: DropTarget | null): boolean {
   if (a === b) return true;
@@ -201,11 +196,11 @@ export function ProjectsPage() {
       if (current && !boardChanged(current, moveCardInBoard(current, dragId, target.listId, target.index)))
         return;
       moveCard(dragId, target.listId, target.index).catch((err) =>
-        alertError(err, "Não foi possível mover o cartão.")
+        alertApiError(err, "Não foi possível mover o cartão.")
       );
     } else if (type === "list" && target.kind === "list") {
       reorderLists(target.order).catch((err) =>
-        alertError(err, "Não foi possível reordenar as listas.")
+        alertApiError(err, "Não foi possível reordenar as listas.")
       );
     }
   };
@@ -344,7 +339,7 @@ export function ProjectsPage() {
       pressTimerRef.current = window.setTimeout(() => {
         clearPress();
         startDrag(id, type, true);
-      }, LONG_PRESS_MS);
+      }, LONG_PRESS_DRAG_MS);
 
       window.addEventListener("touchmove", onTouchMove, { passive: false });
       window.addEventListener("touchend", onTouchEnd, { passive: false });
@@ -431,27 +426,27 @@ export function ProjectsPage() {
   };
 
   const handleSaveCardDetail = (card: Card, patch: CardPatch) => {
-    updateCard(card.id, patch).catch((err) => alertError(err, "Não foi possível salvar o cartão."));
+    updateCard(card.id, patch).catch((err) => alertApiError(err, "Não foi possível salvar o cartão."));
   };
 
   const handleToggleDone = (card: Card) => {
     updateCard(card.id, { done: !card.done }).catch((err) =>
-      alertError(err, "Não foi possível atualizar o cartão.")
+      alertApiError(err, "Não foi possível atualizar o cartão.")
     );
   };
 
   const handleDeleteCard = (card: Card) => {
     if (!card.done && !window.confirm(`Excluir "${card.title}"?`)) return;
-    deleteCard(card.id).catch((err) => alertError(err, "Não foi possível excluir o cartão."));
+    deleteCard(card.id).catch((err) => alertApiError(err, "Não foi possível excluir o cartão."));
   };
 
   const handleAddCard = (listId: string, title: string) => {
-    createCard(listId, title).catch((err) => alertError(err, "Não foi possível criar o cartão."));
+    createCard(listId, title).catch((err) => alertApiError(err, "Não foi possível criar o cartão."));
   };
 
   const handleRenameList = (listId: string, name: string) => {
     setRenamingListId(null);
-    renameList(listId, name).catch((err) => alertError(err, "Não foi possível renomear a lista."));
+    renameList(listId, name).catch((err) => alertApiError(err, "Não foi possível renomear a lista."));
   };
 
   const handleDeleteList = (list: BoardList) => {
@@ -463,13 +458,13 @@ export function ProjectsPage() {
         }?`
       );
     if (!confirmed) return;
-    deleteList(list.id).catch((err) => alertError(err, "Não foi possível excluir a lista."));
+    deleteList(list.id).catch((err) => alertApiError(err, "Não foi possível excluir a lista."));
   };
 
   const handleCreateList = (name: string) => {
     setAddingList(false);
     clearNovo();
-    createList(name).catch((err) => alertError(err, "Não foi possível criar a lista."));
+    createList(name).catch((err) => alertApiError(err, "Não foi possível criar a lista."));
   };
 
   const currentProject = projects.find((p) => p.id === currentProjectId) ?? null;
@@ -489,13 +484,13 @@ export function ProjectsPage() {
           current={currentProject}
           onSelect={selectProject}
           onCreate={(name) =>
-            createProject(name).catch((err) => alertError(err, "Não foi possível criar o projeto."))
+            createProject(name).catch((err) => alertApiError(err, "Não foi possível criar o projeto."))
           }
           onRename={(id, name) =>
-            renameProject(id, name).catch((err) => alertError(err, "Não foi possível renomear o projeto."))
+            renameProject(id, name).catch((err) => alertApiError(err, "Não foi possível renomear o projeto."))
           }
           onDelete={(id) =>
-            deleteProject(id).catch((err) => alertError(err, "Não foi possível excluir o projeto."))
+            deleteProject(id).catch((err) => alertApiError(err, "Não foi possível excluir o projeto."))
           }
         />
       </header>
@@ -515,7 +510,7 @@ export function ProjectsPage() {
               onCommit={(name) => {
                 setCreatingProject(false);
                 clearNovo();
-                createProject(name).catch((err) => alertError(err, "Não foi possível criar o projeto."));
+                createProject(name).catch((err) => alertApiError(err, "Não foi possível criar o projeto."));
               }}
               onCancel={() => {
                 setCreatingProject(false);
@@ -613,7 +608,7 @@ export function ProjectsPage() {
           card={detailCard}
           onSave={(patch) => handleSaveCardDetail(detailCard, patch)}
           onDelete={(card) =>
-            deleteCard(card.id).catch((err) => alertError(err, "Não foi possível excluir o cartão."))
+            deleteCard(card.id).catch((err) => alertApiError(err, "Não foi possível excluir o cartão."))
           }
           onClose={() => setDetailCardId(null)}
         />

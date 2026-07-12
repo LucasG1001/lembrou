@@ -6,7 +6,9 @@ import {
 } from "../schemas/habit.js";
 import * as habitModel from "../models/habitModel.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
-import { DATE_RE, respondValidationError } from "../lib/validation.js";
+import { DATE_RE, parseBody, requireUuid } from "../lib/validation.js";
+
+const HABIT_NOT_FOUND = "Hábito não encontrado.";
 
 export const getAll = asyncHandler("Erro ao buscar hábitos.", async (_req, res) => {
   const habits = await habitModel.findAll();
@@ -14,43 +16,38 @@ export const getAll = asyncHandler("Erro ao buscar hábitos.", async (_req, res)
 });
 
 export const create = asyncHandler("Erro ao criar hábito.", async (req, res) => {
-  const parsed = createHabitSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const habit = await habitModel.create(parsed.data);
+  const body = parseBody(res, createHabitSchema, req.body);
+  if (!body) return;
+  const habit = await habitModel.create(body);
   res.status(201).json(habit);
 });
 
 export const update = asyncHandler("Erro ao atualizar hábito.", async (req, res) => {
-  const parsed = updateHabitSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const habit = await habitModel.update(String(req.params.id), parsed.data);
+  const id = String(req.params.id);
+  if (!requireUuid(res, id, HABIT_NOT_FOUND)) return;
+  const body = parseBody(res, updateHabitSchema, req.body);
+  if (!body) return;
+  const habit = await habitModel.update(id, body);
   if (!habit) {
-    res.status(404).json({ error: "Hábito não encontrado." });
+    res.status(404).json({ error: HABIT_NOT_FOUND });
     return;
   }
   res.json(habit);
 });
 
 export const reorder = asyncHandler("Erro ao reordenar hábitos.", async (req, res) => {
-  const parsed = reorderHabitsSchema.safeParse(req.body);
-  if (!parsed.success) {
-    respondValidationError(res, parsed.error);
-    return;
-  }
-  const habits = await habitModel.reorder(parsed.data.order);
+  const body = parseBody(res, reorderHabitsSchema, req.body);
+  if (!body) return;
+  const habits = await habitModel.reorder(body.order);
   res.json(habits);
 });
 
 export const remove = asyncHandler("Erro ao remover hábito.", async (req, res) => {
-  const removed = await habitModel.remove(String(req.params.id));
+  const id = String(req.params.id);
+  if (!requireUuid(res, id, HABIT_NOT_FOUND)) return;
+  const removed = await habitModel.remove(id);
   if (!removed) {
-    res.status(404).json({ error: "Hábito não encontrado." });
+    res.status(404).json({ error: HABIT_NOT_FOUND });
     return;
   }
   res.status(204).send();
@@ -59,17 +56,15 @@ export const remove = asyncHandler("Erro ao remover hábito.", async (req, res) 
 export const setCompletion = asyncHandler("Erro ao atualizar conclusão.", async (req, res) => {
   const id = String(req.params.id);
   const date = String(req.params.date);
+  if (!requireUuid(res, id, HABIT_NOT_FOUND)) return;
   if (!DATE_RE.test(date)) {
     res.status(400).json({ error: "Data inválida (use YYYY-MM-DD)." });
     return;
   }
-  const parsed = completionCountSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Contagem inválida." });
-    return;
-  }
+  const parsedBody = parseBody(res, completionCountSchema, req.body);
+  if (!parsedBody) return;
 
-  const { count } = parsed.data;
+  const { count } = parsedBody;
   if (count <= 0) {
     await habitModel.clearCompletion(id, date);
   } else {

@@ -1,9 +1,10 @@
-import { createElement, useState } from "react";
+import { createElement } from "react";
 import type { Habit } from "../../types/habit";
 import { formatDateDisplay } from "../../utils/dateUtils";
 import { getLevelColor } from "../../utils/levelUtils";
 import { getHabitIcon } from "../../utils/habitIcons";
 import { useDismiss } from "../../hooks/useDismiss";
+import { ConfirmButton } from "../ConfirmButton/ConfirmButton";
 import { LevelBadge } from "../LevelBadge/LevelBadge";
 import { CompletionGrid } from "../CompletionGrid/CompletionGrid";
 import styles from "./SidePanel.module.css";
@@ -16,44 +17,14 @@ interface SidePanelProps {
 }
 
 export function SidePanel({ habit, onClose, onEdit, onDelete }: SidePanelProps) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
   useDismiss(onClose);
-
-  function handleBackdropClick() {
-    setConfirmDelete(false);
-    onClose();
-  }
-
-  function handleDeleteClick() {
-    if (confirmDelete) {
-      onDelete(habit.id);
-      onClose();
-    } else {
-      setConfirmDelete(true);
-    }
-  }
-
-  function handlePanelClick(e: React.MouseEvent) {
-    if (confirmDelete) {
-      const target = e.target as HTMLElement;
-      if (!target.closest(`.${styles.deleteButton}`)) {
-        setConfirmDelete(false);
-      }
-    }
-  }
 
   const levelColor = getLevelColor(habit.level);
 
   return (
     <>
-      <div className={styles.backdrop} onClick={handleBackdropClick} aria-hidden="true" />
-      <aside
-        className={styles.panel}
-        role="dialog"
-        aria-label={`Detalhes de ${habit.name}`}
-        onClick={handlePanelClick}
-      >
+      <div className={styles.backdrop} onClick={onClose} aria-hidden="true" />
+      <aside className={styles.panel} role="dialog" aria-label={`Detalhes de ${habit.name}`}>
         <div className={styles.header}>
           <button className={styles.closeButton} onClick={onClose} aria-label="Fechar painel">
             ×
@@ -106,12 +77,16 @@ export function SidePanel({ habit, onClose, onEdit, onDelete }: SidePanelProps) 
             <button className={styles.editButton} onClick={() => onEdit(habit)}>
               Editar hábito
             </button>
-            <button
-              className={`${styles.deleteButton} ${confirmDelete ? styles.deleteConfirm : ""}`}
-              onClick={handleDeleteClick}
-            >
-              {confirmDelete ? "Confirmar exclusão?" : "Excluir hábito"}
-            </button>
+            <ConfirmButton
+              className={styles.deleteButton}
+              confirmClassName={styles.deleteConfirm}
+              idleLabel="Excluir hábito"
+              confirmLabel="Confirmar exclusão?"
+              onConfirm={() => {
+                onDelete(habit.id);
+                onClose();
+              }}
+            />
           </div>
         </div>
       </aside>

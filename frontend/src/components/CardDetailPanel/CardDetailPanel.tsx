@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Card, CardPatch, ChecklistItem } from "../../types/project";
 import { useDismiss } from "../../hooks/useDismiss";
+import { ConfirmButton } from "../ConfirmButton/ConfirmButton";
 import { ImagePasteArea } from "../ImagePasteArea/ImagePasteArea";
 import styles from "./CardDetailPanel.module.css";
 
@@ -18,7 +19,6 @@ export function CardDetailPanel({ card, onSave, onDelete, onClose }: CardDetailP
   const [done, setDone] = useState(card.done);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(card.checklist);
   const [newItem, setNewItem] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useDismiss(onClose);
 

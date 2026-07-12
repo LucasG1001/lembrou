@@ -53,10 +53,6 @@
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.itemWithAction {
-  grid-template-columns: 24px 96px 1fr auto auto;
-}
-
 .item:hover {
   background: var(--color-bg-secondary);
   border-color: var(--color-border);
@@ -113,11 +109,6 @@
   white-space: nowrap;
 }
 
-.itemAction {
-  display: flex;
-  align-items: center;
-}
-
 .empty {
   padding: var(--spacing-2xl);
   text-align: center;
@@ -139,13 +130,6 @@
     padding: var(--spacing-sm);
   }
 
-  .itemWithAction {
-    grid-template-columns: auto 1fr auto;
-    grid-template-areas:
-      "icon time action"
-      ".    title detail";
-  }
-
   .itemIcon {
     grid-area: icon;
   }
@@ -164,14 +148,5 @@
 
   .itemTitleWrap {
     grid-area: title;
-  }
-
-  .itemAction {
-    grid-area: action;
-    justify-content: flex-end;
-  }
-
-  .itemWithAction .itemDetail {
-    display: none;
   }
 }

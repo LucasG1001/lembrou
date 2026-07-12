@@ -30,3 +30,18 @@ export const NEUTRAL_TINTS: CategoryTints = {
   fg: "var(--color-text-secondary)",
   border: "var(--color-border)",
 };
+
+export function categoryTints(
+  categories: { id: string; color: string }[],
+  id: string | null
+): CategoryTints {
+  const cat = id ? categories.find((c) => c.id === id) : undefined;
+  return cat ? tints(cat.color) : NEUTRAL_TINTS;
+}
+
+export function categoryLabel(
+  categories: { id: string; name: string }[],
+  id: string | null
+): string {
+  return (id && categories.find((c) => c.id === id)?.name) || "Sem categoria";
+}

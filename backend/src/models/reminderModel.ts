@@ -1,4 +1,5 @@
 import { pool } from "../database/connection.js";
+import { updateById } from "../database/transaction.js";
 import { buildUpdateSet } from "../lib/sqlUpdate.js";
 import { computeNextOccurrence } from "../lib/dateUtils.js";
 import type { NewReminder, Reminder, ReminderPatch, ReminderRow, ReminderStatus } from "../types/reminder.js";
@@ -112,16 +113,8 @@ const COLUMN_MAP: Record<keyof ReminderPatch, string> = {
 
 export async function update(id: string, patch: ReminderPatch): Promise<Reminder | null> {
   const { sets, values, nextIndex } = buildUpdateSet(patch, COLUMN_MAP);
-
-  if (sets.length === 0) return findById(id);
-
-  sets.push("updated_at = NOW()");
-  values.push(id);
-  const result = await pool.query<ReminderRow>(
-    `UPDATE reminders SET ${sets.join(", ")} WHERE id = $${nextIndex} RETURNING *`,
-    values
-  );
-  return result.rows[0] ? toReminder(result.rows[0]) : null;
+  const row = await updateById<ReminderRow>("reminders", id, sets, values, nextIndex);
+  return row ? toReminder(row) : null;
 }
 
 export async function remove(id: string): Promise<boolean> {

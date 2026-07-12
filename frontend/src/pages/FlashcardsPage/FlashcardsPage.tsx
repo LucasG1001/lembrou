@@ -7,7 +7,7 @@ import { FlashcardList } from "../../components/FlashcardList/FlashcardList";
 import { FlashcardForm } from "../../components/FlashcardForm/FlashcardForm";
 import { FlashcardCategoryModal } from "../../components/FlashcardCategoryModal/FlashcardCategoryModal";
 import { fetchFlashcard } from "../../services/flashcardService";
-import { apiErrorMessage } from "../../utils/apiError";
+import { alertApiError, apiErrorMessage } from "../../utils/apiError";
 import type { Flashcard, FlashcardFormData } from "../../types/flashcard";
 import styles from "./FlashcardsPage.module.css";
 
@@ -73,7 +73,7 @@ export function FlashcardsPage() {
     setFormError(null);
     fetchFlashcard(id)
       .then(setEditing)
-      .catch((err) => window.alert(apiErrorMessage(err, "Não foi possível carregar o flashcard.")));
+      .catch((err) => alertApiError(err, "Não foi possível carregar o flashcard."));
   }, []);
 
   const handleDelete = useCallback(() => {

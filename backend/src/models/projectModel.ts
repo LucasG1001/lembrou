@@ -1,5 +1,6 @@
 import { pool } from "../database/connection.js";
-import { buildUpdateSet } from "../lib/sqlUpdate.js";
+import { updateById, withTransaction } from "../database/transaction.js";
+import { buildUpdateSet, nextPositionSql } from "../lib/sqlUpdate.js";
 import { DomainError } from "./errors.js";
 import type {
   BoardList,
@@ -95,7 +96,7 @@ export async function findBoard(projectId: string): Promise<ProjectBoard | null>
 export async function createProject(name: string): Promise<Project> {
   const result = await pool.query<ProjectRow>(
     `INSERT INTO projects (name, position)
-     VALUES ($1, (SELECT COALESCE(MAX(position), -1) + 1 FROM projects))
+     VALUES ($1, ${nextPositionSql("projects")})
      RETURNING *`,
     [name]
   );
@@ -104,17 +105,8 @@ export async function createProject(name: string): Promise<Project> {
 
 export async function updateProject(id: string, patch: ProjectPatch): Promise<Project | null> {
   const { sets, values, nextIndex } = buildUpdateSet(patch, { name: "name" });
-  if (sets.length === 0) {
-    const existing = await pool.query<ProjectRow>("SELECT * FROM projects WHERE id = $1", [id]);
-    return existing.rows[0] ? toProject(existing.rows[0]) : null;
-  }
-  sets.push("updated_at = NOW()");
-  values.push(id);
-  const result = await pool.query<ProjectRow>(
-    `UPDATE projects SET ${sets.join(", ")} WHERE id = $${nextIndex} RETURNING *`,
-    values
-  );
-  return result.rows[0] ? toProject(result.rows[0]) : null;
+  const row = await updateById<ProjectRow>("projects", id, sets, values, nextIndex);
+  return row ? toProject(row) : null;
 }
 
 export async function removeProject(id: string): Promise<boolean> {
@@ -128,7 +120,7 @@ export async function createList(projectId: string, name: string): Promise<Board
 
   const result = await pool.query<BoardListRow>(
     `INSERT INTO board_lists (project_id, name, position)
-     VALUES ($1, $2, (SELECT COALESCE(MAX(position), -1) + 1 FROM board_lists WHERE project_id = $1))
+     VALUES ($1, $2, ${nextPositionSql("board_lists", "project_id = $1")})
      RETURNING *`,
     [projectId, name]
   );
@@ -137,29 +129,13 @@ export async function createList(projectId: string, name: string): Promise<Board
 
 export async function updateList(id: string, patch: ListPatch): Promise<BoardList | null> {
   const { sets, values, nextIndex } = buildUpdateSet(patch, { name: "name" });
-  if (sets.length === 0) return findListById(id);
-  sets.push("updated_at = NOW()");
-  values.push(id);
-  const result = await pool.query<BoardListRow>(
-    `UPDATE board_lists SET ${sets.join(", ")} WHERE id = $${nextIndex} RETURNING *`,
-    values
-  );
-  if (!result.rows[0]) return null;
+  const row = await updateById<BoardListRow>("board_lists", id, sets, values, nextIndex);
+  if (!row) return null;
   const cards = await pool.query<CardRow>(
     "SELECT * FROM cards WHERE list_id = $1 ORDER BY position ASC, created_at ASC",
     [id]
   );
-  return toBoardList(result.rows[0], cards.rows);
-}
-
-async function findListById(id: string): Promise<BoardList | null> {
-  const result = await pool.query<BoardListRow>("SELECT * FROM board_lists WHERE id = $1", [id]);
-  if (!result.rows[0]) return null;
-  const cards = await pool.query<CardRow>(
-    "SELECT * FROM cards WHERE list_id = $1 ORDER BY position ASC, created_at ASC",
-    [id]
-  );
-  return toBoardList(result.rows[0], cards.rows);
+  return toBoardList(row, cards.rows);
 }
 
 export async function removeList(id: string): Promise<boolean> {
@@ -168,22 +144,14 @@ export async function removeList(id: string): Promise<boolean> {
 }
 
 export async function reorderLists(projectId: string, orderedIds: string[]): Promise<ProjectBoard | null> {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
+  await withTransaction(async (client) => {
     for (let i = 0; i < orderedIds.length; i++) {
       await client.query(
         "UPDATE board_lists SET position = $1, updated_at = NOW() WHERE id = $2 AND project_id = $3",
         [i, orderedIds[i], projectId]
       );
     }
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+  });
   return findBoard(projectId);
 }
 
@@ -193,7 +161,7 @@ export async function createCard(listId: string, title: string): Promise<Card | 
 
   const result = await pool.query<CardRow>(
     `INSERT INTO cards (list_id, title, position)
-     VALUES ($1, $2, (SELECT COALESCE(MAX(position), -1) + 1 FROM cards WHERE list_id = $1))
+     VALUES ($1, $2, ${nextPositionSql("cards", "list_id = $1")})
      RETURNING *`,
     [listId, title]
   );
@@ -213,17 +181,8 @@ export async function updateCard(id: string, patch: CardPatch): Promise<Card | n
     sets.push(`checklist = $${idIndex++}`);
     values.push(JSON.stringify(checklist));
   }
-  if (sets.length === 0) {
-    const existing = await pool.query<CardRow>("SELECT * FROM cards WHERE id = $1", [id]);
-    return existing.rows[0] ? toCard(existing.rows[0]) : null;
-  }
-  sets.push("updated_at = NOW()");
-  values.push(id);
-  const result = await pool.query<CardRow>(
-    `UPDATE cards SET ${sets.join(", ")} WHERE id = $${idIndex} RETURNING *`,
-    values
-  );
-  return result.rows[0] ? toCard(result.rows[0]) : null;
+  const row = await updateById<CardRow>("cards", id, sets, values, idIndex);
+  return row ? toCard(row) : null;
 }
 
 export async function removeCard(id: string): Promise<boolean> {
@@ -232,11 +191,7 @@ export async function removeCard(id: string): Promise<boolean> {
 }
 
 export async function moveCard(cardId: string, toListId: string, position: number): Promise<ProjectBoard | null> {
-  const client = await pool.connect();
-  let projectId: string;
-  try {
-    await client.query("BEGIN");
-
+  const projectId = await withTransaction(async (client) => {
     const cardResult = await client.query<CardRow>("SELECT * FROM cards WHERE id = $1", [cardId]);
     const card = cardResult.rows[0];
     if (!card) throw new DomainError("Cartão não encontrado.", 404);
@@ -251,7 +206,6 @@ export async function moveCard(cardId: string, toListId: string, position: numbe
     if (target.project_id !== source.project_id) {
       throw new DomainError("A lista de destino pertence a outro projeto.", 400);
     }
-    projectId = source.project_id;
 
     const targetResult = await client.query<{ id: string }>(
       "SELECT id FROM cards WHERE list_id = $1 AND id <> $2 ORDER BY position ASC, created_at ASC",
@@ -276,12 +230,7 @@ export async function moveCard(cardId: string, toListId: string, position: numbe
       }
     }
 
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+    return source.project_id;
+  });
   return findBoard(projectId);
 }

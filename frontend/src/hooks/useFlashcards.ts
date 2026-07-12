@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Flashcard, FlashcardFormData, FlashcardSummary } from "../types/flashcard";
 import {
   fetchFlashcards,
@@ -8,6 +8,7 @@ import {
   reviewFlashcard as apiReviewFlashcard,
   setFlashcardCategory as apiSetFlashcardCategory,
 } from "../services/flashcardService";
+import { useFetchList } from "./useFetchList";
 import { countDue } from "../utils/flashcardUtils";
 
 interface UseFlashcardsReturn {
@@ -24,16 +25,12 @@ interface UseFlashcardsReturn {
 }
 
 export function useFlashcards(): UseFlashcardsReturn {
-  const [cards, setCards] = useState<FlashcardSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchFlashcards()
-      .then(setCards)
-      .catch(() => setError("Não foi possível carregar os flashcards."))
-      .finally(() => setLoading(false));
-  }, []);
+  const {
+    items: cards,
+    setItems: setCards,
+    loading,
+    error,
+  } = useFetchList<FlashcardSummary>(fetchFlashcards, "Não foi possível carregar os flashcards.");
 
   const dueCount = useMemo(() => countDue(cards), [cards]);
 

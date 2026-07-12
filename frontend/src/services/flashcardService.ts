@@ -1,41 +1,34 @@
-import { api } from "./api";
+import { del, get, post, put } from "./api";
 import type { Flashcard, FlashcardFormData, FlashcardSummary } from "../types/flashcard";
 
-export async function fetchFlashcards(): Promise<FlashcardSummary[]> {
-  const response = await api.get<FlashcardSummary[]>("/api/flashcards");
-  return response.data;
+export function fetchFlashcards(): Promise<FlashcardSummary[]> {
+  return get<FlashcardSummary[]>("/api/flashcards");
 }
 
-export async function fetchDueFlashcards(): Promise<Flashcard[]> {
-  const response = await api.get<Flashcard[]>("/api/flashcards/due");
-  return response.data;
+export function fetchDueFlashcards(): Promise<Flashcard[]> {
+  return get<Flashcard[]>("/api/flashcards/due");
 }
 
-export async function fetchFlashcard(id: string): Promise<Flashcard> {
-  const response = await api.get<Flashcard>(`/api/flashcards/${id}`);
-  return response.data;
+export function fetchFlashcard(id: string): Promise<Flashcard> {
+  return get<Flashcard>(`/api/flashcards/${id}`);
 }
 
-export async function createFlashcard(data: FlashcardFormData): Promise<Flashcard> {
-  const response = await api.post<Flashcard>("/api/flashcards", data);
-  return response.data;
+export function createFlashcard(data: FlashcardFormData): Promise<Flashcard> {
+  return post<Flashcard>("/api/flashcards", data);
 }
 
-export async function updateFlashcard(id: string, data: FlashcardFormData): Promise<Flashcard> {
-  const response = await api.put<Flashcard>(`/api/flashcards/${id}`, data);
-  return response.data;
+export function updateFlashcard(id: string, data: FlashcardFormData): Promise<Flashcard> {
+  return put<Flashcard>(`/api/flashcards/${id}`, data);
 }
 
-export async function setFlashcardCategory(id: string, categoryId: string | null): Promise<Flashcard> {
-  const response = await api.put<Flashcard>(`/api/flashcards/${id}`, { categoryId });
-  return response.data;
+export function setFlashcardCategory(id: string, categoryId: string | null): Promise<Flashcard> {
+  return put<Flashcard>(`/api/flashcards/${id}`, { categoryId });
 }
 
-export async function deleteFlashcard(id: string): Promise<void> {
-  await api.delete(`/api/flashcards/${id}`);
+export function deleteFlashcard(id: string): Promise<void> {
+  return del(`/api/flashcards/${id}`);
 }
 
-export async function reviewFlashcard(id: string, correct: boolean): Promise<Flashcard> {
-  const response = await api.post<Flashcard>(`/api/flashcards/${id}/review`, { correct });
-  return response.data;
+export function reviewFlashcard(id: string, correct: boolean): Promise<Flashcard> {
+  return post<Flashcard>(`/api/flashcards/${id}/review`, { correct });
 }

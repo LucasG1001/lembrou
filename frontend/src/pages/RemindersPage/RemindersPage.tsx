@@ -7,7 +7,7 @@ import { BellIcon, CalendarIcon } from "../../components/Sidebar/Sidebar.icons";
 import { useCalendar } from "../../context/useCalendar";
 import { groupByDay, groupByMonth, splitAgenda, type TimelineItem } from "../../utils/agenda";
 import { recurrenceLabel, remainingLabel, dayRemainingLabel } from "../../utils/format";
-import { apiErrorMessage } from "../../utils/apiError";
+import { alertApiError } from "../../utils/apiError";
 import { useMinuteTick } from "../../hooks/useMinuteTick";
 import type { Reminder } from "../../types/reminder";
 import styles from "./RemindersPage.module.css";
@@ -88,7 +88,6 @@ export function RemindersPage() {
           iconFor={iconForBell}
           onItemClick={(item) => setSelected(byId.get(item.id) ?? null)}
           onItemLongPress={(item) => navigate(`/lembretes/r/${item.id}`)}
-          weekTitle={null}
           emptyMessage="Nenhum lembrete ativo agendado."
         />
       )}
@@ -100,18 +99,16 @@ export function RemindersPage() {
           onClose={() => setSelected(null)}
           onCheck={(id) =>
             acknowledge(id).catch((err) =>
-              window.alert(apiErrorMessage(err, "Não foi possível concluir o lembrete."))
+              alertApiError(err, "Não foi possível concluir o lembrete.")
             )
           }
           onReschedule={(id, input) =>
-            reschedule(id, input).catch((err) =>
-              window.alert(apiErrorMessage(err, "Não foi possível remarcar."))
-            )
+            reschedule(id, input).catch((err) => alertApiError(err, "Não foi possível remarcar."))
           }
           onCustom={(id) => navigate(`/lembretes/r/${id}?action=reschedule`)}
           onCancel={(id) =>
             cancel(id).catch((err) =>
-              window.alert(apiErrorMessage(err, "Não foi possível cancelar o lembrete."))
+              alertApiError(err, "Não foi possível cancelar o lembrete.")
             )
           }
         />

@@ -1,4 +1,5 @@
 import { pool } from "../database/connection.js";
+import { updateById } from "../database/transaction.js";
 import { buildUpdateSet } from "../lib/sqlUpdate.js";
 import { review } from "../services/flashcardScheduler.js";
 import type {
@@ -72,14 +73,8 @@ export async function updateFlashcard(id: string, patch: FlashcardPatch): Promis
     answerImages: "answer_images",
     categoryId: "category_id",
   });
-  if (sets.length === 0) return findById(id);
-  sets.push("updated_at = NOW()");
-  values.push(id);
-  const result = await pool.query<FlashcardRow>(
-    `UPDATE flashcards SET ${sets.join(", ")} WHERE id = $${nextIndex} RETURNING *`,
-    values
-  );
-  return result.rows[0] ? toFlashcard(result.rows[0]) : null;
+  const row = await updateById<FlashcardRow>("flashcards", id, sets, values, nextIndex);
+  return row ? toFlashcard(row) : null;
 }
 
 export async function reviewFlashcard(id: string, correct: boolean, now: Date): Promise<Flashcard | null> {
