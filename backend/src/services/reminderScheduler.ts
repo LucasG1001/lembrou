@@ -27,7 +27,6 @@ export async function processDue(now: Date = new Date()): Promise<void> {
           console.warn(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") processado sem id de mensagem (notify-api não configurada?).`);
         } else {
           console.log(`[scheduler] lembrete ${reminder.id} ("${reminder.title}") notificado: ${reminder.phase} → ${patch.phase ?? reminder.phase}.`);
-          await reminderModel.update(reminder.id, { lastMessageId: messageId }).catch(() => undefined);
         }
       } catch (error) {
         console.error(`[scheduler] falha ao enviar notificação do lembrete ${reminder.id} ("${reminder.title}"):`, error);

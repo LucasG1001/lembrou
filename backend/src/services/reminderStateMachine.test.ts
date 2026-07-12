@@ -24,7 +24,6 @@ function makeReminder(over: Partial<Reminder>): Reminder {
     maxNotify: 10,
     acknowledged: false,
     acknowledgedAt: null,
-    lastMessageId: null,
     createdAt: "",
     updatedAt: "",
     ...over,
@@ -100,10 +99,9 @@ describe("decide (com hora)", () => {
 
   it("cap atingido cancela evento único", () => {
     const r = makeReminder({ phase: "nag", notifyCount: 10, maxNotify: 10 });
-    const { patch, actionable } = decide(r, new Date());
+    const { patch } = decide(r, new Date());
     expect(patch.status).toBe("cancelled");
     expect(patch.nextNotifyAt).toBeNull();
-    expect(actionable).toBe(false);
   });
 
   it("cap atingido em evento recorrente avança para a próxima data", () => {

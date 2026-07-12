@@ -27,8 +27,6 @@ services:
       # A notify-api é alcançável na remindme-net pelo nome do serviço.
       NOTIFY_API_URL: http://notify-api:3334
       NOTIFY_API_KEY: ${NOTIFY_API_KEY}
-      CALLBACK_SECRET: ${CALLBACK_SECRET}
-      WEB_URL: ${WEB_URL}
     # Sem porta no host: o proxy reverso central (caddy-docker-proxy, stack ../media/proxy)
     # descobre este container pela rede proxy-net via labels e termina o TLS.
     # O Express serve o SPA e a API na mesma porta 3333.
@@ -41,7 +39,6 @@ services:
     networks:
       default:
       proxy-net:
-      # Alias estável para a notify-api repassar os cliques de botão.
       remindme-net:
         aliases:
           - remindme-server

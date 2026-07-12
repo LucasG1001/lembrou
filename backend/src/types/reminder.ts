@@ -28,7 +28,6 @@ export interface Reminder {
   maxNotify: number;
   acknowledged: boolean;
   acknowledgedAt: string | null;
-  lastMessageId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,7 +50,6 @@ export interface ReminderRow {
   max_notify: number;
   acknowledged: boolean;
   acknowledged_at: string | null;
-  last_message_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -90,5 +88,4 @@ export interface ReminderPatch {
   notifyCount?: number;
   acknowledged?: boolean;
   acknowledgedAt?: Date | null;
-  lastMessageId?: string | null;
 }

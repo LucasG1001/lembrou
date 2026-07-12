@@ -1,15 +1,8 @@
 import { httpRequest } from "../lib/httpClient.js";
 
-export interface NotifyButton {
-  text: string;
-  url?: string;
-  callbackData?: string;
-}
-
 export interface NotifyPayload {
   title: string;
   description: string;
-  buttons?: NotifyButton[];
 }
 
 interface NotifyResponse {
@@ -38,7 +31,6 @@ export async function sendNotification(payload: NotifyPayload): Promise<string |
         type: "reminder",
         title: payload.title,
         description: payload.description,
-        buttons: payload.buttons,
       },
     });
 

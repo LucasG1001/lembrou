@@ -33,7 +33,6 @@ function toReminder(row: ReminderRow): Reminder {
     maxNotify: row.max_notify,
     acknowledged: row.acknowledged,
     acknowledgedAt: row.acknowledged_at,
-    lastMessageId: row.last_message_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -109,7 +108,6 @@ const COLUMN_MAP: Record<keyof ReminderPatch, string> = {
   notifyCount: "notify_count",
   acknowledged: "acknowledged",
   acknowledgedAt: "acknowledged_at",
-  lastMessageId: "last_message_id",
 };
 
 export async function update(id: string, patch: ReminderPatch): Promise<Reminder | null> {

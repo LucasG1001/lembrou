@@ -18,8 +18,6 @@ export interface TickResult {
   message: ReminderMessage;
   /** Campos a persistir após o envio. */
   patch: ReminderPatch;
-  /** Se a mensagem ainda espera ação do usuário (define se leva botões). */
-  actionable: boolean;
 }
 
 export function isRecurring(r: Pick<Reminder, "recurInterval" | "recurUnit">): boolean {
@@ -93,21 +91,21 @@ export function decide(r: Reminder, now: Date): TickResult {
 function decideTimed(r: Reminder, now: Date): TickResult {
   if (r.notifyCount >= r.maxNotify) {
     if (isRecurring(r)) {
-      return { message: messages.recurAdvance(r.title), patch: finishOccurrence(r, now), actionable: false };
+      return { message: messages.recurAdvance(r.title), patch: finishOccurrence(r, now) };
     }
-    return { message: messages.autoCancel(r.title), patch: { status: "cancelled", nextNotifyAt: null }, actionable: false };
+    return { message: messages.autoCancel(r.title), patch: { status: "cancelled", nextNotifyAt: null } };
   }
 
   const notifyCount = r.notifyCount + 1;
   switch (r.phase) {
     case "pending":
-      return { message: messages.pre30(r.title), patch: { phase: "pre", nextNotifyAt: addMinutes(new Date(r.eventAt), -LEAD_2_MIN), notifyCount }, actionable: true };
+      return { message: messages.pre30(r.title), patch: { phase: "pre", nextNotifyAt: addMinutes(new Date(r.eventAt), -LEAD_2_MIN), notifyCount } };
     case "pre":
-      return { message: messages.pre5(r.title), patch: { phase: "due", nextNotifyAt: new Date(r.eventAt), notifyCount }, actionable: true };
+      return { message: messages.pre5(r.title), patch: { phase: "due", nextNotifyAt: new Date(r.eventAt), notifyCount } };
     case "due":
-      return { message: messages.atTime(r.title), patch: { phase: "at", nextNotifyAt: addMinutes(now, NAG_INTERVAL_MIN), notifyCount }, actionable: true };
+      return { message: messages.atTime(r.title), patch: { phase: "at", nextNotifyAt: addMinutes(now, NAG_INTERVAL_MIN), notifyCount } };
     default:
-      return { message: messages.nag(r.title), patch: { phase: "nag", nextNotifyAt: addMinutes(now, NAG_INTERVAL_MIN), notifyCount }, actionable: true };
+      return { message: messages.nag(r.title), patch: { phase: "nag", nextNotifyAt: addMinutes(now, NAG_INTERVAL_MIN), notifyCount } };
   }
 }
 
@@ -117,8 +115,7 @@ function decideAllDay(r: Reminder, now: Date): TickResult {
     return {
       message: messages.dayBefore(r.title),
       patch: { phase: "day_before", nextNotifyAt: morning, notifyCount: r.notifyCount + 1 },
-      actionable: true,
     };
   }
-  return { message: messages.dayOf(r.title), patch: finishOccurrence(r, now), actionable: false };
+  return { message: messages.dayOf(r.title), patch: finishOccurrence(r, now) };
 }

@@ -25,7 +25,6 @@ export interface Reminder {
   maxNotify: number;
   acknowledged: boolean;
   acknowledgedAt: string | null;
-  lastMessageId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,7 +38,6 @@ export interface ReminderInput {
   recurUnit: RecurUnit | null;
   recurWeekday: number | null;
   recurMode?: RecurMode;
-  maxNotify?: number;
 }
 
 export interface RescheduleInput {

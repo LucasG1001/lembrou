@@ -20,7 +20,6 @@ export async function migrate(): Promise<void> {
       max_notify        INTEGER NOT NULL DEFAULT 10,
       acknowledged      BOOLEAN NOT NULL DEFAULT false,
       acknowledged_at   TIMESTAMPTZ,
-      last_message_id   TEXT,
       created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -46,6 +45,10 @@ export async function migrate(): Promise<void> {
     CREATE INDEX IF NOT EXISTS reminders_due_idx
       ON reminders (next_notify_at)
       WHERE status = 'active';
+  `);
+
+  await pool.query(`
+    ALTER TABLE reminders DROP COLUMN IF EXISTS last_message_id;
   `);
 
   await pool.query(`
