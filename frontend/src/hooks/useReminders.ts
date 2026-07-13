@@ -18,18 +18,24 @@ export function useReminders() {
     reload,
   } = useFetchList<Reminder>(() => fetchReminders("active"), "Não foi possível carregar os lembretes.");
 
-  const applyUpdate = useCallback((updated: Reminder) => {
-    setReminders((prev) =>
-      updated.status === "active"
-        ? prev.map((r) => (r.id === updated.id ? updated : r))
-        : prev.filter((r) => r.id !== updated.id)
-    );
-  }, []);
+  const applyUpdate = useCallback(
+    (updated: Reminder) => {
+      setReminders((prev) =>
+        updated.status === "active"
+          ? prev.map((r) => (r.id === updated.id ? updated : r))
+          : prev.filter((r) => r.id !== updated.id)
+      );
+    },
+    [setReminders]
+  );
 
-  const remove = useCallback(async (id: string) => {
-    await deleteReminder(id);
-    setReminders((prev) => prev.filter((r) => r.id !== id));
-  }, []);
+  const remove = useCallback(
+    async (id: string) => {
+      await deleteReminder(id);
+      setReminders((prev) => prev.filter((r) => r.id !== id));
+    },
+    [setReminders]
+  );
 
   const acknowledge = useCallback(
     async (id: string) => applyUpdate(await acknowledgeReminder(id)),

@@ -39,10 +39,10 @@ Browser → Caddy (proxy central, TLS) → Express (server :3333, serve SPA + AP
                                                   └──(só Lembretes: envia alerta de texto)──▶ notify-api :3334 ──▶ Telegram
 ```
 
-> As notificações são **só texto** desde que as ações migraram para o app. O endpoint `/api/telegram/callback` (cliques de botão) continua existindo, mas está **dormente** (nenhum botão é mais enviado).
+> As notificações são **só texto** (as ações ficam no app). Não há fluxo de callback do Telegram.
 
 - **Domínios do backend** (mesmo padrão `types → models → schemas → controllers → routes`):
-  - `reminders` — `/api/reminders` (+ scheduler de notificações e `/api/telegram/callback`).
+  - `reminders` — `/api/reminders` (+ scheduler de notificações).
   - `habits` — `/api/habits` (CRUD + `/:id/completion/:date`). Sem scheduler.
 - A **notify-api** (`../notify-api`) é o gateway do Telegram (usada só pelos Lembretes). O RemindMe nunca fala com o Telegram diretamente.
 - O **scheduler** (`setInterval` de 60s) varre lembretes vencidos; a lógica de transição fica em `services/reminderStateMachine.ts` (testada). Hábitos não passam pelo scheduler.
@@ -56,10 +56,9 @@ Browser → Caddy (proxy central, TLS) → Express (server :3333, serve SPA + AP
 | `GET/PUT/DELETE` | `/api/reminders/:id` | ler / atualizar / remover |
 | `POST` | `/api/reminders/:id/acknowledge` `\|` `/cancel` | concluir / cancelar |
 | `POST` | `/api/reminders/:id/reschedule` | remarcar (move só a ocorrência atual) |
-| `POST` | `/api/telegram/callback` | repasse de cliques (notify-api) — **legado/dormente** |
 | `GET/POST` | `/api/habits` | listar / criar hábito |
 | `PUT/DELETE` | `/api/habits/:id` | atualizar / remover |
-| `PATCH` | `/api/habits/:id/completion/:date` | define status (`done\|notDone\|clear`) |
+| `PATCH` | `/api/habits/:id/completion/:date` | define a contagem do dia (body `{ count }`) |
 
 ## Desenvolvimento local
 
@@ -67,7 +66,7 @@ Pré-requisitos: PostgreSQL acessível (banco `remindme`). A notify-api só é n
 
 ```bash
 # backend
-cd backend && cp .env.example .env   # ajuste DATABASE_URL, NOTIFY_API_*, CALLBACK_SECRET
+cd backend && cp .env.example .env   # ajuste DATABASE_URL, NOTIFY_API_*
 npm install && npm run dev            # http://localhost:3333
 
 # frontend
@@ -90,7 +89,7 @@ node scripts/migrate-habits-from-done.mjs
 
 ## Cadastrar o projeto na notify-api (para os Lembretes)
 
-A notify-api precisa conhecer o RemindMe para enviar e repassar cliques. Crie o projeto via endpoint admin (a resposta traz a `apiKey` → use como `NOTIFY_API_KEY`):
+A notify-api precisa conhecer o RemindMe para enviar as notificações. Crie o projeto via endpoint admin (a resposta traz a `apiKey` → use como `NOTIFY_API_KEY`):
 
 ```bash
 curl -X POST http://localhost:3334/api/projects \
@@ -99,14 +98,9 @@ curl -X POST http://localhost:3334/api/projects \
   -d '{
     "name": "RemindMe",
     "telegramBotToken": "<bot-token>",
-    "telegramChatId": "<chat-id>",
-    "callbackUrl": "http://remindme-server:3333/api/telegram/callback",
-    "callbackSecret": "<mesmo valor de CALLBACK_SECRET>"
+    "telegramChatId": "<chat-id>"
   }'
 ```
-
-- Em produção (Docker), `callbackUrl` usa o alias `remindme-server` na rede `remindme-net`.
-- Em dev, use `http://localhost:3333/api/telegram/callback`.
 
 ## Produção (Docker)
 
@@ -115,7 +109,7 @@ O domínio é roteado pelo **proxy reverso central Caddy** (`caddy-docker-proxy`
 ```bash
 docker network create remindme-net      # uma vez (a notify-api também entra nessa rede)
 docker network create proxy-net         # uma vez (compartilhada com o proxy central)
-cp .env.example .env                     # preencha senha, NOTIFY_API_KEY, CALLBACK_SECRET, WEB_URL, REMINDME_DOMAIN
+cp .env.example .env                     # preencha senha, NOTIFY_API_KEY, REMINDME_DOMAIN
 docker compose up --build                # acesse https://${REMINDME_DOMAIN} pela VPN
 ```
 
@@ -128,7 +122,5 @@ Crie o registro DNS de `REMINDME_DOMAIN` no Cloudflare apontando para a VPN.
 | `DATABASE_URL` | backend | conexão PostgreSQL (banco `remindme`) |
 | `NOTIFY_API_URL` | backend | base da notify-api (ex: `http://notify-api:3334`) |
 | `NOTIFY_API_KEY` | backend | apiKey do projeto RemindMe na notify-api |
-| `CALLBACK_SECRET` | backend + projeto notify-api | valida o repasse dos cliques (callback dormente) |
-| `WEB_URL` | backend | URL pública do frontend (legado dos botões; não usado atualmente) |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | compose | credenciais do container do banco |
 | `REMINDME_DOMAIN` | compose | domínio servido pelo proxy Caddy (ex: `remind.gomeslab.tech`) |

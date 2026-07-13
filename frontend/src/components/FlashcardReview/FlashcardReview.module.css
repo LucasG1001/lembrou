@@ -237,7 +237,7 @@
 }
 
 .controlWrong:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: var(--color-error-soft);
 }
 
 .controlCorrect {
@@ -247,7 +247,7 @@
 }
 
 .controlCorrect:hover {
-  background: rgba(16, 185, 129, 0.2);
+  background: var(--color-success-soft);
 }
 
 .controlKey {
@@ -317,7 +317,7 @@
 .restart {
   margin-top: var(--spacing-base);
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
   font-weight: var(--font-weight-semibold);
   padding: var(--spacing-md) var(--spacing-2xl);
   border-radius: var(--radius-md);

@@ -1,8 +1,7 @@
-import { useState, useCallback } from "react";
 import type { DayOfWeek, HabitCompletion } from "../../types/habit";
 import { formatDateKey, getDayOfWeek, getToday, isSameDay, spCalendarDay } from "../../utils/dateUtils";
-import { MONTH_PT } from "../../utils/month";
 import { WEEKDAY_LETTERS } from "../../utils/weekdays";
+import { useMonthGrid } from "../../hooks/useMonthGrid";
 import styles from "./CompletionGrid.module.css";
 
 interface CompletionGridProps {
@@ -54,83 +53,29 @@ function getDayState(
   return "missed";
 }
 
-function buildCalendarDays(
-  year: number,
-  month: number,
-  today: Date,
-  createdDay: Date,
-  completions: HabitCompletion[],
-  selectedDays: DayOfWeek[]
-): CalendarDay[] {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const days: CalendarDay[] = [];
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, month, day);
-    const state = getDayState(date, today, createdDay, completions, selectedDays);
-    days.push({
-      day,
-      date,
-      state,
-      isToday: isSameDay(date, today),
-    });
-  }
-
-  return days;
-}
-
-function getFirstDayOffset(year: number, month: number): number {
-  return new Date(year, month, 1).getDay();
-}
-
 export function CompletionGrid({ completions, selectedDays, createdAt }: CompletionGridProps) {
   const today = getToday();
-
-  const [viewMonth, setViewMonth] = useState(() => ({
-    year: today.getFullYear(),
-    month: today.getMonth(),
-  }));
+  const { view, goPrev, goNext, monthLabel, firstDayOffset, days } = useMonthGrid();
 
   const createdDay = spCalendarDay(new Date(createdAt));
   const createdYear = createdDay.getFullYear();
   const createdMonth = createdDay.getMonth();
 
   const canGoPrev =
-    viewMonth.year > createdYear ||
-    (viewMonth.year === createdYear && viewMonth.month > createdMonth);
+    view.year > createdYear || (view.year === createdYear && view.month > createdMonth);
 
   const canGoNext =
-    viewMonth.year < today.getFullYear() ||
-    (viewMonth.year === today.getFullYear() && viewMonth.month < today.getMonth());
+    view.year < today.getFullYear() ||
+    (view.year === today.getFullYear() && view.month < today.getMonth());
 
-  const handlePrev = useCallback(() => {
-    setViewMonth((prev) => {
-      if (prev.month === 0) {
-        return { year: prev.year - 1, month: 11 };
-      }
-      return { year: prev.year, month: prev.month - 1 };
-    });
-  }, []);
+  const calendarDays: CalendarDay[] = days.map((date) => ({
+    day: date.getDate(),
+    date,
+    state: getDayState(date, today, createdDay, completions, selectedDays),
+    isToday: isSameDay(date, today),
+  }));
 
-  const handleNext = useCallback(() => {
-    setViewMonth((prev) => {
-      if (prev.month === 11) {
-        return { year: prev.year + 1, month: 0 };
-      }
-      return { year: prev.year, month: prev.month + 1 };
-    });
-  }, []);
-
-  const calendarDays = buildCalendarDays(
-    viewMonth.year,
-    viewMonth.month,
-    today,
-    createdDay,
-    completions,
-    selectedDays
-  );
-
-  const offset = getFirstDayOffset(viewMonth.year, viewMonth.month);
+  const offset = firstDayOffset;
 
   const stateClassMap: Record<DayState, string> = {
     completed: styles.completed ?? "",
@@ -145,18 +90,16 @@ export function CompletionGrid({ completions, selectedDays, createdAt }: Complet
       <div className={styles.navigation}>
         <button
           className={styles.navButton}
-          onClick={handlePrev}
+          onClick={goPrev}
           disabled={!canGoPrev}
           aria-label="Mês anterior"
         >
           ‹
         </button>
-        <span className={styles.monthLabel}>
-          {MONTH_PT[viewMonth.month]} {viewMonth.year}
-        </span>
+        <span className={styles.monthLabel}>{monthLabel}</span>
         <button
           className={styles.navButton}
-          onClick={handleNext}
+          onClick={goNext}
           disabled={!canGoNext}
           aria-label="Próximo mês"
         >

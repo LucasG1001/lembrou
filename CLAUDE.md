@@ -35,8 +35,7 @@ Pré-requisito local: PostgreSQL acessível (banco `remindme`). A notify-api só
 ```
 Browser → Caddy (proxy central, TLS) → Express (server :3333, serve SPA + API) → PostgreSQL
                                                   │
-                                                  ├──(só Lembretes)──▶ notify-api :3334 ──▶ Telegram
-                                                  ◀──(repassa clique)── notify-api (long-polling)
+                                                  └──(só Lembretes)──▶ notify-api :3334 ──▶ Telegram
 ```
 
 Em produção não há nginx: o Express serve os arquivos estáticos do build do frontend (`backend/public`, copiado na imagem) com fallback de SPA e expõe a API em `/api` na mesma porta 3333. Em dev o Vite (`:5173`) serve o frontend e faz proxy de `/api` para `:3333` — o Express só serve estáticos quando `backend/public` existe.
@@ -47,11 +46,12 @@ O backend roda `migrate()` no startup (criação idempotente de `reminders`, `ha
 
 Dois domínios, mesmo padrão em camadas: `types/` → `models/` (mapper `toX` snake→camel, queries parametrizadas) → `schemas/` (Zod) → `controllers/` (try/catch, valida com Zod, responde `{ error: "msg PT" }`) → `routes/` (Router + export nomeado).
 
-- **`server.ts`** — Express, registra rotas (`/api/reminders`, `/api/habits`, `/api/telegram`), roda `migrate()` e inicia o scheduler de lembretes.
-- **`database/connection.ts`** — pool pg (usa `DATABASE_URL`). **`database/migrate.ts`** — DDL idempotente.
+- **`server.ts`** — Express, registra rotas (`/api/reminders`, `/api/habits`, `/api/projects`, `/api/flashcards`, `/api/flashcard-categories`), roda `migrate()` e inicia o scheduler de lembretes.
+- **`database/connection.ts`** — pool pg (usa `DATABASE_URL`). **`database/migrate.ts`** — DDL idempotente. **`database/transaction.ts`** — `withTransaction(fn)` e `updateById` (UPDATE dinâmico reutilizado pelos models).
+- **`lib/validation.ts`** — `requireUuid`, `parseBody(res, schema, body)` e `respondValidationError`, compartilhados pelos controllers. **`lib/sqlUpdate.ts`** — `buildUpdateSet` + `nextPositionSql`.
 - **Reminders**: `models/reminderModel.ts`, `controllers/reminderController.ts`, `services/reminderScheduler.ts` (setInterval 60s) e `services/reminderStateMachine.ts` (lógica de fases, testada). `lib/dateUtils.ts` isola o fuso (America/Sao_Paulo, UTC-3).
 - **Habits**: `models/habitModel.ts` (inclui conclusões + `CompletionLockedError`), `controllers/habitController.ts`. Sem scheduler/notificações.
-- **notify-api**: `services/notifyService.ts` + `controllers/callbackController.ts` (recebe cliques em `/api/telegram/callback`, validado por `middleware/callbackAuth.ts`).
+- **notify-api**: `services/notifyService.ts` envia notificações (só texto) via gateway. Sem fluxo de callback do Telegram.
 
 ### Frontend (`frontend/src/`)
 
@@ -60,18 +60,18 @@ Dois domínios, mesmo padrão em camadas: `types/` → `models/` (mapper `toX` s
 - **`components/Timeline/`** + **`utils/agenda.ts`** — linha do tempo genérica (`TimelineItem`, `splitAgenda`, `groupByDay`, `groupByMonth`) usada pelas duas páginas.
 - **Lembretes**: `pages/RemindersPage` (timeline na aba Ativos + cards nas demais), `pages/ReminderFormPage`, `components/ReminderCard`, `hooks/useReminders.ts`, `services/reminderService.ts`, `utils/format.ts`.
 - **Hábitos**: `pages/HabitsPage` (timeline de ocorrências + `SidePanel` + `HabitForm`), `hooks/useHabits.ts` (recalcula streak/level no cliente), `services/habitService.ts`, `utils/{dateUtils,streakUtils,levelUtils}.ts`, componentes `CompletionGrid`, `SidePanel`, `HabitForm`, `DaySelector`, `LevelBadge`.
-- **`styles/global.css`** — CSS custom properties (tema escuro púrpura, fonte Inter). Inclui um bloco de **tokens de compatibilidade** que mapeia os nomes antigos do `done` (`--accent`, `--bg-*`, `--radius-card`, `--level-1..8`…) para o tema unificado, para os componentes portados.
+- **`styles/global.css`** — CSS custom properties (tema escuro púrpura, fonte Inter). Vocabulário único de tokens `--color-*`/`--radius-*`/`--level-1..8`; sempre usar essas variáveis (nunca hardcode de cor).
 
 ### Endpoints
 
-- `GET/POST /api/reminders`; `GET/PUT/DELETE /api/reminders/:id`; `POST /api/reminders/:id/acknowledge` e `/cancel`; `POST /api/telegram/callback`.
-- `GET/POST /api/habits`; `PUT/DELETE /api/habits/:id`; `PATCH /api/habits/:id/completion/:date` (body `{ status: "done"|"notDone"|"clear" }`).
+- `GET/POST /api/reminders`; `GET/PUT/DELETE /api/reminders/:id`; `POST /api/reminders/:id/acknowledge` e `/cancel`.
+- `GET/POST /api/habits`; `PUT/DELETE /api/habits/:id`; `PATCH /api/habits/:id/completion/:date` (body `{ count: number }`).
 
 ### Schema do banco
 
 - **`reminders`** — lembrete com `event_at`, `is_all_day`, recorrência (`recur_*`), `status`, `phase`, `next_notify_at`, `notify_count`, `max_notify`, etc.
-- **`habits`** — `id`, `name`, `selected_days INTEGER[]` (0–6), `current_streak`, `longest_streak`, `level`, timestamps.
-- **`habit_completions`** — `habit_id` (FK cascade), `date TEXT` (YYYY-MM-DD), `completed`, `locked`, `UNIQUE(habit_id, date)`.
+- **`habits`** — `id`, `name`, `selected_days INTEGER[]` (0–6), `icon`, `target_count`, `position`, timestamps. Streak/nível são recalculados no cliente (não persistidos).
+- **`habit_completions`** — `habit_id` (FK cascade), `date TEXT` (YYYY-MM-DD), `count`, `locked`, `UNIQUE(habit_id, date)`. O campo `completed` da API é derivado (`count >= target_count`).
 
 ## Convenções
 
@@ -84,13 +84,13 @@ Dois domínios, mesmo padrão em camadas: `types/` → `models/` (mapper `toX` s
 
 ## Fuso horário
 
-Lembretes usam fuso fixo America/Sao_Paulo isolado em `backend/src/lib/dateUtils.ts`. Hábitos usam a data local do dispositivo e gravam a chave `YYYY-MM-DD` (o backend só persiste a string) — consistente para clientes em SP.
+Lembretes usam fuso fixo America/Sao_Paulo isolado em `backend/src/lib/dateUtils.ts`. No frontend, `utils/dateUtils.ts` (`spCalendarDay`/`spDateKey`/`diffDaysFromToday`) espelha esse fuso fixo (UTC-3): tanto a timeline de lembretes quanto os hábitos usam o dia-calendário de SP, gravando a chave `YYYY-MM-DD`.
 
 ## Variáveis de ambiente
 
-Backend (`backend/.env`): `DATABASE_URL`, `PORT` (3333), `NOTIFY_API_URL`, `NOTIFY_API_KEY`, `CALLBACK_SECRET`, `WEB_URL`.
+Backend (`backend/.env`): `DATABASE_URL`, `PORT` (3333), `NOTIFY_API_URL`, `NOTIFY_API_KEY`.
 
-Docker (`.env`): `POSTGRES_USER/PASSWORD/DB`, `NOTIFY_API_KEY`, `CALLBACK_SECRET`, `WEB_URL`, `REMINDME_DOMAIN`.
+Docker (`.env`): `POSTGRES_USER/PASSWORD/DB`, `NOTIFY_API_KEY`, `REMINDME_DOMAIN`.
 
 ## Produção (Docker) e proxy
 

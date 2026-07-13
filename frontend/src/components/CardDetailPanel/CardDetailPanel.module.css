@@ -228,7 +228,7 @@
   padding: 12px;
   border-radius: var(--radius-md);
   background-color: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
@@ -259,5 +259,5 @@
 .deleteConfirm,
 .deleteConfirm:hover {
   background-color: var(--color-error);
-  color: #fff;
+  color: var(--color-on-accent);
 }

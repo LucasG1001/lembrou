@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { Project } from "../../types/project";
 import { useDismiss } from "../../hooks/useDismiss";
 import { CaretDownIcon } from "../Sidebar/Sidebar.icons";
+import { ConfirmButton } from "../ConfirmButton/ConfirmButton";
 import { InlineTextEdit } from "../InlineTextEdit/InlineTextEdit";
 import styles from "./ProjectSwitcher.module.css";
 
@@ -24,13 +25,11 @@ export function ProjectSwitcher({
 }: ProjectSwitcherProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "rename" | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   const close = () => {
     setOpen(false);
     setMode(null);
-    setConfirmDelete(false);
   };
 
   useDismiss(close, rootRef, open);
@@ -102,20 +101,15 @@ export function ProjectSwitcher({
             ))}
 
           {current && (
-            <button
-              type="button"
+            <ConfirmButton
               className={`${styles.item} ${styles.itemDanger}`}
-              onClick={() => {
-                if (confirmDelete) {
-                  onDelete(current.id);
-                  close();
-                } else {
-                  setConfirmDelete(true);
-                }
+              idleLabel="Excluir projeto"
+              confirmLabel="Confirmar exclusão?"
+              onConfirm={() => {
+                onDelete(current.id);
+                close();
               }}
-            >
-              {confirmDelete ? "Confirmar exclusão?" : "Excluir projeto"}
-            </button>
+            />
           )}
         </div>
       )}

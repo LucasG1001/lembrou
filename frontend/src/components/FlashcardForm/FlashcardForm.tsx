@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Flashcard, FlashcardFormData } from "../../types/flashcard";
 import type { FlashcardCategory } from "../../types/flashcardCategory";
 import { ImagePasteArea } from "../ImagePasteArea/ImagePasteArea";
+import { ConfirmButton } from "../ConfirmButton/ConfirmButton";
 import { useDismiss } from "../../hooks/useDismiss";
 import { NEUTRAL_TINTS, tints } from "../../utils/flashcardPalette";
 import styles from "./FlashcardForm.module.css";
@@ -30,7 +31,6 @@ export function FlashcardForm({
   const [categoryId, setCategoryId] = useState<string | null>(
     initialData?.categoryId ?? categories[0]?.id ?? null
   );
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useDismiss(onClose);
 
@@ -128,14 +128,13 @@ export function FlashcardForm({
 
         <div className={styles.footer}>
           {initialData && onDelete ? (
-            <button
-              type="button"
-              className={`${styles.deleteButton} ${confirmDelete ? styles.deleteConfirm : ""}`}
-              onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}
-              onBlur={() => setConfirmDelete(false)}
-            >
-              {confirmDelete ? "Confirmar?" : "Excluir"}
-            </button>
+            <ConfirmButton
+              className={styles.deleteButton}
+              confirmClassName={styles.deleteConfirm}
+              idleLabel="Excluir"
+              confirmLabel="Confirmar?"
+              onConfirm={onDelete}
+            />
           ) : (
             <span />
           )}

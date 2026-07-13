@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { formatDateKey, getToday, isSameDay } from "../../utils/dateUtils";
-import { MONTH_PT } from "../../utils/month";
 import { WEEKDAY_LETTERS } from "../../utils/weekdays";
 import { getHolidays } from "../../utils/holidays";
 import { useDismiss } from "../../hooks/useDismiss";
+import { useMonthGrid } from "../../hooks/useMonthGrid";
 import styles from "./ReminderCalendar.module.css";
 
 interface ReminderCalendarProps {
@@ -13,25 +13,13 @@ interface ReminderCalendarProps {
 
 export function ReminderCalendar({ countByDay, onClose }: ReminderCalendarProps) {
   const today = getToday();
-  const [view, setView] = useState(() => ({ year: today.getFullYear(), month: today.getMonth() }));
+  const { view, goPrev, goNext, monthLabel, firstDayOffset: offset, days } = useMonthGrid();
 
   useDismiss(onClose);
-
-  const handlePrev = useCallback(() => {
-    setView((p) => (p.month === 0 ? { year: p.year - 1, month: 11 } : { year: p.year, month: p.month - 1 }));
-  }, []);
-
-  const handleNext = useCallback(() => {
-    setView((p) => (p.month === 11 ? { year: p.year + 1, month: 0 } : { year: p.year, month: p.month + 1 }));
-  }, []);
 
   const holidays = useMemo(() => getHolidays(view.year), [view.year]);
   const holidayByDay = useMemo(() => new Map(holidays.map((h) => [h.dateKey, h])), [holidays]);
   const monthHolidays = holidays.filter((h) => Number(h.dateKey.slice(5, 7)) - 1 === view.month);
-
-  const offset = new Date(view.year, view.month, 1).getDay();
-  const daysInMonth = new Date(view.year, view.month + 1, 0).getDate();
-  const days = Array.from({ length: daysInMonth }, (_, i) => new Date(view.year, view.month, i + 1));
 
   const handleBackdrop = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
@@ -47,13 +35,11 @@ export function ReminderCalendar({ countByDay, onClose }: ReminderCalendarProps)
     >
       <div className={styles.modal}>
         <div className={styles.header}>
-          <button type="button" className={styles.navButton} onClick={handlePrev} aria-label="Mês anterior">
+          <button type="button" className={styles.navButton} onClick={goPrev} aria-label="Mês anterior">
             ‹
           </button>
-          <span className={styles.monthLabel}>
-            {MONTH_PT[view.month]} {view.year}
-          </span>
-          <button type="button" className={styles.navButton} onClick={handleNext} aria-label="Próximo mês">
+          <span className={styles.monthLabel}>{monthLabel}</span>
+          <button type="button" className={styles.navButton} onClick={goNext} aria-label="Próximo mês">
             ›
           </button>
           <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Fechar">

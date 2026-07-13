@@ -217,7 +217,7 @@
   justify-content: center;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border);
-  color: #fff;
+  color: var(--color-on-accent);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
 }

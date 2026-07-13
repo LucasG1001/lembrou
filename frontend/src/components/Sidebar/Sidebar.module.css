@@ -26,12 +26,12 @@
 .logoIcon {
   width: 38px;
   height: 38px;
-  background: linear-gradient(135deg, var(--color-accent), #a78bfa);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--color-on-accent);
   flex-shrink: 0;
   box-shadow: var(--shadow-sm);
 }
@@ -284,7 +284,7 @@
     height: 48px;
     border-radius: var(--radius-full);
     background: var(--color-accent);
-    color: #fff;
+    color: var(--color-on-accent);
     box-shadow: var(--shadow-lg);
     z-index: 90;
     transition: background var(--transition-fast), transform var(--transition-fast);

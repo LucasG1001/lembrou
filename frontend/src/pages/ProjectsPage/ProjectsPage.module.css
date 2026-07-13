@@ -126,7 +126,7 @@
 .emptyButton {
   margin-top: var(--spacing-base);
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
   padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--radius-md);
   font-weight: var(--font-weight-semibold);

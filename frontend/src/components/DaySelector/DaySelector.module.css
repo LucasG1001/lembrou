@@ -6,10 +6,10 @@
 .dayButton {
   width: 40px;
   height: 36px;
-  border-radius: var(--radius-button);
-  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
   background-color: transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -19,19 +19,19 @@
 }
 
 .dayButton:hover {
-  border-color: var(--accent);
-  color: var(--text-primary);
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
 }
 
 .selected {
-  background-color: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 .selected:hover {
-  background-color: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .allButton {
@@ -39,14 +39,14 @@
   align-self: flex-start;
   padding: 4px 0;
   background: none;
-  color: var(--accent);
+  color: var(--color-accent);
   font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
 }
 
 .error {
-  color: var(--danger);
+  color: var(--color-error);
   font-size: var(--font-size-sm);
   margin-top: var(--spacing-sm);
 }

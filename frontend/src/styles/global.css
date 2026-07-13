@@ -31,8 +31,16 @@
   --color-warning-subtle: rgba(245, 158, 11, 0.12);
   --color-error: #ef4444;
   --color-error-subtle: rgba(239, 68, 68, 0.12);
+  --color-error-hover: #fca5a5;
+  --color-error-soft: rgba(239, 68, 68, 0.2);
+  --color-error-outline: rgba(248, 113, 113, 0.4);
+  --color-error-bg-faint: rgba(248, 113, 113, 0.08);
+  --color-success-soft: rgba(16, 185, 129, 0.2);
   --color-info: #3b82f6;
   --color-info-subtle: rgba(59, 130, 246, 0.12);
+
+  --color-on-accent: #ffffff;
+  --color-accent-light: #a78bfa;
 
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
@@ -96,31 +104,6 @@
   --level-6: #fb923c;
   --level-7: #38bdf8;
   --level-8: #f472b6;
-
-  /* Tokens de compatibilidade: componentes de hábitos portados do "done"
-     referenciam estes nomes; aqui eles apontam para o tema unificado. */
-  --bg-primary: var(--color-bg-primary);
-  --bg-secondary: var(--color-bg-secondary);
-  --bg-card: var(--color-bg-secondary);
-  --bg-card-hover: var(--color-bg-hover);
-  --bg-overlay: var(--color-bg-overlay);
-  --border: var(--color-border);
-  --border-subtle: var(--color-border-subtle);
-  --accent: var(--color-accent);
-  --accent-hover: var(--color-accent-hover);
-  --accent-glow: var(--color-accent-glow);
-  --success: var(--color-success);
-  --success-glow: var(--color-success-subtle);
-  --danger: var(--color-error);
-  --danger-hover: #fca5a5;
-  --text-primary: var(--color-text-primary);
-  --text-secondary: var(--color-text-secondary);
-  --text-muted: var(--color-text-tertiary);
-  --radius-card: var(--radius-lg);
-  --radius-button: var(--radius-md);
-  --radius-circle: var(--radius-full);
-  --font-display: var(--font-family);
-  --font-body: var(--font-family);
 }
 
 *, *::before, *::after {

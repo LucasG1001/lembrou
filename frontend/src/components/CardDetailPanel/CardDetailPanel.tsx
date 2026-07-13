@@ -54,15 +54,6 @@ export function CardDetailPanel({ card, onSave, onDelete, onClose }: CardDetailP
     onClose();
   }
 
-  function handleDeleteClick() {
-    if (confirmDelete) {
-      onDelete(card);
-      onClose();
-    } else {
-      setConfirmDelete(true);
-    }
-  }
-
   return (
     <>
       <div className={styles.backdrop} onClick={onClose} aria-hidden="true" />
@@ -161,13 +152,16 @@ export function CardDetailPanel({ card, onSave, onDelete, onClose }: CardDetailP
             <button type="button" className={styles.saveButton} onClick={handleSave}>
               Salvar
             </button>
-            <button
-              type="button"
-              className={`${styles.deleteButton} ${confirmDelete ? styles.deleteConfirm : ""}`}
-              onClick={handleDeleteClick}
-            >
-              {confirmDelete ? "Confirmar exclusão?" : "Excluir cartão"}
-            </button>
+            <ConfirmButton
+              className={styles.deleteButton}
+              confirmClassName={styles.deleteConfirm}
+              idleLabel="Excluir cartão"
+              confirmLabel="Confirmar exclusão?"
+              onConfirm={() => {
+                onDelete(card);
+                onClose();
+              }}
+            />
           </div>
         </div>
       </aside>

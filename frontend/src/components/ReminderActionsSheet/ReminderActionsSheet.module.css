@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background-color: var(--bg-overlay);
+  background-color: var(--color-bg-overlay);
   z-index: 200;
   display: flex;
   align-items: flex-end;

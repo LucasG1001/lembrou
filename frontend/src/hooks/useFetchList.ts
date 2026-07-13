@@ -15,7 +15,10 @@ export function useFetchList<T>(fetcher: () => Promise<T[]>, errorMessage: strin
   const [refreshKey, setRefreshKey] = useState(0);
 
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
+
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  });
 
   useEffect(() => {
     let active = true;

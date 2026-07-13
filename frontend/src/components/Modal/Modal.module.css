@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background-color: var(--bg-overlay);
+  background-color: var(--color-bg-overlay);
   z-index: 200;
   display: flex;
   align-items: center;
@@ -20,9 +20,9 @@
   max-width: 440px;
   max-height: calc(100vh - 40px);
   max-height: calc(100dvh - 40px);
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   animation: modalIn 200ms ease;
   display: flex;
   flex-direction: column;
@@ -49,24 +49,24 @@
 .title {
   font-size: clamp(1.125rem, 4vw, 1.25rem);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .closeButton {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font-size: 20px;
   transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
 .closeButton:hover {
-  color: var(--text-primary);
-  background-color: var(--bg-card);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
 }
 
 .body {
@@ -92,29 +92,29 @@
 
 .cancelButton {
   padding: 10px 20px;
-  border-radius: var(--radius-button);
-  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-base);
   font-weight: 500;
   transition: color var(--transition-fast);
 }
 
 .cancelButton:hover {
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .saveButton {
   padding: 10px 24px;
-  border-radius: var(--radius-button);
-  background-color: var(--accent);
-  color: #fff;
+  border-radius: var(--radius-md);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
   font-size: var(--font-size-base);
   font-weight: 600;
   transition: background-color var(--transition-fast), opacity var(--transition-fast);
 }
 
 .saveButton:hover:not(:disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--color-accent-hover);
 }
 
 .saveButton:disabled {
