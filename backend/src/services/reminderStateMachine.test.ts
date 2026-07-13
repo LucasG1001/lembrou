@@ -86,25 +86,25 @@ describe("decide (com hora)", () => {
     const r = makeReminder({ phase: "due", notifyCount: 2 });
     const { patch } = decide(r, now);
     expect(patch.phase).toBe("at");
-    expect(patch.nextNotifyAt?.getTime()).toBe(now.getTime() + 10 * 60 * 1000);
+    expect(patch.nextNotifyAt?.getTime()).toBe(now.getTime() + 15 * 60 * 1000);
   });
 
-  it("nag se repete a cada 10 min", () => {
+  it("nag se repete a cada 15 min", () => {
     const now = new Date("2026-06-18T17:00:00.000Z");
     const r = makeReminder({ phase: "at", notifyCount: 3 });
     const { patch } = decide(r, now);
     expect(patch.phase).toBe("nag");
-    expect(patch.nextNotifyAt?.getTime()).toBe(now.getTime() + 10 * 60 * 1000);
+    expect(patch.nextNotifyAt?.getTime()).toBe(now.getTime() + 15 * 60 * 1000);
   });
 
-  it("cap atingido cancela evento único", () => {
+  it("cap atingido para de avisar mas mantém o evento único ativo (atrasado)", () => {
     const r = makeReminder({ phase: "nag", notifyCount: 10, maxNotify: 10 });
     const { patch } = decide(r, new Date());
-    expect(patch.status).toBe("cancelled");
+    expect(patch.status).toBeUndefined();
     expect(patch.nextNotifyAt).toBeNull();
   });
 
-  it("cap atingido em evento recorrente avança para a próxima data", () => {
+  it("cap atingido em evento recorrente também só para de avisar (não avança sozinho)", () => {
     const r = makeReminder({
       phase: "nag",
       notifyCount: 10,
@@ -113,9 +113,9 @@ describe("decide (com hora)", () => {
       recurUnit: "week",
     });
     const { patch } = decide(r, new Date());
-    expect(patch.status).toBe("active");
-    expect(patch.notifyCount).toBe(0);
-    expect(patch.eventAt).toBeInstanceOf(Date);
+    expect(patch.status).toBeUndefined();
+    expect(patch.eventAt).toBeUndefined();
+    expect(patch.nextNotifyAt).toBeNull();
   });
 });
 
@@ -127,10 +127,11 @@ describe("decide (dia inteiro)", () => {
     expect(toSpParts(patch.nextNotifyAt as Date)).toMatchObject({ day: 18, hour: 8 });
   });
 
-  it("day_before encerra o evento único", () => {
+  it("no dia envia o aviso e para de notificar, mantendo ativo (atrasado)", () => {
     const r = makeReminder({ isAllDay: true, phase: "day_before" });
     const { patch } = decide(r, new Date());
-    expect(patch.status).toBe("done");
+    expect(patch.status).toBeUndefined();
+    expect(patch.phase).toBe("morning");
     expect(patch.nextNotifyAt).toBeNull();
   });
 });

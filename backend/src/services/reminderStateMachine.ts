@@ -4,7 +4,7 @@ import * as messages from "./reminderMessages.js";
 
 const LEAD_1_MIN = 30;
 const LEAD_2_MIN = 5;
-const NAG_INTERVAL_MIN = 10;
+const NAG_INTERVAL_MIN = 15;
 const ALLDAY_BEFORE_HOUR = 8;
 const ALLDAY_MORNING_HOUR = 8;
 
@@ -85,15 +85,14 @@ export function finishOccurrence(r: Reminder, now: Date): ReminderPatch {
 
 /** Decide a próxima ação de um lembrete vencido (função pura). */
 export function decide(r: Reminder, now: Date): TickResult {
-  return r.isAllDay ? decideAllDay(r, now) : decideTimed(r, now);
+  return r.isAllDay ? decideAllDay(r) : decideTimed(r, now);
 }
 
 function decideTimed(r: Reminder, now: Date): TickResult {
+  // Atingido o limite de avisos: para de notificar mas mantém ativo (fica atrasado
+  // até o usuário concluir ou cancelar). Não cancela nem avança sozinho.
   if (r.notifyCount >= r.maxNotify) {
-    if (isRecurring(r)) {
-      return { message: messages.recurAdvance(r.title), patch: finishOccurrence(r, now) };
-    }
-    return { message: messages.autoCancel(r.title), patch: { status: "cancelled", nextNotifyAt: null } };
+    return { message: messages.nagStop(r.title), patch: { nextNotifyAt: null } };
   }
 
   const notifyCount = r.notifyCount + 1;
@@ -109,7 +108,7 @@ function decideTimed(r: Reminder, now: Date): TickResult {
   }
 }
 
-function decideAllDay(r: Reminder, now: Date): TickResult {
+function decideAllDay(r: Reminder): TickResult {
   if (r.phase === "pending") {
     const morning = spDateAtTime(new Date(r.eventAt), 0, ALLDAY_MORNING_HOUR, 0);
     return {
@@ -117,5 +116,7 @@ function decideAllDay(r: Reminder, now: Date): TickResult {
       patch: { phase: "day_before", nextNotifyAt: morning, notifyCount: r.notifyCount + 1 },
     };
   }
-  return { message: messages.dayOf(r.title), patch: finishOccurrence(r, now) };
+  // Aviso do dia: último toque. Depois para de notificar mas mantém ativo
+  // (fica atrasado até o usuário concluir). Não conclui nem avança sozinho.
+  return { message: messages.dayOf(r.title), patch: { phase: "morning", nextNotifyAt: null } };
 }

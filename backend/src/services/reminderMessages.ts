@@ -33,17 +33,10 @@ export function nag(title: string): ReminderMessage {
   };
 }
 
-export function autoCancel(title: string): ReminderMessage {
+export function nagStop(title: string): ReminderMessage {
   return {
-    title: `😴 Cansei de avisar`,
-    description: `Te lembrei de ${title} várias vezes e ninguém respondeu, então cancelei por aqui. Se ainda precisar, é só reabrir no app.`,
-  };
-}
-
-export function recurAdvance(title: string): ReminderMessage {
-  return {
-    title: `🔁 Fica pra próxima`,
-    description: `Encerrei os lembretes de ${title} desta vez. Quando chegar a próxima data, eu te chamo de novo. 👋`,
+    title: `😮‍💨 Vou parar de insistir`,
+    description: `Não vou mais te lembrar de ${title} por aqui, mas ele continua pendente no app até você concluir.`,
   };
 }
 
